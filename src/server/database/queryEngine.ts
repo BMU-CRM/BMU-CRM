@@ -5,9 +5,8 @@
 // It speaks the same request format as PostgREST, the standard REST layer for
 // Postgres, which keeps the app's query code unchanged if the database is ever
 // moved to a hosted Postgres service.
-import type { PGlite, Transaction } from '@electric-sql/pglite';
 import { getSchemaInfo, type ForeignKey, type FunctionInfo, type SchemaInfo, type TableInfo } from './databaseSchemaInfo';
-import { runAs, type Identity } from './localDatabase';
+import { runAs, type Identity, type SqlDatabase, type SqlRunner } from './sqlDatabase';
 
 class QueryError extends Error {
   constructor(
@@ -460,7 +459,7 @@ function getTable(schema: SchemaInfo, name: string) {
   return table;
 }
 
-async function readRows(tx: Transaction, request: ParsedRequest, schema: SchemaInfo, table: TableInfo): Promise<QueryResult> {
+async function readRows(tx: SqlRunner, request: ParsedRequest, schema: SchemaInfo, table: TableInfo): Promise<QueryResult> {
   const params = new Params();
   const modifiers = readModifiers(request.url.searchParams);
   const context: BuildContext = { schema, params, modifiers, aliasCounter: { value: 0 } };
@@ -500,7 +499,7 @@ async function readRows(tx: Transaction, request: ParsedRequest, schema: SchemaI
 // Writes return the changed rows only when asked to, as PostgREST does. Reading them
 // back also requires the select policy to allow them.
 async function finishWrite(
-  tx: Transaction,
+  tx: SqlRunner,
   request: ParsedRequest,
   schema: SchemaInfo,
   table: TableInfo,
@@ -538,7 +537,7 @@ function writeColumns(request: ParsedRequest, table: TableInfo, rows: Record<str
   return columns;
 }
 
-async function insertRows(tx: Transaction, request: ParsedRequest, schema: SchemaInfo, table: TableInfo) {
+async function insertRows(tx: SqlRunner, request: ParsedRequest, schema: SchemaInfo, table: TableInfo) {
   const rows = (Array.isArray(request.body) ? request.body : [request.body]) as Record<string, unknown>[];
   if (rows.length === 0) return { status: 201, body: '[]' };
 
@@ -574,7 +573,7 @@ function filterSql(request: ParsedRequest, table: TableInfo, params: Params) {
   return conditions.length ? ` where ${conditions.join(' and ')}` : '';
 }
 
-async function updateRows(tx: Transaction, request: ParsedRequest, schema: SchemaInfo, table: TableInfo) {
+async function updateRows(tx: SqlRunner, request: ParsedRequest, schema: SchemaInfo, table: TableInfo) {
   const values = (request.body ?? {}) as Record<string, unknown>;
   const columns = writeColumns(request, table, [values]);
   const params = new Params();
@@ -592,7 +591,7 @@ async function updateRows(tx: Transaction, request: ParsedRequest, schema: Schem
   return finishWrite(tx, request, schema, table, sql, params, 200);
 }
 
-async function deleteRows(tx: Transaction, request: ParsedRequest, schema: SchemaInfo, table: TableInfo) {
+async function deleteRows(tx: SqlRunner, request: ParsedRequest, schema: SchemaInfo, table: TableInfo) {
   const params = new Params();
   const sql = `delete from public.${quoteIdent(table.name)} as _s0${filterSql(request, table, params)}`;
   return finishWrite(tx, request, schema, table, sql, params, 200);
@@ -626,7 +625,7 @@ function argumentSql(type: string, value: unknown, params: Params) {
   return `${params.add(typeof value === 'object' ? JSON.stringify(value) : value)}::${type}`;
 }
 
-async function callFunction(tx: Transaction, request: ParsedRequest, schema: SchemaInfo, name: string): Promise<QueryResult> {
+async function callFunction(tx: SqlRunner, request: ParsedRequest, schema: SchemaInfo, name: string): Promise<QueryResult> {
   const args: Record<string, unknown> =
     request.method === 'GET' || request.method === 'HEAD'
       ? Object.fromEntries(request.url.searchParams)
@@ -675,7 +674,7 @@ function errorStatus(code: string, identity: Identity) {
   return 500;
 }
 
-export async function handleDatabaseRequest(db: PGlite, identity: Identity, request: Request): Promise<Response> {
+export async function handleDatabaseRequest(db: SqlDatabase, identity: Identity, request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname.replace(/^.*\/rest\/v1\//, '');
   const text = request.method === 'GET' || request.method === 'HEAD' ? '' : await request.text();

@@ -1,9 +1,9 @@
 // Creates the first account, which everyone else is then invited from. Used by the
 // setup page on a fresh install and by the founder:create command.
-import type { PGlite } from '@electric-sql/pglite';
+import type { SqlDatabase } from '@/server/database/sqlDatabase';
 import { createAuthUser, deleteAuthUser } from './authAccounts';
 
-export async function founderExists(db: PGlite) {
+export async function founderExists(db: SqlDatabase) {
   const { rows } = await db.query<{ found: boolean }>(
     `select exists (
        select 1 from public.employees e join public.roles r on r.id = e.role_id where r.name = 'Founder'
@@ -12,7 +12,7 @@ export async function founderExists(db: PGlite) {
   return rows[0]?.found === true;
 }
 
-export async function createFounder(db: PGlite, founder: { name: string; email: string; password: string }) {
+export async function createFounder(db: SqlDatabase, founder: { name: string; email: string; password: string }) {
   if (await founderExists(db)) throw new Error('A Founder account already exists.');
 
   const email = founder.email.trim().toLowerCase();

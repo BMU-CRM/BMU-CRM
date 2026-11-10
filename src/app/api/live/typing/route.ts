@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getSessionUser } from '@/server/auth/currentSession';
-import { getAppDatabase, runAs } from '@/server/database/localDatabase';
+import { databaseProvider, getAppDatabase } from '@/server/database/appDatabase';
+import { runAs } from '@/server/database/sqlDatabase';
 import { publishTyping } from '@/server/live/liveEvents';
+import { broadcastTyping } from '@/server/live/realtimeChannels';
 
 // Tells the other people in a conversation that this user is typing. The name comes
 // from the database, not the browser, and only members of the conversation can send.
@@ -25,6 +27,8 @@ export async function POST(request: NextRequest) {
 
   if (!result?.allowed || !result.name) return NextResponse.json({ error: 'Not allowed' }, { status: 403 });
 
-  publishTyping({ conversationId: body.data.conversationId, name: result.name, userId: user.userId });
+  const signal = { conversationId: body.data.conversationId, name: result.name, userId: user.userId };
+  if (databaseProvider() === 'supabase') await broadcastTyping(db, signal);
+  else publishTyping(signal);
   return new NextResponse(null, { status: 204 });
 }

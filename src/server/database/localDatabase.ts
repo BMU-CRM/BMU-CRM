@@ -1,7 +1,7 @@
-// The app's database: Postgres running inside this Node process, stored in a folder.
+// The embedded database: Postgres running inside this Node process, stored in a folder.
 // There is no separate server to install. One process opens the folder at a time;
 // a lock file stops a second one, because two writers would corrupt the data.
-import { PGlite, type Transaction } from '@electric-sql/pglite';
+import { PGlite } from '@electric-sql/pglite';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { applyMigrations } from './migrationRunner';
@@ -11,9 +11,6 @@ export type DatabaseOptions = {
   dataDir: string;
   migrationsDir: string;
 };
-
-const globalKey = Symbol.for('crm.localDatabase');
-type GlobalWithDatabase = typeof globalThis & { [globalKey]?: Promise<PGlite> };
 
 export function defaultDatabaseOptions(): DatabaseOptions {
   // Decided when the app runs, so the bundler is told not to look inside these.
@@ -67,41 +64,4 @@ export async function openDatabase(options: DatabaseOptions) {
   await db.exec(`set timezone = 'UTC'`);
   await applyMigrations(db, options.migrationsDir);
   return db;
-}
-
-// The shared database for the running app. Kept on globalThis so that reloading code
-// in development reuses it instead of opening the folder twice.
-export function getAppDatabase(): Promise<PGlite> {
-  const holder = globalThis as GlobalWithDatabase;
-
-  holder[globalKey] ??= (async () => {
-    const db = await openDatabase(defaultDatabaseOptions());
-    // Loaded here so tests and scripts that open their own database never start them.
-    const { startBackgroundServices } = await import('./backgroundServices');
-    await startBackgroundServices(db);
-    return db;
-  })().catch((error: unknown) => {
-    delete holder[globalKey];
-    throw error;
-  });
-
-  return holder[globalKey];
-}
-
-export type Identity =
-  | { role: 'anon' }
-  | { role: 'authenticated'; userId: string }
-  | { role: 'service_role' };
-
-// Runs work in one transaction as the given database role, so row level security
-// applies exactly as it would for that user. Nothing outside the callback sees
-// the role or user, because both are local to the transaction.
-export async function runAs<T>(db: PGlite, identity: Identity, work: (tx: Transaction) => Promise<T>) {
-  return db.transaction(async (tx) => {
-    await tx.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
-      identity.role === 'authenticated' ? identity.userId : '',
-    ]);
-    await tx.exec(`set local role ${identity.role}`);
-    return work(tx);
-  });
 }

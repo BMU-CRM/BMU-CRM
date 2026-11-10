@@ -9,7 +9,7 @@ import { finishSession, getSessionUser, startSession } from '@/server/auth/curre
 import { createFounder, founderExists } from '@/server/auth/founderSetup';
 import { isRateLimited } from '@/server/auth/signInRateLimit';
 import { createAdminDatabaseClient } from '@/server/database/databaseClient';
-import { getAppDatabase } from '@/server/database/localDatabase';
+import { getAppDatabase } from '@/server/database/appDatabase';
 
 // Only same-site paths are allowed, so a crafted link cannot send users elsewhere.
 function safeNextPath(value: FormDataEntryValue | null) {
@@ -23,11 +23,12 @@ export async function signInAction(_previous: ActionResult, formData: FormData):
   });
   if (!parsed.success) return validationFailure(parsed.error);
 
-  if (isRateLimited(parsed.data.email)) {
+  const db = await getAppDatabase();
+  if (await isRateLimited(db, parsed.data.email)) {
     return failure('Too many attempts. Please wait a few minutes and try again.');
   }
 
-  const result = await checkPassword(await getAppDatabase(), parsed.data.email, parsed.data.password);
+  const result = await checkPassword(db, parsed.data.email, parsed.data.password);
   if (result.status === 'invalid') return failure('The email or password is incorrect.');
   if (result.status === 'blocked') return failure('Your account is not active. Please contact your administrator.');
 
@@ -47,8 +48,8 @@ export async function requestPasswordResetAction(
   const parsed = forgotPasswordSchema.safeParse({ email: formData.get('email') });
   if (!parsed.success) return validationFailure(parsed.error);
 
-  if (!isRateLimited(`reset:${parsed.data.email}`)) {
-    const db = await getAppDatabase();
+  const db = await getAppDatabase();
+  if (!(await isRateLimited(db, `reset:${parsed.data.email}`))) {
     const user = await findAuthUserByEmail(db, parsed.data.email);
     if (user && !user.banned) await sendPasswordReset(db, { userId: user.id, email: parsed.data.email });
   }

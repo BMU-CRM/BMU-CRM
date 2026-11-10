@@ -1,6 +1,7 @@
 import 'server-only';
 import { getSessionUser } from '@/server/auth/currentSession';
-import { getAppDatabase, type Identity } from './localDatabase';
+import { getAppDatabase } from './appDatabase';
+import type { Identity } from './sqlDatabase';
 import { createQueryClient } from './queryClients';
 
 export type { DatabaseClient } from './queryClients';

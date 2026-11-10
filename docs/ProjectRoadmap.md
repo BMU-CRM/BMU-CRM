@@ -19,7 +19,7 @@ These parts of the brief depend on something that does not exist yet.
 | Feature | Moves to | Waiting for |
 | --- | --- | --- |
 | Email notifications | Going live | An email provider. The preference table is ready for it |
-| Invitation and password reset emails | Going live | An email provider. Emails are queued in `auth.outgoing_emails`, and administrators create links to pass on meanwhile |
+| Invitation and password reset emails | Going live | An email provider. Emails are queued in `app_auth.outgoing_emails`, and administrators create links to pass on meanwhile |
 | Shared data between teammates' computers | Going live | A hosted database. Each computer has its own workspace until then |
 | Malware scanning of uploads | Phase 7 | A scanning service. Programs and web pages are already refused by name and file type |
 | File retention policies | Phase 7 | A decision on how long to keep files |
@@ -56,8 +56,8 @@ The department-specific tools, such as bug tracking and campaign tracking, are b
 | Leave types and yearly allowances (started as Casual 12, Sick 6, Earned 15, Unpaid) | Going live. Editable in Settings > HR settings |
 | Working hours and days (started as 9:30 to 18:30, Monday to Friday, 15 minutes grace) | Going live. Editable in Settings > HR settings |
 | Who handles each ticket category | Going live. Editable in Settings > Ticket categories |
-| Hosted database, such as Supabase, so teammates share one workspace | Going live. The app runs on its own embedded database until then |
-| File storage: the local `.data/files` folder (used now), or a hosted store | Going live. The limit is 50 MB per file, set in the files migration |
+| Supabase plan: Free while testing, Pro before real company data (daily backups, no pausing) | Going live. The live site on Vercel uses Supabase for its database, files, scheduled jobs and live updates. Each computer still runs its own embedded database |
+| File size limit | Going live. 50 MB per file, set in the files migration. Larger files also need a paid Supabase plan |
 | Email sending provider | Going live. Until then, administrators create invitation and reset links to pass on |
 | Company legal name, GSTIN, PAN, state and bank details | Before the first real invoice. Editable in Settings > Finance settings |
 | Invoice number prefix (started as INV, giving INV/26-27/0001) | Before the first real invoice. It cannot be changed for numbers already issued |

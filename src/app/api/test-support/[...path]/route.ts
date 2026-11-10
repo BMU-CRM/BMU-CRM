@@ -2,9 +2,10 @@ import { timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAuthUser, deleteAuthUser, EmailTakenError, latestEmailedLink } from '@/server/auth/authAccounts';
 import { lastDispatchResult } from '@/server/database/backgroundServices';
-import { getAppDatabase } from '@/server/database/localDatabase';
+import { databaseProvider, getAppDatabase } from '@/server/database/appDatabase';
 import { handleDatabaseRequest } from '@/server/database/queryEngine';
 import { removeObjects } from '@/server/storage/objectStore';
+import { removeStoredObjects } from '@/server/storage/supabaseStorage';
 
 // For automated browser tests only. Off unless TEST_SUPPORT_SECRET (at least 32
 // characters) is set when the server starts, and every call must carry that secret.
@@ -62,7 +63,8 @@ async function handle(request: NextRequest, { params }: { params: Promise<{ path
   const bucketMatch = path.match(/^storage\/v1\/object\/([\w-]+)$/);
   if (bucketMatch?.[1] && request.method === 'DELETE') {
     const body = (await request.json()) as { prefixes?: string[] };
-    await removeObjects(db, bucketMatch[1], body.prefixes ?? []);
+    if (databaseProvider() === 'supabase') await removeStoredObjects(bucketMatch[1], body.prefixes ?? []);
+    else await removeObjects(db, bucketMatch[1], body.prefixes ?? []);
     return NextResponse.json([]);
   }
 

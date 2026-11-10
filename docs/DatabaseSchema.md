@@ -6,19 +6,20 @@ The source of truth is `database/migrations/`. This page explains how the tables
 
 ### Platform (local_platform migration)
 
-The first migration creates what a hosted Postgres platform would normally provide. None of it is in the public schema, so no user query can reach it.
+The first migration creates what a hosted Postgres platform would normally provide. None of it is in the public schema, so no user query can reach it. On Supabase, `database/platform/supabase_platform.sql` runs in its place: Supabase already has the roles, `auth.uid()`, `storage` and `realtime`, and provides scheduled jobs and web requests through its `pg_cron` and `pg_net` extensions.
 
 | Schema or object | Purpose |
 | --- | --- |
 | Roles `anon`, `authenticated`, `service_role` | Every query runs as one of these. Only `service_role` bypasses row level security |
-| `auth.users`, `auth.sessions` | Accounts, password hashes and sign-in sessions. Only token hashes are stored |
-| `auth.one_time_tokens` | Invitation and password reset links. Each works once |
-| `auth.outgoing_emails` | Emails waiting for an email provider |
+| `app_auth.users`, `app_auth.sessions` | Accounts, password hashes and sign-in sessions. Only token hashes are stored. Kept apart from Supabase's own `auth` tables (moved from `auth` by the app_auth_schema migration) |
+| `app_auth.one_time_tokens` | Invitation and password reset links. Each works once |
+| `app_auth.outgoing_emails` | Emails waiting for an email provider |
+| `app_auth.sign_in_attempts` | Recent sign-in and reset attempts, to limit password guessing. Cleared after a day |
 | `auth.uid()` | The signed-in user for the current query |
-| `storage.buckets`, `storage.objects` | One row per stored file, checked by the file rules. The bytes are on disk |
-| `cron.job`, `cron.schedule()` | Scheduled jobs, run by the app |
-| `net.http_request_queue`, `net.http_post()` | Outgoing requests such as push delivery, sent by the app after the change is saved |
-| `live_updates` publication, `live.broadcast_change()` | Announces changes to open pages |
+| `storage.buckets`, `storage.objects` | One row per stored file, checked by the file rules. The bytes are on disk, or in Supabase Storage |
+| `cron.job`, `cron.schedule()` | Scheduled jobs, run by the app, or by `pg_cron` on Supabase |
+| `net.http_request_queue`, `net.http_post()` | Outgoing requests such as push delivery, sent by the app after the change is saved, or by `pg_net` on Supabase |
+| `live_updates` publication, `live.broadcast_change()` | Announces changes to open pages, through the app or through Supabase Realtime |
 | `app_meta.schema_migrations` | Which migrations have run |
 
 ### Organisation (Phase 1)
@@ -151,7 +152,7 @@ How the money rules work:
 ## Relationships
 
 ```text
-auth.users ──1:1── employees ──many:1── roles ──1:many── role_permissions ──many:1── permissions
+app_auth.users ──1:1── employees ──many:1── roles ──1:many── role_permissions ──many:1── permissions
                      │  │  │
                      │  │  └─ many:1 ── designations
                      │  └──── many:1 ── departments ── parent department (self)

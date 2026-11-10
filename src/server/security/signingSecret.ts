@@ -1,11 +1,12 @@
 // A random secret created the first time the app runs and kept in the database's
 // private settings. It signs short-lived file links and checks push requests.
-import type { PGlite } from '@electric-sql/pglite';
+import type { SqlDatabase } from '@/server/database/sqlDatabase';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
-const secrets = new WeakMap<PGlite, Promise<string>>();
+const secrets = new WeakMap<SqlDatabase, Promise<string>>();
 
-async function loadSecret(db: PGlite, key: string) {
+// Reads a random value from the private settings, creating it the first time.
+export async function loadSecret(db: SqlDatabase, key: string) {
   await db.query(
     `insert into private.app_settings (key, value) values ($1, $2) on conflict (key) do nothing`,
     [key, randomBytes(32).toString('hex')],
@@ -15,7 +16,7 @@ async function loadSecret(db: PGlite, key: string) {
   return rows[0].value;
 }
 
-export function getSigningSecret(db: PGlite) {
+export function getSigningSecret(db: SqlDatabase) {
   let secret = secrets.get(db);
   if (!secret) {
     secret = loadSecret(db, 'signing_secret');
@@ -26,7 +27,7 @@ export function getSigningSecret(db: PGlite) {
 
 // A token that carries a small JSON payload, signed so it cannot be altered, and
 // valid until the expiry inside it.
-export async function signToken(db: PGlite, payload: Record<string, unknown>, lifetimeSeconds: number) {
+export async function signToken(db: SqlDatabase, payload: Record<string, unknown>, lifetimeSeconds: number) {
   const body = Buffer.from(
     JSON.stringify({ ...payload, exp: Math.floor(Date.now() / 1000) + lifetimeSeconds }),
   ).toString('base64url');
@@ -34,7 +35,7 @@ export async function signToken(db: PGlite, payload: Record<string, unknown>, li
   return `${body}.${signature}`;
 }
 
-export async function readToken<T extends Record<string, unknown>>(db: PGlite, token: string): Promise<T | null> {
+export async function readToken<T extends Record<string, unknown>>(db: SqlDatabase, token: string): Promise<T | null> {
   const [body, signature] = token.split('.');
   if (!body || !signature) return null;
 

@@ -2,7 +2,9 @@
 
 ## Overview
 
-One Next.js application serves the interface and the backend. Nothing else needs installing: Postgres runs inside the app (PGlite, from npm) and stores its data in `.data/database`. Uploaded files are kept in `.data/files`.
+One Next.js application serves the interface and the backend. On a computer, nothing else needs installing: Postgres runs inside the app (PGlite, from npm) and stores its data in `.data/database`. Uploaded files are kept in `.data/files`.
+
+The live site runs on Vercel, which keeps no disk, so it uses Supabase instead: Supabase Postgres for the database, Supabase Storage for files, `pg_cron` and `pg_net` for scheduled jobs and push requests, and Supabase Realtime for live updates. `DATABASE_PROVIDER=supabase` switches all of them (`src/server/database/appDatabase.ts`). Everything else, including sign-in and every query, is the same code on both. Setup steps are in [SetupGuide.md](SetupGuide.md#going-live-on-vercel-and-supabase).
 
 ```text
 Browser
@@ -35,7 +37,9 @@ Because the request format is PostgREST's, the same code works unchanged against
 
 ### Startup
 
-The first request opens the database (`localDatabase.ts`), applies any new migrations (`migrationRunner.ts`) and starts the background services (`backgroundServices.ts`). A lock file stops a second program opening the same folder, because two writers would corrupt it.
+The first request opens the database (`appDatabase.ts`). On a computer, that opens the embedded database (`localDatabase.ts`), applies any new migrations (`migrationRunner.ts`) and starts the background services (`backgroundServices.ts`). A lock file stops a second program opening the same folder, because two writers would corrupt it.
+
+On Vercel, it opens a small pool of connections to Supabase's connection pooler (`postgresDatabase.ts`). Migrations are not applied there, because many copies of the app start at once. `npm run db:supabase` applies them instead (`scripts/migrateSupabase.ts`), with `database/platform/supabase_platform.sql` in place of the first migration. Both kinds of database meet the same small interface (`sqlDatabase.ts`), and each query runs in a transaction as the signed-in user's role, so row level security behaves the same on both.
 
 ## Three layers of access control
 
@@ -80,13 +84,15 @@ The timeline reads from `audit_logs`, which records a `client_id` for any row th
 
 ## Sign-in
 
-Accounts live in `auth.users`, outside the public schema, so no user query can reach them. Passwords are hashed with scrypt. Signing in creates a session: the browser keeps a random token in an http-only cookie, and the database keeps only its hash. The route guard checks that the cookie exists; every page and action then checks the session itself.
+Accounts live in `app_auth.users`, outside the public schema, so no user query can reach them. The schema is not called `auth` because Supabase keeps its own sign-in tables there; this app does not use Supabase Auth. Passwords are hashed with scrypt. Signing in creates a session: the browser keeps a random token in an http-only cookie, and the database keeps only its hash. The route guard checks that the cookie exists; every page and action then checks the session itself.
 
-Invitations and password resets are one-time links (`auth.one_time_tokens`). Until an email provider is connected, the emails are queued in `auth.outgoing_emails` and administrators create links to pass on from the employee page. Sign-in attempts are limited to 10 per email in 15 minutes.
+Invitations and password resets are one-time links (`app_auth.one_time_tokens`). Until an email provider is connected, the emails are queued in `app_auth.outgoing_emails` and administrators create links to pass on from the employee page. Sign-in attempts are limited to 10 per email in 15 minutes, counted in the database (`app_auth.sign_in_attempts`) so the limit holds across every copy of the app.
 
 ## Real-time updates
 
 Tables in the `live_updates` publication get a trigger that announces each change with only the row's ids. `/api/live` streams these to open pages as server-sent events, after checking with row level security that the user may see that row. Pages then ask the server to rebuild themselves, so no data travels in the event itself. One connection per browser tab is shared by every component (`src/lib/live/liveUpdates.ts`), and it refreshes once on connecting, to catch anything missed. Chat typing signals go through `/api/live/typing`, which only members of the conversation can use.
+
+On Supabase, the same trigger sends the change with `realtime.send` to a Supabase Realtime channel, and pages listen there instead (`/api/live/config` tells a page which way to listen). The channel name is random and given only to signed-in people. It carries only table names and row ids, which say nothing without access to the rows; pages still reload through the usual rules. Typing signals go to a separate channel per conversation, whose name is derived from the signing secret, so only people who may read the conversation are told it (`src/server/live/realtimeChannels.ts`).
 
 ## Workload
 
@@ -104,6 +110,8 @@ Browser ── 1. ask to upload ──> server action ── creates the file re
         ── 2. sends the file to /api/storage/upload (with progress) ──>
         ── 3. confirm ──> database reads the real size from storage.objects, marks it ready
 ```
+
+On Supabase, file contents are kept in Supabase Storage (`supabaseStorage.ts`). The upload link points straight at Storage, so large files never pass through Vercel, which limits request sizes. Storage does not know this app's rules, so the app checks `can_upload_file_object` as the user before making the link. Storage then writes the `storage.objects` row with the real size and type, which step 3 reads as before.
 
 Downloads go through `/files/{id}/download`, which checks access, records it, then redirects to a signed link that expires in a minute. Only images, PDFs, text, audio and browser-playable video open in the browser. Everything else downloads. Links are signed with a secret the app creates on first run and keeps in the database's private settings.
 
@@ -140,7 +148,7 @@ The service worker in `public/sw.js` shows the notification and opens the app wh
 
 ## Scheduled jobs
 
-Migrations register jobs with `cron.schedule`, as on a hosted Postgres. The app checks every minute and runs each job whose schedule is due: deadline reminders and escalation every 15 minutes, meeting reminders every 5, overdue invoice reminders every hour.
+Migrations register jobs with `cron.schedule`, as on a hosted Postgres. The app checks every minute and runs each job whose schedule is due: deadline reminders and escalation every 15 minutes, meeting reminders every 5, overdue invoice reminders every hour. On Supabase, `pg_cron` runs the same jobs inside the database, and `pg_net` sends push requests to `/api/notifications/dispatch`.
 
 ## The admin database client
 
@@ -152,6 +160,7 @@ Migrations register jobs with `cron.schedule`, as on a hosted Postgres. The app 
 .data/                Local database and uploaded files (not in Git)
 database/
   migrations/         Database changes, applied automatically on start
+  platform/           Supabase's version of the first migration
 docs/                 Architecture, schema, permissions, design system, setup
 public/images/        WebP images
 scripts/              Version snapshots, image conversion, first account, type generation
@@ -173,12 +182,12 @@ src/
   server/
     actions/          Changes to data
     auth/             Accounts, sessions, passwords, one-time links
-    database/         Embedded database, migrations, query engine, background services
+    database/         Embedded or Supabase database, migrations, query engine, background services
     jobs/             Schedule matching
     live/             Live change hub
     security/         Signing secret
     services/         Reads of data
-    storage/          File store on disk, and file links
+    storage/          File store on disk or in Supabase Storage, and file links
   types/              Database types generated from the migrations
   proxy.ts            Route protection
 tests/                Unit tests, query engine tests and database rule tests

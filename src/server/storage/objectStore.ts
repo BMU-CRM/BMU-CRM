@@ -1,13 +1,13 @@
 // Stores uploaded file contents in a folder on disk. Each stored file also has a row
 // in storage.objects, written and read as the signed-in user, so the database's file
 // rules decide who may upload and who may read every file.
-import type { PGlite } from '@electric-sql/pglite';
+import type { SqlDatabase } from '@/server/database/sqlDatabase';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { mkdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { runAs, type Identity } from '@/server/database/localDatabase';
+import { runAs, type Identity } from '@/server/database/sqlDatabase';
 
 export class StorageError extends Error {
   constructor(
@@ -38,7 +38,7 @@ function objectPath(root: string, bucket: string, name: string) {
 
 type Bucket = { file_size_limit: number | null; allowed_mime_types: string[] | null };
 
-async function getBucket(db: PGlite, bucket: string) {
+async function getBucket(db: SqlDatabase, bucket: string) {
   const { rows } = await db.query<Bucket>('select file_size_limit, allowed_mime_types from storage.buckets where id = $1', [
     bucket,
   ]);
@@ -50,7 +50,7 @@ async function getBucket(db: PGlite, bucket: string) {
 // Saves an upload. The database row is written first, as the uploader, so a refused
 // upload never touches the disk. If saving the bytes fails, the row is removed again.
 export async function putObject(
-  db: PGlite,
+  db: SqlDatabase,
   identity: Identity,
   object: { bucket: string; name: string; contentType: string; body: ReadableStream<Uint8Array> | Buffer },
   root = storageRoot(),
@@ -107,8 +107,19 @@ export async function putObject(
   }
 }
 
+// Whether this person may upload the object, by the same rule the database applies to
+// new rows in storage.objects. Used before handing out an upload link that Supabase
+// Storage accepts without checking the app's rules itself.
+export async function canUploadObject(db: SqlDatabase, identity: Identity, bucket: string, name: string) {
+  if (bucket !== 'files') return false;
+  return runAs(db, identity, async (tx) => {
+    const { rows } = await tx.query<{ allowed: boolean }>('select public.can_upload_file_object($1) as allowed', [name]);
+    return rows[0]?.allowed === true;
+  });
+}
+
 // Whether this person may read the object, by the same rules as everything else.
-export async function canReadObject(db: PGlite, identity: Identity, bucket: string, name: string) {
+export async function canReadObject(db: SqlDatabase, identity: Identity, bucket: string, name: string) {
   return runAs(db, identity, async (tx) => {
     const { rows } = await tx.query<{ found: boolean }>(
       'select exists (select 1 from storage.objects where bucket_id = $1 and name = $2) as found',
@@ -118,7 +129,7 @@ export async function canReadObject(db: PGlite, identity: Identity, bucket: stri
   });
 }
 
-export async function openObject(db: PGlite, bucket: string, name: string, root = storageRoot()) {
+export async function openObject(db: SqlDatabase, bucket: string, name: string, root = storageRoot()) {
   const { rows } = await db.query<{ metadata: { size?: number; mimetype?: string } }>(
     'select metadata from storage.objects where bucket_id = $1 and name = $2',
     [bucket, name],
@@ -137,7 +148,7 @@ export async function openObject(db: PGlite, bucket: string, name: string, root 
   };
 }
 
-export async function removeObjects(db: PGlite, bucket: string, names: string[], root = storageRoot()) {
+export async function removeObjects(db: SqlDatabase, bucket: string, names: string[], root = storageRoot()) {
   for (const name of names) {
     await db.query('delete from storage.objects where bucket_id = $1 and name = $2', [bucket, name]);
     await rm(objectPath(root, bucket, name), { force: true });

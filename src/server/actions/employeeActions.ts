@@ -18,7 +18,7 @@ import {
 } from '@/lib/validation/employeeSchema';
 import { sendInvitation, sendPasswordReset } from '@/server/auth/accountEmails';
 import { createAuthUser, deleteAuthUser, EmailTakenError, setAuthUserBlocked } from '@/server/auth/authAccounts';
-import { getAppDatabase } from '@/server/database/localDatabase';
+import { getAppDatabase } from '@/server/database/appDatabase';
 import { getActionAccess } from '@/server/services/accessService';
 import { getDefaultRole, getEmployee, getEmployeeControls } from '@/server/services/employeeService';
 

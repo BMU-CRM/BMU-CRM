@@ -1,7 +1,7 @@
-// Invitation and password reset messages. Each one is queued in auth.outgoing_emails
+// Invitation and password reset messages. Each one is queued in app_auth.outgoing_emails
 // for an email provider to send once one is connected. Until then, administrators
 // pass the link on themselves, so every function also returns it.
-import type { PGlite } from '@electric-sql/pglite';
+import type { SqlDatabase } from '@/server/database/sqlDatabase';
 import { createOneTimeLink, queueEmail } from './authAccounts';
 
 // Off until an email provider is connected. Pages use it to tell people where their
@@ -12,7 +12,7 @@ function siteUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
 }
 
-export async function sendInvitation(db: PGlite, account: { userId: string; email: string; name: string }) {
+export async function sendInvitation(db: SqlDatabase, account: { userId: string; email: string; name: string }) {
   const token = await createOneTimeLink(db, account.userId, 'invite');
   const link = `${siteUrl()}/auth/confirm?type=invite&token=${token}`;
   await queueEmail(db, {
@@ -25,7 +25,7 @@ export async function sendInvitation(db: PGlite, account: { userId: string; emai
   return link;
 }
 
-export async function sendPasswordReset(db: PGlite, account: { userId: string; email: string }) {
+export async function sendPasswordReset(db: SqlDatabase, account: { userId: string; email: string }) {
   const token = await createOneTimeLink(db, account.userId, 'recovery');
   const link = `${siteUrl()}/auth/confirm?type=recovery&token=${token}`;
   await queueEmail(db, {

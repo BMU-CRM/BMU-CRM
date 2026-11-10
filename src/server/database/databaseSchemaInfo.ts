@@ -1,7 +1,7 @@
 // What the query engine needs to know about the public schema: each table's columns,
 // how tables link to each other, and the functions the app may call. Read from
 // Postgres itself, so a migration is the only place anything is declared.
-import type { PGlite } from '@electric-sql/pglite';
+import type { SqlDatabase } from '@/server/database/sqlDatabase';
 
 export type TableInfo = {
   name: string;
@@ -36,9 +36,9 @@ export type SchemaInfo = {
   functions: Map<string, FunctionInfo[]>;
 };
 
-const cache = new WeakMap<PGlite, Promise<SchemaInfo>>();
+const cache = new WeakMap<SqlDatabase, Promise<SchemaInfo>>();
 
-export function getSchemaInfo(db: PGlite) {
+export function getSchemaInfo(db: SqlDatabase) {
   let info = cache.get(db);
   if (!info) {
     info = loadSchemaInfo(db);
@@ -47,7 +47,9 @@ export function getSchemaInfo(db: PGlite) {
   return info;
 }
 
-async function loadSchemaInfo(db: PGlite): Promise<SchemaInfo> {
+// Column names are read as text, not Postgres's own name type: the driver for a hosted
+// database returns lists of that type as a single string instead of a list.
+async function loadSchemaInfo(db: SqlDatabase): Promise<SchemaInfo> {
   const [columns, primaryKeys, foreignKeys, functions] = await Promise.all([
     db.query<{ table_name: string; column_name: string; type: string }>(`
       select c.relname as table_name, a.attname as column_name, a.atttypid::regtype::text as type
@@ -58,7 +60,7 @@ async function loadSchemaInfo(db: PGlite): Promise<SchemaInfo> {
       order by c.relname, a.attnum`),
     db.query<{ table_name: string; columns: string[] }>(`
       select cl.relname as table_name,
-        array(select a.attname from unnest(con.conkey) with ordinality k(attnum, ord)
+        array(select a.attname::text from unnest(con.conkey) with ordinality k(attnum, ord)
               join pg_attribute a on a.attrelid = con.conrelid and a.attnum = k.attnum order by k.ord) as columns
       from pg_constraint con
       join pg_class cl on cl.oid = con.conrelid
@@ -66,9 +68,9 @@ async function loadSchemaInfo(db: PGlite): Promise<SchemaInfo> {
       where con.contype = 'p' and n.nspname = 'public'`),
     db.query<{ name: string; table_name: string; ref_table: string; columns: string[]; ref_columns: string[] }>(`
       select con.conname as name, cl.relname as table_name, rcl.relname as ref_table,
-        array(select a.attname from unnest(con.conkey) with ordinality k(attnum, ord)
+        array(select a.attname::text from unnest(con.conkey) with ordinality k(attnum, ord)
               join pg_attribute a on a.attrelid = con.conrelid and a.attnum = k.attnum order by k.ord) as columns,
-        array(select a.attname from unnest(con.confkey) with ordinality k(attnum, ord)
+        array(select a.attname::text from unnest(con.confkey) with ordinality k(attnum, ord)
               join pg_attribute a on a.attrelid = con.confrelid and a.attnum = k.attnum order by k.ord) as ref_columns
       from pg_constraint con
       join pg_class cl on cl.oid = con.conrelid

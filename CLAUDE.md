@@ -18,9 +18,10 @@ Internal company operating platform for our own team: CRM, projects and tasks, f
 
 - Next.js (App Router), TypeScript, HTML, CSS Modules. No Tailwind.
 - Backend: Next.js server actions and route handlers on Node.js. No separate server.
-- Database: Postgres embedded in the app (PGlite, from npm), stored in `.data/database`. No Docker, no Supabase.
-- Queries: the PostgREST query builder (`@supabase/postgrest-js`, a library only), answered in-process by `src/server/database/queryEngine.ts`.
-- Sign-in, file storage, live updates and scheduled jobs are the app's own code, in `src/server/auth`, `src/server/storage`, `src/server/live` and `src/server/database/backgroundServices.ts`.
+- Database: on a computer, Postgres embedded in the app (PGlite, from npm), stored in `.data/database`. No Docker.
+- Live site: Vercel with Supabase (Mumbai). `DATABASE_PROVIDER=supabase`, set only in Vercel, switches the database, file storage, scheduled jobs and live updates to Supabase. See [docs/SetupGuide.md](docs/SetupGuide.md).
+- Queries: the PostgREST query builder (`@supabase/postgrest-js`, a library only), answered in-process by `src/server/database/queryEngine.ts` on both databases.
+- Sign-in is the app's own code on both (`src/server/auth`, tables in `app_auth`). Supabase Auth is not used. File storage, live updates and scheduled jobs are in `src/server/storage`, `src/server/live` and `src/server/database/backgroundServices.ts`, with Supabase versions alongside.
 - Images: WebP, using `next/image` and `scripts/convertImagesToWebp.ts`.
 
 ## Naming conventions
@@ -37,8 +38,8 @@ Internal company operating platform for our own team: CRM, projects and tasks, f
 - Responsive website with mobile push notifications first. No native apps yet.
 - The AI assistant only answers questions. It never performs actions.
 - Branches: decide later. Do not build multi-branch data yet.
-- File storage provider and Google Drive: integrate later.
-- Everything runs as code, with no Docker or Supabase. Supabase (or another hosted database) and hosting: integrate later.
+- Google Drive: integrate later.
+- Hosting: Vercel with Supabase (Free plan while testing, Pro before real data). The live database started fresh, with no data copied from `.data`.
 - Email provider: integrate later. Until then, administrators create invitation and reset links in the app.
 - Roles, landing page and branding details: the owner will provide them later.
 - Pagerbook attendance: integrate later, behind an integration layer.
@@ -58,3 +59,5 @@ Internal company operating platform for our own team: CRM, projects and tasks, f
 - Any change to `.env.local` needs the owner's dev server restarted before it takes effect.
 - `createAdminDatabaseClient()` bypasses row level security. Use it only in `src/server/` and `scripts/`.
 - Postgres 18 reports a delete blocked by a protected link as `23001`, not `23503`. Use `isStillInUse(error)`.
+- Code must work on both databases. Write raw SQL against `SqlDatabase` (`src/server/database/sqlDatabase.ts`), never PGlite directly.
+- After adding a migration, the owner runs `npm run db:supabase` before deploying the code that needs it. Say so in the task report.

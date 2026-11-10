@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { redeemOneTimeLink, type LinkKind } from '@/server/auth/authAccounts';
 import { startSession } from '@/server/auth/currentSession';
-import { getAppDatabase } from '@/server/database/localDatabase';
+import { getAppDatabase } from '@/server/database/appDatabase';
 
 const allowedKinds: LinkKind[] = ['invite', 'recovery'];
 

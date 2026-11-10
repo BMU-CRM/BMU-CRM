@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { founderExists } from '@/server/auth/founderSetup';
-import { getAppDatabase } from '@/server/database/localDatabase';
+import { getAppDatabase } from '@/server/database/appDatabase';
 
 export const metadata: Metadata = { title: 'Sign in' };
 

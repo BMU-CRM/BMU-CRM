@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getAppDatabase } from '@/server/database/localDatabase';
+import { databaseProvider, getAppDatabase } from '@/server/database/appDatabase';
 import { readToken } from '@/server/security/signingSecret';
 import { putObject, StorageError } from '@/server/storage/objectStore';
 
@@ -8,6 +8,9 @@ type UploadToken = { k: string; b: string; n: string; u: string };
 // Receives a file the browser sends with a signed upload link. The link says which
 // user and file it is for; the database decides whether that user may upload it.
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  // On Supabase, files go straight to Supabase Storage instead.
+  if (databaseProvider() === 'supabase') return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
   const db = await getAppDatabase();
   const token = await readToken<UploadToken>(db, (await params).token);
   if (!token || token.k !== 'upload' || !request.body) {

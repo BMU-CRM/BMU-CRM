@@ -1,7 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
-import { getAppDatabase } from '@/server/database/localDatabase';
+import { getAppDatabase } from '@/server/database/appDatabase';
 import { sessionCookieName } from '@/lib/auth/sessionCookieName';
 import { createSession, endSession, findSessionUser } from './authAccounts';
 

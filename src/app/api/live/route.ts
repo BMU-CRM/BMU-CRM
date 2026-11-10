@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { getSessionUser } from '@/server/auth/currentSession';
-import { getAppDatabase, runAs, type Identity } from '@/server/database/localDatabase';
+import { databaseProvider, getAppDatabase } from '@/server/database/appDatabase';
+import { runAs, type Identity } from '@/server/database/sqlDatabase';
 import { onChange, onTyping, type LiveChange } from '@/server/live/liveEvents';
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +55,8 @@ async function canSee(identity: Identity, change: LiveChange) {
 export async function GET(request: NextRequest) {
   const user = await getSessionUser();
   if (!user || user.blocked) return new Response('Not signed in', { status: 401 });
+  // On Supabase, pages listen to Supabase Realtime instead (see /api/live/config).
+  if (databaseProvider() === 'supabase') return new Response('Not found', { status: 404 });
 
   const identity: Identity = { role: 'authenticated', userId: user.userId };
   const subscriptions = readSubscriptions(request);

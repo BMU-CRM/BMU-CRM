@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getAppDatabase } from '@/server/database/localDatabase';
+import { databaseProvider, getAppDatabase } from '@/server/database/appDatabase';
 import { readToken } from '@/server/security/signingSecret';
 import { openObject, StorageError } from '@/server/storage/objectStore';
 
@@ -8,6 +8,9 @@ type ReadToken = { k: string; b: string; n: string; d: string | null };
 // Sends a stored file. The signed link is only made after the database confirmed
 // the user may read the file, and it stops working after a minute.
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  // On Supabase, files are fetched straight from Supabase Storage instead.
+  if (databaseProvider() === 'supabase') return new NextResponse('Not found', { status: 404 });
+
   const db = await getAppDatabase();
   const token = await readToken<ReadToken>(db, (await params).token);
   if (!token || token.k !== 'read') {

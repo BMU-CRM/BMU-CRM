@@ -17,7 +17,7 @@ Copying `.env.example` to `.env.local` is optional. It turns on push notificatio
 
 ### Teammates
 
-Each teammate clones the project and runs the same two commands. Each computer has its own `.data` folder, so everyone starts with their own empty workspace and creates their own Founder account. Shared data between computers comes with a hosted database, which is planned for going live.
+Each teammate clones the project and runs the same two commands. Each computer has its own `.data` folder, so everyone starts with their own empty workspace and creates their own Founder account. The shared workspace is the live site on Vercel, which uses Supabase (see Going live).
 
 ### One program at a time
 
@@ -45,6 +45,7 @@ To let someone in, an administrator opens their page in **People > Employees** a
 | `npm run lint` | Lint |
 | `npm run build` | Production build |
 | `npm run db:types` | Rebuild `src/types/databaseTypes.ts` after changing a migration |
+| `npm run db:supabase` | Apply new migrations to the Supabase database used by the live site. See Going live |
 | `npm run founder:create -- --name "Name" --email you@company.com --password "AStrongPassword1"` | Create the Founder account from the terminal, instead of the setup page. Stop the app first |
 | `npm run images:webp` | Convert JPG and PNG files in `public/images` to WebP |
 
@@ -64,14 +65,67 @@ Never edit a migration that has already run on a database people use. Add a new 
 
 Times are Indian time. The reply says how many rows were imported and why any were not. Records that HR corrected by hand are never overwritten.
 
-## Going live
+## Going live on Vercel and Supabase
 
-Not decided yet. The current setup suits one server with a disk that is kept, such as a small virtual machine, because the database and files live in folders. Hosting that resets the disk on every deploy, such as Vercel, needs a hosted database and file store first.
+Vercel keeps no disk between requests, so the live site uses Supabase for what `.data` does on your computer:
 
-The app is ready for a hosted Postgres such as Supabase:
+| On your computer | On Vercel |
+| --- | --- |
+| Embedded database in `.data/database` | Supabase Postgres, through its connection pooler |
+| Files in `.data/files`, sent through the app | Supabase Storage. The browser sends and fetches files directly with short-lived signed links |
+| Scheduled jobs and push requests run by the app | `pg_cron` and `pg_net`, inside Supabase |
+| Live updates and typing through `/api/live` | Supabase Realtime channels |
 
-- The migrations are standard Postgres. The first one, `20261106000000_local_platform.sql`, creates what a hosted platform normally provides, and is replaced by the platform's own versions.
-- Queries go through the standard PostgREST format, so pointing the query clients at a hosted service is a configuration change, not a rewrite.
-- File storage, sign-in and live updates each sit behind one module (`src/server/storage`, `src/server/auth`, `src/server/live`), so each can be swapped on its own.
+`DATABASE_PROVIDER=supabase` switches all four. Without it, as on your computer, nothing changes. Sign-in is the app's own on both, and the app's accounts are kept in `app_auth`, apart from Supabase's own `auth` tables.
 
-Before going live, also set `NEXT_PUBLIC_SITE_URL` to the live address, connect an email provider, and set `ATTENDANCE_IMPORT_SECRET` to a long random value.
+### 1. Set up the Supabase database
+
+Put these in `.env.local` (from Supabase: **Connect** for the two database addresses, **Project Settings > Data API** for the URL, **Project Settings > API Keys** for the keys):
+
+```env
+SUPABASE_DB_POOLER_URL=postgresql://postgres.<project>:<password>@aws-...pooler.supabase.com:6543/postgres
+SUPABASE_DB_SESSION_URL=postgresql://postgres.<project>:<password>@aws-...pooler.supabase.com:5432/postgres
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+SUPABASE_SECRET_KEY=sb_secret_...
+```
+
+Then run:
+
+```powershell
+npm run db:supabase
+```
+
+It applies every migration Supabase does not have yet, using `database/platform/supabase_platform.sql` in place of the first one, and turns on `pg_cron` and `pg_net`. Run it again after any new migration, **before** deploying the code that needs it. It never touches `.data`, so it can run while `npm run dev` is running.
+
+### 2. Settings in Vercel
+
+In **Vercel > Project > Settings > Environment Variables**, for Production:
+
+| Name | Value |
+| --- | --- |
+| `DATABASE_PROVIDER` | `supabase` |
+| `SUPABASE_DB_POOLER_URL` | Same as in `.env.local` (port 6543) |
+| `SUPABASE_URL` | Same as in `.env.local` |
+| `SUPABASE_PUBLISHABLE_KEY` | Same as in `.env.local` |
+| `SUPABASE_SECRET_KEY` | Same as in `.env.local` |
+| `NEXT_PUBLIC_SITE_URL` | The live address, for example `https://bmu-crm.vercel.app` |
+
+`SUPABASE_DB_SESSION_URL` is only for `npm run db:supabase` and is not needed in Vercel. Never give the secret key or the database password a `NEXT_PUBLIC_` name: those are sent to browsers.
+
+Optional:
+
+- **Push notifications:** the VAPID keys from `.env.example`, plus `NOTIFICATION_DISPATCH_URL` (`https://<live address>/api/notifications/dispatch`) and `NOTIFICATION_DISPATCH_SECRET` (a long random value). Supabase then calls that address for each notification.
+- **Attendance import:** `ATTENDANCE_IMPORT_SECRET`.
+
+`vercel.json` runs the app in Mumbai (`bom1`), next to the database. Every page makes several database queries, so a region on another continent would make each page seconds slower.
+
+### 3. Deploy
+
+Push the code and let Vercel build it, or press **Redeploy** after changing settings, because settings only reach a new deployment. Then open `/setup` on the live address to create the Founder account.
+
+### Before real company data goes in
+
+- Move Supabase to the Pro plan: the free plan pauses a project after a week without use and has no daily backups.
+- Connect an email provider, and set `ATTENDANCE_IMPORT_SECRET` to a long random value if it is used.
+- Files are limited to 50 MB each, set in the files migration and by the Supabase plan.

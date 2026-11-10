@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { FirstAccountForm } from '@/components/auth/FirstAccountForm';
 import { founderExists } from '@/server/auth/founderSetup';
-import { getAppDatabase } from '@/server/database/localDatabase';
+import { getAppDatabase } from '@/server/database/appDatabase';
 
 export const metadata: Metadata = { title: 'Set up' };
 

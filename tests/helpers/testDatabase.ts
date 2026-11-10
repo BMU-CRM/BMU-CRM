@@ -6,7 +6,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { checkPassword, createAuthUser } from '@/server/auth/authAccounts';
-import { openDatabase, type Identity } from '@/server/database/localDatabase';
+import { openDatabase } from '@/server/database/localDatabase';
+import type { Identity } from '@/server/database/sqlDatabase';
 import { createQueryClient, type DatabaseClient } from '@/server/database/queryClients';
 import { canReadObject, putObject } from '@/server/storage/objectStore';
 

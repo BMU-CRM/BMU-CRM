@@ -1,9 +1,8 @@
 // Query clients for the app's database. Each one runs every query as a fixed database
 // role and user, so row level security applies to everything it does.
-import type { PGlite } from '@electric-sql/pglite';
 import { PostgrestClient } from '@supabase/postgrest-js';
 import type { Database } from '@/types/databaseTypes';
-import type { Identity } from './localDatabase';
+import type { Identity, SqlDatabase } from './sqlDatabase';
 import { handleDatabaseRequest } from './queryEngine';
 
 export type DatabaseClient = PostgrestClient<Database>;
@@ -13,7 +12,7 @@ export type DatabaseClient = PostgrestClient<Database>;
 const localAddress = 'http://app.database/rest/v1';
 
 export function createQueryClient(
-  getDatabase: () => Promise<PGlite>,
+  getDatabase: () => Promise<SqlDatabase>,
   identity: Identity | (() => Promise<Identity>),
 ): DatabaseClient {
   return new PostgrestClient<Database>(localAddress, {
