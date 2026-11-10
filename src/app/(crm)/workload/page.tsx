@@ -25,7 +25,7 @@ export default async function WorkloadPage() {
     <>
       <PageHeader
         title="Workload"
-        description={`Load compares remaining work with ${weeklyCapacityHours} hours a week, weighted by priority and overdue work.`}
+        description={`The load compares remaining work with ${weeklyCapacityHours} hours a week, weighted by priority and overdue work.`}
       />
       <div className={layout.stack}>
         <StatTiles
