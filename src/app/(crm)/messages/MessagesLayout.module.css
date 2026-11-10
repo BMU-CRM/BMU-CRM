@@ -1,0 +1,142 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  height: calc(100dvh - var(--topbar-height) - var(--space-5) * 2);
+  min-height: 480px;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-small);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--color-border);
+}
+
+.sidebarHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.search {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.mainHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+  font-size: var(--text-large);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.subtitle {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.back {
+  display: none;
+  color: var(--color-primary);
+  font-size: var(--text-small);
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pinnedBar {
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-warning-soft);
+  font-size: var(--text-small);
+}
+
+.pinnedBar a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholder {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.results > li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.result {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+}
+
+.result:hover {
+  background: var(--color-surface-muted);
+}
+
+.resultMeta {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: calc(100dvh - var(--topbar-height) - var(--space-4) * 2);
+  }
+
+  /* On a phone, the list and a conversation each take the full screen. */
+  .layout[data-has-conversation='true'] .sidebar {
+    display: none;
+  }
+
+  .layout[data-has-conversation='false'] .main {
+    display: none;
+  }
+
+  .back {
+    display: inline;
+  }
+}

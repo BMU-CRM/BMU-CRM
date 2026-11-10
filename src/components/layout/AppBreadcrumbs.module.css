@@ -1,0 +1,29 @@
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: var(--text-small);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.separator {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.link,
+.group {
+  color: var(--color-text-muted);
+}
+
+.link:hover {
+  color: var(--color-text);
+}
+
+.current {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

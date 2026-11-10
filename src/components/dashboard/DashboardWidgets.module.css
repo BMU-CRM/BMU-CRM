@@ -1,0 +1,64 @@
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.facts {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.fact {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.fact dt {
+  color: var(--color-text-muted);
+}
+
+.fact dd {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.list > li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+}
+
+.person:hover {
+  background: var(--color-surface-muted);
+}
+
+.activity {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.activityTime {
+  flex-shrink: 0;
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}

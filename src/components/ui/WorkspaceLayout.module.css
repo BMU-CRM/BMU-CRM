@@ -1,0 +1,139 @@
+/* Shared layout for detail pages such as a client, project or task. */
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--space-4);
+}
+
+.facts dt {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.facts dd {
+  overflow-wrap: anywhere;
+}
+
+.factsStacked {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.factsStacked dt {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.factsStacked dd {
+  overflow-wrap: anywhere;
+}
+
+.text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.link {
+  color: var(--color-primary);
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.emptyText {
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.list > li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.rowMain {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rowTitle {
+  font-weight: 500;
+}
+
+.rowActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.sectionForm {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.fieldRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.fieldRow > * {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.fieldRow > button {
+  flex: 0 0 auto;
+}
+
+.spaced {
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 1040px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .row {
+    flex-wrap: wrap;
+  }
+}

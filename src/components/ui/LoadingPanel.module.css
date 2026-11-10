@@ -1,0 +1,11 @@
+.loading {
+  border-radius: var(--radius-large);
+  background: var(--color-surface-muted);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}

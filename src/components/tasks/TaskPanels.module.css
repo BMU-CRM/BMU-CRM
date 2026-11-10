@@ -1,0 +1,10 @@
+.done {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.comment {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}

@@ -1,0 +1,109 @@
+.thread {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3) 0;
+}
+
+.empty {
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.message {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+}
+
+.message:hover {
+  background: var(--color-surface-muted);
+}
+
+.message:target {
+  background: var(--color-warning-soft);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.author {
+  font-weight: 600;
+}
+
+.time {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.pinned {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.6875rem;
+  color: var(--color-warning);
+}
+
+.body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.deleted {
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.reply {
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;
+  margin: var(--space-1) 0;
+  padding: var(--space-1) var(--space-3);
+  border-left: 3px solid var(--color-border-strong);
+  font-size: var(--text-small);
+  color: var(--color-text-secondary);
+}
+
+.replyAuthor {
+  font-weight: 500;
+}
+
+.replyBody {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  overflow-wrap: anywhere;
+}
+
+.file:hover {
+  border-color: var(--color-primary);
+}
+
+.seen {
+  margin-top: var(--space-1);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}

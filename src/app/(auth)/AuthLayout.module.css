@@ -1,0 +1,34 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: var(--space-4);
+}
+
+.card {
+  width: min(400px, 100%);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-small);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.brandMark {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-small);
+  background: var(--color-primary);
+}
+
+.brandName {
+  font-weight: 600;
+}

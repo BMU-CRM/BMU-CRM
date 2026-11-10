@@ -1,0 +1,28 @@
+.totals {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
+  gap: var(--space-1) var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
+}
+
+.totals dt {
+  color: var(--color-text-muted);
+}
+
+.totals dd {
+  text-align: right;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.words {
+  padding: 0 var(--space-4) var(--space-3);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+  text-align: right;
+}

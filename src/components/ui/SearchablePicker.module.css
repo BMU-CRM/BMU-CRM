@@ -1,0 +1,129 @@
+.picker {
+  position: relative;
+}
+
+.box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 36px;
+  padding: 3px var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+  cursor: text;
+  transition: border-color var(--motion-quick);
+}
+
+.box:hover {
+  border-color: var(--color-text-muted);
+}
+
+.box:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
+}
+
+.box[data-invalid='true'] {
+  border-color: var(--color-critical);
+}
+
+.input {
+  flex: 1 1 120px;
+  min-width: 80px;
+  min-height: 28px;
+  padding: 0 var(--space-1);
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  padding: 2px 2px 2px var(--space-2);
+  font-size: var(--text-small);
+  background: var(--color-primary-soft);
+  border-radius: 999px;
+}
+
+.chipLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chipRemove,
+.clear {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chipRemove:hover,
+.clear:hover {
+  color: var(--color-text);
+  background: var(--color-surface-muted);
+}
+
+.chipRemove:focus-visible,
+.clear:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: var(--space-1) 0;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-medium);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 14%);
+}
+
+.groupLabel {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.option[data-active='true'] {
+  background: var(--color-primary-soft);
+}
+
+.check {
+  flex-shrink: 0;
+  width: 16px;
+  color: var(--color-primary);
+}
+
+.empty {
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text-muted);
+}

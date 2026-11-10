@@ -1,0 +1,32 @@
+.title {
+  font-size: var(--text-title);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.description {
+  margin: var(--space-1) 0 var(--space-5);
+  color: var(--color-text-secondary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.submit {
+  width: 100%;
+}
+
+.link {
+  display: block;
+  margin-top: var(--space-4);
+  font-size: var(--text-small);
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

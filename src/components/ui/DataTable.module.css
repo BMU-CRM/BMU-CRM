@@ -1,0 +1,85 @@
+.scroller {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td,
+.table tbody th {
+  padding: var(--space-3) var(--space-4);
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Row headings read like the rest of the row, not like column headings. */
+.table tbody th {
+  font-size: inherit;
+  color: inherit;
+  white-space: normal;
+}
+
+.table th.numeric {
+  text-align: right;
+}
+
+.table tbody tr:last-child td,
+.table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover {
+  background: var(--color-surface-muted);
+}
+
+.primaryText {
+  font-weight: 500;
+}
+
+.primaryLink:hover {
+  color: var(--color-primary);
+}
+
+.secondaryText {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.rowActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+.paginationLinks {
+  display: flex;
+  gap: var(--space-2);
+}

@@ -1,0 +1,193 @@
+/* Design tokens. Components use these names, never raw colours.
+   To apply the brand colour, change --color-primary in both themes. */
+
+:root {
+  color-scheme: light;
+
+  --color-primary: #1f6f5c;
+  --color-primary-hover: #185a4a;
+  --color-primary-soft: #e6f1ee;
+  --color-on-primary: #ffffff;
+
+  --color-page: #f6f6f4;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-muted: #f1f1ee;
+  --color-border: #e4e4df;
+  --color-border-strong: #cfcfc8;
+
+  --color-text: #1b1c1a;
+  --color-text-secondary: #55574f;
+  --color-text-muted: #6f7168;
+
+  --color-good: #1a6b3f;
+  --color-good-soft: #e4f2ea;
+  --color-warning: #8a5a00;
+  --color-warning-soft: #fbf0d9;
+  --color-critical: #b3261e;
+  --color-critical-soft: #fbe9e7;
+
+  --shadow-small: 0 1px 2px rgb(27 28 26 / 5%);
+  --shadow-overlay: 0 12px 32px rgb(27 28 26 / 14%);
+
+  --radius-small: 6px;
+  --radius-medium: 8px;
+  --radius-large: 12px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --text-small: 0.8125rem;
+  --text-body: 0.875rem;
+  --text-large: 1rem;
+  --text-title: 1.375rem;
+  --text-display: 1.875rem;
+
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+  --topbar-height: 56px;
+
+  --motion-quick: 120ms ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --color-primary: #58c4a7;
+    --color-primary-hover: #74d3b9;
+    --color-primary-soft: #1b322c;
+    --color-on-primary: #0e1a17;
+
+    --color-page: #121311;
+    --color-surface: #191a18;
+    --color-surface-raised: #20211f;
+    --color-surface-muted: #232422;
+    --color-border: #2c2d2a;
+    --color-border-strong: #3d3f3a;
+
+    --color-text: #ededea;
+    --color-text-secondary: #b7b8b1;
+    --color-text-muted: #94968d;
+
+    --color-good: #6fcf97;
+    --color-good-soft: #1b3024;
+    --color-warning: #e3b45c;
+    --color-warning-soft: #33290f;
+    --color-critical: #f28b82;
+    --color-critical-soft: #3a1d1b;
+
+    --shadow-small: 0 1px 2px rgb(0 0 0 / 30%);
+    --shadow-overlay: 0 12px 32px rgb(0 0 0 / 50%);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-primary: #58c4a7;
+  --color-primary-hover: #74d3b9;
+  --color-primary-soft: #1b322c;
+  --color-on-primary: #0e1a17;
+
+  --color-page: #121311;
+  --color-surface: #191a18;
+  --color-surface-raised: #20211f;
+  --color-surface-muted: #232422;
+  --color-border: #2c2d2a;
+  --color-border-strong: #3d3f3a;
+
+  --color-text: #ededea;
+  --color-text-secondary: #b7b8b1;
+  --color-text-muted: #94968d;
+
+  --color-good: #6fcf97;
+  --color-good-soft: #1b3024;
+  --color-warning: #e3b45c;
+  --color-warning-soft: #33290f;
+  --color-critical: #f28b82;
+  --color-critical-soft: #3a1d1b;
+
+  --shadow-small: 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-overlay: 0 12px 32px rgb(0 0 0 / 50%);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: var(--text-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Readable by screen readers, hidden on screen. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

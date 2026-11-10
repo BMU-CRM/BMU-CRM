@@ -1,0 +1,36 @@
+import type { Database } from '@/types/databaseTypes';
+
+export type NotificationKind = Database['public']['Enums']['notification_kind'];
+
+export const notificationKindLabels: Record<NotificationKind, string> = {
+  task_assigned: 'A task is assigned to me',
+  task_due_soon: 'A task is due today or tomorrow',
+  task_overdue: 'A task is overdue',
+  task_review_requested: 'Work is ready for my review',
+  task_changes_requested: 'Changes are requested on my work',
+  task_completed: 'A task is approved or completed',
+  task_rejected: 'A task I assigned is rejected',
+  task_escalated: 'A task is escalated to me',
+  task_comment: 'Someone comments on my task',
+  file_received: 'I receive a file',
+  message_received: 'I receive a direct or group message',
+  mention: 'Someone mentions me',
+  announcement: 'A company announcement is posted',
+  meeting_invited: 'I am invited to a meeting',
+  meeting_changed: 'A meeting I am in changes',
+  meeting_cancelled: 'A meeting I am in is cancelled',
+  meeting_reminder: 'A meeting is about to start',
+  leave_requested: 'Someone asks me to approve leave',
+  leave_decided: 'My leave is approved, rejected or cancelled',
+  ticket_raised: 'A support ticket needs my attention',
+  ticket_updated: 'A support ticket of mine is updated',
+  payment_received: 'A client pays an invoice I look after',
+  invoice_overdue: 'An invoice I look after is overdue',
+};
+
+export const notificationKinds = Object.keys(notificationKindLabels) as NotificationKind[];
+
+// Only same-site paths, so a notification can never send someone to another site.
+export function safeNotificationLink(link: string | null) {
+  return link && /^\/(?![/\\])/.test(link) ? link : '/notifications';
+}

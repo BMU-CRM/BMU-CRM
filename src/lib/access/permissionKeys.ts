@@ -1,0 +1,58 @@
+// Must match the keys in the public.permissions table.
+export const permissionKeys = {
+  dashboardView: 'dashboard.view',
+  employeesView: 'employees.view',
+  employeesCreate: 'employees.create',
+  employeesUpdate: 'employees.update',
+  employeesAssignRole: 'employees.assign_role',
+  employeesDeactivate: 'employees.deactivate',
+  teamView: 'team.view',
+  organisationView: 'organisation.view',
+  organisationStats: 'organisation.stats',
+  departmentsManage: 'departments.manage',
+  designationsManage: 'designations.manage',
+  rolesManage: 'roles.manage',
+  auditView: 'audit.view',
+  clientsView: 'clients.view',
+  clientsCreate: 'clients.create',
+  clientsUpdate: 'clients.update',
+  projectsView: 'projects.view',
+  projectsCreate: 'projects.create',
+  projectsUpdate: 'projects.update',
+  tasksView: 'tasks.view',
+  tasksCreate: 'tasks.create',
+  tasksAssign: 'tasks.assign',
+  tasksAssignHeads: 'tasks.assign_heads',
+  tasksAssignProjectTeam: 'tasks.assign_project_team',
+  tasksManage: 'tasks.manage',
+  workloadView: 'workload.view',
+  filesView: 'files.view',
+  filesUpload: 'files.upload',
+  messagesUse: 'messages.use',
+  messagesAnnounce: 'messages.announce',
+  leaveRequest: 'leave.request',
+  leaveApprove: 'leave.approve',
+  attendanceView: 'attendance.view',
+  attendanceManage: 'attendance.manage',
+  hrManage: 'hr.manage',
+  meetingsCreate: 'meetings.create',
+  meetingsView: 'meetings.view',
+  ticketsCreate: 'tickets.create',
+  ticketsManage: 'tickets.manage',
+  quotationsView: 'quotations.view',
+  quotationsManage: 'quotations.manage',
+  invoicesView: 'invoices.view',
+  invoicesManage: 'invoices.manage',
+  paymentsRecord: 'payments.record',
+  financeReports: 'finance.reports',
+  financeManage: 'finance.manage',
+  catalogManage: 'catalog.manage',
+} as const;
+
+export type PermissionKey = (typeof permissionKeys)[keyof typeof permissionKeys];
+
+export const permissionScopes = ['own', 'team', 'department', 'organisation'] as const;
+
+export type PermissionScope = (typeof permissionScopes)[number];
+
+export type PermissionMap = Partial<Record<string, PermissionScope>>;

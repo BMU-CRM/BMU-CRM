@@ -1,0 +1,15 @@
+.multi {
+  min-height: 140px;
+  padding: var(--space-1);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.spaced {
+  margin-top: var(--space-4);
+}

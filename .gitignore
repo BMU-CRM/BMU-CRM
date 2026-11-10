@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Testing
+coverage/
+
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# The local database, stored files and their lock files. Never commit these.
+.data/
+
+# Vercel
+.vercel/
+
+# Logs and system files
+npm-debug.log*
+.DS_Store
+Thumbs.db

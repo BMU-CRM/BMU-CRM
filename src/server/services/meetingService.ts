@@ -1,0 +1,181 @@
+import 'server-only';
+import { datePartInIndia } from '@/lib/calendar/calendarRange';
+import { createDatabaseClient } from '@/server/database/databaseClient';
+import type { CurrentAccess } from './accessService';
+import { clientLabelFor } from './clientService';
+import { getTeamLeave } from './hrService';
+
+async function myMeetingIds(access: CurrentAccess) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('meeting_participants')
+    .select('meeting_id')
+    .eq('employee_id', access.employee.id)
+    .neq('response', 'declined');
+  if (error) throw error;
+  return data.map((row) => row.meeting_id);
+}
+
+// The calendar shows the person's own meetings, even for people who can see everyone's.
+async function listMyMeetings(access: CurrentAccess, from: string, to: string) {
+  const database = await createDatabaseClient();
+  const ids = await myMeetingIds(access);
+  const idFilter = ids.length > 0 ? `,id.in.(${ids.join(',')})` : '';
+
+  const { data, error } = await database
+    .from('meetings')
+    .select('id, title, kind, status, starts_at, ends_at, location')
+    .or(`organizer_id.eq.${access.employee.id}${idFilter}`)
+    .gte('starts_at', `${from}T00:00:00+05:30`)
+    .lte('starts_at', `${to}T23:59:59+05:30`)
+    .order('starts_at');
+  if (error) throw error;
+  return data;
+}
+
+export type CalendarItem = {
+  id: string;
+  kind: 'meeting' | 'task' | 'leave' | 'holiday';
+  date: string;
+  title: string;
+  time: string | null;
+  href: string | null;
+  isCancelled?: boolean;
+};
+
+const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+
+export async function getCalendarItems(access: CurrentAccess, from: string, to: string) {
+  const database = await createDatabaseClient();
+
+  const [meetings, tasks, leave, holidays] = await Promise.all([
+    listMyMeetings(access, from, to),
+    database
+      .from('tasks')
+      .select('id, title, due_date')
+      .eq('assignee_id', access.employee.id)
+      .not('status', 'in', '("completed","rejected")')
+      .gte('due_date', from)
+      .lte('due_date', to),
+    getTeamLeave(from, to),
+    database.from('holidays').select('id, holiday_date, name').gte('holiday_date', from).lte('holiday_date', to),
+  ]);
+  if (tasks.error) throw tasks.error;
+  if (holidays.error) throw holidays.error;
+
+  const items: CalendarItem[] = [
+    ...holidays.data.map((holiday) => ({
+      id: holiday.id,
+      kind: 'holiday' as const,
+      date: holiday.holiday_date,
+      title: holiday.name,
+      time: null,
+      href: null,
+    })),
+    ...meetings.map((meeting) => ({
+      id: meeting.id,
+      kind: 'meeting' as const,
+      date: datePartInIndia(meeting.starts_at),
+      title: meeting.title,
+      time: `${clock.format(new Date(meeting.starts_at))} to ${clock.format(new Date(meeting.ends_at))}`,
+      href: `/meetings/${meeting.id}`,
+      isCancelled: meeting.status === 'cancelled',
+    })),
+    ...tasks.data.map((task) => ({
+      id: task.id,
+      kind: 'task' as const,
+      date: task.due_date as string,
+      title: `Due: ${task.title}`,
+      time: null,
+      href: `/tasks/${task.id}`,
+    })),
+  ];
+
+  // Leave spans several days, so it appears on each one in the range.
+  for (const entry of leave) {
+    for (let day = entry.start_date; day <= entry.end_date; ) {
+      if (day >= from && day <= to) {
+        items.push({
+          id: `${entry.request_id}-${day}`,
+          kind: 'leave',
+          date: day,
+          title: `${entry.full_name} on ${entry.leave_type.toLowerCase()}${entry.is_half_day ? ' (half day)' : ''}`,
+          time: null,
+          href: null,
+        });
+      }
+      const next = new Date(`${day}T00:00:00Z`);
+      next.setUTCDate(next.getUTCDate() + 1);
+      day = next.toISOString().slice(0, 10);
+    }
+  }
+
+  const order = { holiday: 0, leave: 1, meeting: 2, task: 3 };
+  return items.sort((first, second) => {
+    if (first.date !== second.date) return first.date < second.date ? -1 : 1;
+    if (first.kind !== second.kind) return order[first.kind] - order[second.kind];
+    return (first.time ?? '').localeCompare(second.time ?? '');
+  });
+}
+
+export async function listUpcomingMeetings(access: CurrentAccess, limit: number) {
+  const database = await createDatabaseClient();
+  const ids = await myMeetingIds(access);
+  const idFilter = ids.length > 0 ? `,id.in.(${ids.join(',')})` : '';
+
+  const { data, error } = await database
+    .from('meetings')
+    .select('id, title, starts_at, ends_at, location, meeting_link')
+    .or(`organizer_id.eq.${access.employee.id}${idFilter}`)
+    .eq('status', 'scheduled')
+    .gte('ends_at', new Date().toISOString())
+    .order('starts_at')
+    .limit(limit);
+  if (error) throw error;
+  return data;
+}
+
+// Meetings about a client that this person may see, newest first.
+export async function listClientMeetings(clientId: string, limit: number) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('meetings')
+    .select('id, title, status, starts_at, ends_at, organizer:employees!meetings_organizer_id_fkey(full_name)')
+    .eq('client_id', clientId)
+    .order('starts_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data;
+}
+
+export async function getMeeting(meetingId: string) {
+  const database = await createDatabaseClient();
+
+  const { data, error } = await database
+    .from('meetings')
+    .select(
+      `*,
+       organizer:employees!meetings_organizer_id_fkey(id, full_name),
+       client:clients(id, company_name),
+       project:projects(id, name),
+       participants:meeting_participants(response, employee:employees(id, full_name))`,
+    )
+    .eq('id', meetingId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data && { ...data, client: data.client ?? (await clientLabelFor(data.client_id)) };
+}
+
+export type MeetingDetails = NonNullable<Awaited<ReturnType<typeof getMeeting>>>;
+
+export async function listMeetingFollowUps(meetingId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('tasks')
+    .select('id, title, status, due_date, assignee:employees!tasks_assignee_id_fkey(full_name)')
+    .eq('meeting_id', meetingId)
+    .order('created_at');
+  if (error) throw error;
+  return data;
+}
