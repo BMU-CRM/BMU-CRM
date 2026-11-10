@@ -7,17 +7,29 @@ import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
 import { TextField } from '@/components/ui/FormFields';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { idleResult } from '@/lib/actionResult';
+import type { FirebaseConfig } from '@/lib/auth/firebaseConfig';
+import { GoogleSignInButton } from './GoogleSignInButton';
 import { signInAction } from '@/server/actions/authActions';
 import styles from './AuthForms.module.css';
 
-export function LoginForm({ next, notice }: { next?: string; notice?: string }) {
+type LoginFormProps = { next?: string; notice?: string; firebase: FirebaseConfig | null };
+
+export function LoginForm({ next, notice, firebase }: LoginFormProps) {
   const [result, formAction] = useActionState(signInAction, idleResult);
 
   return (
     <>
       <h1 className={styles.title}>Sign in</h1>
-      <p className={styles.description}>Use your work email and password.</p>
+      <p className={styles.description}>
+        {firebase ? 'Use the Google account you were invited with, or your email and password.' : 'Use your work email and password.'}
+      </p>
       {notice && result.status === 'idle' && <FormMessage result={{ status: 'error', message: notice }} />}
+      {firebase && (
+        <>
+          <GoogleSignInButton config={firebase} next={next} />
+          <p className={styles.divider}>or</p>
+        </>
+      )}
       <FormMessage result={result} />
       <KeepValuesForm action={formAction} className={styles.form}>
         {next && <input type="hidden" name="next" value={next} />}

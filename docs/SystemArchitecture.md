@@ -86,6 +86,8 @@ The timeline reads from `audit_logs`, which records a `client_id` for any row th
 
 Accounts live in `app_auth.users`, outside the public schema, so no user query can reach them. The schema is not called `auth` because Supabase keeps its own sign-in tables there; this app does not use Supabase Auth. Passwords are hashed with scrypt. Signing in creates a session: the browser keeps a random token in an http-only cookie, and the database keeps only its hash. The route guard checks that the cookie exists; every page and action then checks the session itself.
 
+Google sign-in uses Firebase in the browser only to prove which Google account someone holds. The browser sends the Firebase ID token to a server action, which checks its signature against Google's public keys, the project ID, its age, and that it came from a Google sign-in with a confirmed email. No secret key is needed. Only an email that already has a login (an invitation) is let in. The first Google sign-in links that Google account to the login in `app_auth.user_identities`; after that, a different Google account with the same email is refused. Every Google sign-in, link and refusal is written to `audit_logs` as a `google_account` entry. Password sign-in stays available alongside it. The Google button appears only when all four `NEXT_PUBLIC_FIREBASE_*` settings are present.
+
 Invitations and password resets are one-time links (`app_auth.one_time_tokens`). Until an email provider is connected, the emails are queued in `app_auth.outgoing_emails` and administrators create links to pass on from the employee page. Sign-in attempts are limited to 10 per email in 15 minutes, counted in the database (`app_auth.sign_in_attempts`) so the limit holds across every copy of the app.
 
 ## Real-time updates

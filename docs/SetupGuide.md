@@ -117,12 +117,24 @@ Optional:
 
 - **Push notifications:** the VAPID keys from `.env.example`, plus `NOTIFICATION_DISPATCH_URL` (`https://<live address>/api/notifications/dispatch`) and `NOTIFICATION_DISPATCH_SECRET` (a long random value). Supabase then calls that address for each notification.
 - **Attendance import:** `ATTENDANCE_IMPORT_SECRET`.
+- **Google sign-in:** the four `NEXT_PUBLIC_FIREBASE_*` values, the same as in `.env.local`. See "Google sign-in" below.
 
 `vercel.json` runs the app in Mumbai (`bom1`), next to the database. Every page makes several database queries, so a region on another continent would make each page seconds slower.
 
 ### 3. Deploy
 
 Push the code and let Vercel build it, or press **Redeploy** after changing settings, because settings only reach a new deployment. Then open `/setup` on the live address to create the Founder account.
+
+### Google sign-in (Firebase)
+
+Anyone with a login (an invited employee, and clients once the portal exists) can sign in with the Google account for the same email. Nobody else can, and password sign-in keeps working alongside it.
+
+1. **Firebase console > Authentication > Sign-in method:** enable **Google**.
+2. **Authentication > Settings > Authorized domains:** add the live address (`bmu-crm.vercel.app`). `localhost` is there already.
+3. **Google Cloud console > Google Auth Platform > Audience:** with user type External, the publishing status must be **In production**, or only listed test users can sign in.
+4. **Project settings > General > Your apps > SDK setup and configuration (npm):** copy `apiKey`, `authDomain`, `projectId` and `appId` into `NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID` and `_APP_ID`, in `.env.local` and in Vercel. Restart `npm run dev` or redeploy.
+
+No Firebase service account key is needed: the server checks each sign-in against Google's public keys and the project ID. The first Google sign-in links that Google account to the login. To let someone use a different Google account later, the link in `app_auth.user_identities` has to be removed.
 
 ### Before real company data goes in
 

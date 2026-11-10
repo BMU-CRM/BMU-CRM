@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { getFirebaseConfig } from '@/lib/auth/firebaseConfig';
 import { founderExists } from '@/server/auth/founderSetup';
 import { getAppDatabase } from '@/server/database/appDatabase';
 
@@ -17,5 +18,5 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { next, error } = await searchParams;
   const notice = error === 'link-expired' ? 'This link has expired or was already used.' : undefined;
 
-  return <LoginForm next={next} notice={notice} />;
+  return <LoginForm next={next} notice={notice} firebase={getFirebaseConfig()} />;
 }

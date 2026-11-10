@@ -192,7 +192,7 @@ describe('the embedded database', () => {
       `select c.relname as name from pg_class c join pg_namespace n on n.oid = c.relnamespace
        where n.nspname = 'app_auth' and c.relkind = 'r' order by 1`,
     );
-    expect(rows.map((row) => row.name)).toEqual(['one_time_tokens', 'outgoing_emails', 'sessions', 'sign_in_attempts', 'users']);
+    expect(rows.map((row) => row.name)).toEqual(['one_time_tokens', 'outgoing_emails', 'sessions', 'sign_in_attempts', 'user_identities', 'users']);
 
     const leftover = await local.query<{ count: number }>(
       `select count(*)::int as count from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'auth' and c.relkind = 'r'`,

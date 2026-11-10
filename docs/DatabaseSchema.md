@@ -14,6 +14,7 @@ The first migration creates what a hosted Postgres platform would normally provi
 | `app_auth.users`, `app_auth.sessions` | Accounts, password hashes and sign-in sessions. Only token hashes are stored. Kept apart from Supabase's own `auth` tables (moved from `auth` by the app_auth_schema migration) |
 | `app_auth.one_time_tokens` | Invitation and password reset links. Each works once |
 | `app_auth.outgoing_emails` | Emails waiting for an email provider |
+| `app_auth.user_identities` | The Google account linked to each login on its first Google sign-in. Only that Google account can use the login afterwards |
 | `app_auth.sign_in_attempts` | Recent sign-in and reset attempts, to limit password guessing. Cleared after a day |
 | `auth.uid()` | The signed-in user for the current query |
 | `storage.buckets`, `storage.objects` | One row per stored file, checked by the file rules. The bytes are on disk, or in Supabase Storage |

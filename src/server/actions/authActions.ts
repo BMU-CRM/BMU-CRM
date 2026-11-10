@@ -7,7 +7,10 @@ import { emailIsConnected, sendPasswordReset } from '@/server/auth/accountEmails
 import { checkPassword, findAuthUserByEmail, setAuthUserPassword } from '@/server/auth/authAccounts';
 import { finishSession, getSessionUser, startSession } from '@/server/auth/currentSession';
 import { createFounder, founderExists } from '@/server/auth/founderSetup';
+import { verifyFirebaseIdToken } from '@/server/auth/firebaseTokens';
+import { signInWithGoogleIdentity } from '@/server/auth/googleAccounts';
 import { isRateLimited } from '@/server/auth/signInRateLimit';
+import { getFirebaseConfig } from '@/lib/auth/firebaseConfig';
 import { createAdminDatabaseClient } from '@/server/database/databaseClient';
 import { getAppDatabase } from '@/server/database/appDatabase';
 
@@ -34,6 +37,42 @@ export async function signInAction(_previous: ActionResult, formData: FormData):
 
   await startSession(result.userId);
   redirect(safeNextPath(formData.get('next')));
+}
+
+// The browser signs in with Google through Firebase and sends the token it got back.
+// The token is checked here; the browser's word alone is never trusted.
+export async function signInWithGoogleAction(idToken: string, next: string | null): Promise<ActionResult> {
+  const firebase = getFirebaseConfig();
+  if (!firebase) return failure('Google sign-in is not set up.');
+
+  let check: Awaited<ReturnType<typeof verifyFirebaseIdToken>>;
+  try {
+    check = await verifyFirebaseIdToken(idToken, firebase.projectId);
+  } catch (error) {
+    console.error('Could not check the Google sign-in', error);
+    return failure('Google sign-in is not available right now. Please try again, or use your password.');
+  }
+  if (check.status === 'invalid') {
+    console.warn(`Google sign-in token refused: ${check.reason}`);
+    return failure('Google sign-in did not complete. Please try again.');
+  }
+
+  const db = await getAppDatabase();
+  if (await isRateLimited(db, `google:${check.identity.email}`)) {
+    return failure('Too many attempts. Please wait a few minutes and try again.');
+  }
+
+  const result = await signInWithGoogleIdentity(db, check.identity);
+  if (result.status === 'not-invited') {
+    return failure(`${check.identity.email} has not been invited. Please ask your administrator for an invitation.`);
+  }
+  if (result.status === 'blocked') return failure('Your account is not active. Please contact your administrator.');
+  if (result.status === 'other-google-account') {
+    return failure('This account is linked to a different Google account. Please sign in with that one, or use your password.');
+  }
+
+  await startSession(result.userId);
+  redirect(safeNextPath(next));
 }
 
 export async function signOutAction() {

@@ -18,6 +18,7 @@ const entityLabels: Record<string, string> = {
   service_groups: 'service',
   services: 'sub service',
   industries: 'industry',
+  google_account: 'Google account',
 };
 
 const fieldLabels: Record<string, string> = {

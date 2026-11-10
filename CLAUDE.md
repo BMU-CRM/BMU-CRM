@@ -21,7 +21,7 @@ Internal company operating platform for our own team: CRM, projects and tasks, f
 - Database: on a computer, Postgres embedded in the app (PGlite, from npm), stored in `.data/database`. No Docker.
 - Live site: Vercel with Supabase (Mumbai). `DATABASE_PROVIDER=supabase`, set only in Vercel, switches the database, file storage, scheduled jobs and live updates to Supabase. See [docs/SetupGuide.md](docs/SetupGuide.md).
 - Queries: the PostgREST query builder (`@supabase/postgrest-js`, a library only), answered in-process by `src/server/database/queryEngine.ts` on both databases.
-- Sign-in is the app's own code on both (`src/server/auth`, tables in `app_auth`). Supabase Auth is not used. File storage, live updates and scheduled jobs are in `src/server/storage`, `src/server/live` and `src/server/database/backgroundServices.ts`, with Supabase versions alongside.
+- Sign-in is the app's own code on both (`src/server/auth`, tables in `app_auth`). Supabase Auth is not used. Google sign-in goes through Firebase (`NEXT_PUBLIC_FIREBASE_*`), but Firebase only proves the Google account: the server checks the token (`firebaseTokens.ts`), lets in only existing invited logins (`googleAccounts.ts`) and starts the app's own session. File storage, live updates and scheduled jobs are in `src/server/storage`, `src/server/live` and `src/server/database/backgroundServices.ts`, with Supabase versions alongside.
 - Images: WebP, using `next/image` and `scripts/convertImagesToWebp.ts`.
 
 ## Naming conventions
