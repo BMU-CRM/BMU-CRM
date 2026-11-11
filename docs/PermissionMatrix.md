@@ -176,6 +176,7 @@ To reach another team, assign to its head, who passes the work on.
 
 - People involved in a task can always see it: the assignee, creator, reviewer, collaborators and anyone it was escalated to.
 - Nobody can sign off work assigned to them, even with manager access. The exception is a task someone set for themselves.
+- A reviewer must have **Manage tasks** (today: the Founder, Co-Founder, Client Managers and department heads) or be whoever assigned the task. Team members cannot be chosen. Giving a role Manage tasks in Settings > Roles makes its people reviewers.
 - A manager cannot change the details of work assigned to them by someone else.
 - Anyone can postpone or bring forward the deadline of their own open work, from the calendar or otherwise. They cannot remove it. Whoever assigned the task and its reviewer are notified, and the audit log records the change.
 

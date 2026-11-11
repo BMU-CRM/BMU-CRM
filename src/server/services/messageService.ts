@@ -59,8 +59,12 @@ export type ConversationDetails = NonNullable<Awaited<ReturnType<typeof getConve
 
 const messageFields = `
   id, body, created_at, edited_at, deleted_at, pinned_at, author_id, reply_to_id, file_id,
+  contact_employee_id, meeting_id, poll_question, poll_options, poll_allows_multiple,
   author:employees!messages_author_id_fkey(id, full_name),
-  file:files(id, name, kind, size_bytes, status),
+  file:files(id, name, kind, size_bytes, status, external_url),
+  contact:employees!messages_contact_employee_id_fkey(id, full_name, work_email, phone,
+    designation:designations(title), department:departments!employees_department_id_fkey(name)),
+  meeting:meetings(id, title, starts_at, ends_at, status, meeting_link),
   reply:reply_to_id(id, body, deleted_at, author:employees!messages_author_id_fkey(full_name))
 `;
 
@@ -75,7 +79,14 @@ export async function listMessages(conversationId: string) {
     .limit(messagesPerPage);
 
   if (error) throw error;
-  return data.reverse();
+  const now = Date.now();
+  // An event that has ended is shown struck through.
+  return data.reverse().map((message) => ({
+    ...message,
+    meetingIsOver: message.meeting
+      ? message.meeting.status !== 'scheduled' || new Date(message.meeting.ends_at).getTime() < now
+      : false,
+  }));
 }
 
 export type MessageItem = Awaited<ReturnType<typeof listMessages>>[number];
@@ -106,6 +117,30 @@ export async function listReadPositions(conversationId: string) {
   if (error) throw error;
   return data;
 }
+
+// When everyone else in the conversation had read up to, for read ticks.
+export async function getReadState(conversationId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('get_conversation_read_state', { p_conversation: conversationId });
+  if (error) throw error;
+  const row = data[0];
+  // The database says "-infinity" when someone has never opened the conversation.
+  const readAt = row?.everyone_read_at;
+  const everyoneReadAt = readAt && !Number.isNaN(new Date(readAt).getTime()) ? readAt : null;
+  return { others: row?.others ?? 0, everyoneReadAt };
+}
+
+export async function listPollVotes(conversationId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('message_poll_votes')
+    .select('message_id, option_index, employee_id, voter:employees(full_name)')
+    .eq('conversation_id', conversationId);
+  if (error) throw error;
+  return data;
+}
+
+export type PollVote = Awaited<ReturnType<typeof listPollVotes>>[number];
 
 export async function markConversationRead(conversationId: string) {
   const database = await createDatabaseClient();

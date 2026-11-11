@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { LinkedFilesPanel } from '@/components/files/LinkedFilesPanel';
+import { PresenceDot } from '@/components/presence/PresenceDot';
 import { PriorityBadge, TaskStatusBadge } from '@/components/tasks/TaskBadges';
 import { TaskLiveRefresh } from '@/components/tasks/TaskLiveRefresh';
 import {
@@ -171,7 +172,10 @@ export default async function TaskPage({ params }: TaskPageProps) {
             <dl className={layout.factsStacked}>
               <div>
                 <dt>Assigned to</dt>
-                <dd>{task.assignee?.full_name ?? 'Unassigned'}</dd>
+                <dd>
+                  {task.assignee?.full_name ?? 'Unassigned'}{' '}
+                  {task.assignee && <PresenceDot employeeId={task.assignee.id} withLabel />}
+                </dd>
               </div>
               <div>
                 <dt>Assigned by</dt>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { PresenceHeartbeat } from '@/components/presence/PresenceHeartbeat';
 import type { PermissionMap } from '@/lib/access/permissionKeys';
 import { AppSidebar } from './AppSidebar';
 import { AppTopbar, type TopbarNotifications, type TopbarUser } from './AppTopbar';
@@ -26,6 +27,7 @@ export function AppShell({ user, notifications, permissions, initiallyCollapsed,
 
   return (
     <div className={styles.shell} data-collapsed={isCollapsed}>
+      <PresenceHeartbeat />
       <AppSidebar
         permissions={permissions}
         isCollapsed={isCollapsed}

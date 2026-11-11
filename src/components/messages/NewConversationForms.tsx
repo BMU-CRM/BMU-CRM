@@ -2,9 +2,9 @@
 
 import { useActionState } from 'react';
 import { FormActions, SelectField, TextField, type SelectOption } from '@/components/ui/FormFields';
-import formStyles from '@/components/ui/FormFields.module.css';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
+import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { idleResult } from '@/lib/actionResult';
 import { createGroupConversationAction, startDirectConversationAction } from '@/server/actions/messageActions';
@@ -30,22 +30,15 @@ export function GroupConversationForm({ people }: { people: SelectOption[] }) {
     <KeepValuesForm action={formAction}>
       <FormMessage result={result} />
       <TextField label="Group name" name="title" id="group-title" required error={result.fieldErrors?.title} />
-      <div className={formStyles.field} style={{ marginTop: 'var(--space-4)' }}>
-        <label htmlFor="group-members" className={formStyles.label}>
-          Members
-        </label>
-        <select id="group-members" name="memberIds" multiple size={8} className={formStyles.control}>
-          {people.map((person) => (
-            <option key={person.value} value={person.value}>
-              {person.label}
-            </option>
-          ))}
-        </select>
-        {result.fieldErrors?.memberIds ? (
-          <p className={formStyles.error}>{result.fieldErrors.memberIds}</p>
-        ) : (
-          <p className={formStyles.hint}>Hold Ctrl, or Cmd on a Mac, to choose several. You are added automatically.</p>
-        )}
+      <div style={{ marginTop: 'var(--space-4)' }}>
+        <SearchableMultiSelect
+          id="group-members"
+          name="memberIds"
+          label="Members"
+          options={people}
+          hint="Tick everyone to add. You are added automatically."
+          error={result.fieldErrors?.memberIds}
+        />
       </div>
       <FormActions>
         <SubmitButton label="Create group" pendingLabel="Creating…" />

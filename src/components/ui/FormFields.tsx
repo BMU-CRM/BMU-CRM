@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react';
 import styles from './FormFields.module.css';
+import { SearchableSelect, type SearchableSelectProps } from './SearchableSelect';
 
 type FieldShellProps = {
   id: string;
@@ -71,29 +72,21 @@ export function TextAreaField({ label, hint, error, name, id = name, ...props }:
 export type SelectOption = { value: string; label: string };
 
 type SelectFieldProps = SharedProps &
-  ComponentProps<'select'> & {
+  Omit<SearchableSelectProps, 'name' | 'id' | 'aria-invalid' | 'aria-describedby'> & {
     options: SelectOption[];
-    placeholder?: string;
   };
 
-export function SelectField({ label, hint, error, name, id = name, options, placeholder, ...props }: SelectFieldProps) {
+// Every dropdown can be typed into to narrow its choices.
+export function SelectField({ label, hint, error, name, id = name, ...props }: SelectFieldProps) {
   return (
     <FieldShell id={id} label={label} hint={hint} error={error}>
-      <select
+      <SearchableSelect
         id={id}
         name={name}
-        className={styles.control}
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy(id, hint, error)}
         {...props}
-      >
-        {placeholder !== undefined && <option value="">{placeholder}</option>}
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      />
     </FieldShell>
   );
 }

@@ -1,7 +1,9 @@
+/* Beside the bubble: to its right for others' messages, to its left for yours. */
 .actions {
   position: absolute;
-  top: 2px;
-  right: var(--space-4);
+  top: -14px;
+  left: calc(100% + 4px);
+  z-index: 2;
   display: none;
   gap: 2px;
   padding: 2px;
@@ -11,8 +13,13 @@
   box-shadow: var(--shadow-small);
 }
 
-li:hover > .actions,
-li:focus-within > .actions {
+[data-mine='true'] > .actions {
+  right: calc(100% + 4px);
+  left: auto;
+}
+
+div:hover > .actions,
+div:focus-within > .actions {
   display: flex;
 }
 

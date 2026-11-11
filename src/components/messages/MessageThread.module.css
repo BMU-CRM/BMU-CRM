@@ -1,7 +1,7 @@
 .thread {
   display: flex;
   flex-direction: column;
-  padding: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
 }
 
 .empty {
@@ -10,40 +10,80 @@
   text-align: center;
 }
 
+.row {
+  display: flex;
+  flex-direction: column;
+}
+
+.day {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-3) 0;
+}
+
+.day span {
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+/* Others on the left, you on the right, as in WhatsApp. */
 .message {
   position: relative;
   display: flex;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-4);
-}
-
-.message:hover {
-  background: var(--color-surface-muted);
-}
-
-.message:target {
-  background: var(--color-warning-soft);
-}
-
-.content {
-  flex: 1;
-  min-width: 0;
-}
-
-.heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-end;
   gap: var(--space-2);
+  max-width: min(78%, 640px);
+  margin-top: var(--space-3);
+  border-radius: var(--radius-medium);
+}
+
+.message[data-continues='true'] {
+  margin-top: 3px;
+}
+
+.message[data-mine='true'] {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.message:target .bubble {
+  outline: 2px solid var(--color-warning);
+}
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 28px;
+}
+
+.bubble {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3) 4px;
+  border-radius: 12px 12px 12px 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.04);
+}
+
+.message[data-mine='true'] .bubble {
+  border-radius: 12px 12px 4px 12px;
+  background: var(--color-primary-soft);
+  border-color: transparent;
+}
+
+.message[data-continues='true'] .bubble {
+  border-radius: 12px;
 }
 
 .author {
+  margin-bottom: 2px;
+  font-size: var(--text-small);
   font-weight: 600;
-}
-
-.time {
-  font-size: 0.6875rem;
-  color: var(--color-text-muted);
+  color: var(--color-primary);
 }
 
 .pinned {
@@ -67,10 +107,11 @@
 .reply {
   display: flex;
   flex-direction: column;
-  max-width: 520px;
-  margin: var(--space-1) 0;
-  padding: var(--space-1) var(--space-3);
-  border-left: 3px solid var(--color-border-strong);
+  margin-bottom: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.05);
   font-size: var(--text-small);
   color: var(--color-text-secondary);
 }
@@ -85,25 +126,37 @@
   white-space: nowrap;
 }
 
-.file {
-  display: inline-flex;
+/* Time and ticks sit in the bubble's bottom corner. */
+.meta {
+  display: flex;
   align-items: center;
-  gap: var(--space-2);
-  max-width: 100%;
-  margin-top: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-medium);
-  background: var(--color-surface);
-  overflow-wrap: anywhere;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
 }
 
-.file:hover {
-  border-color: var(--color-primary);
+.ticks {
+  display: inline-flex;
+  color: #8a8f98;
 }
 
-.seen {
-  margin-top: var(--space-1);
+/* Light green once seen. */
+.ticks[data-seen='true'] {
+  color: #3fbf7f;
+}
+
+.seenBy {
+  margin-top: 2px;
   font-size: 0.6875rem;
   color: var(--color-text-muted);
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .message {
+    max-width: 90%;
+  }
 }

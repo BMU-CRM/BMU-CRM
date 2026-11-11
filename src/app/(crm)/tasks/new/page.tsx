@@ -7,10 +7,9 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
 import { listClientOptions } from '@/server/services/clientService';
-import { listEmployeeOptions } from '@/server/services/employeeService';
 import { getMeeting } from '@/server/services/meetingService';
 import { listProjectOptions } from '@/server/services/projectService';
-import { getTask, listAssignableEmployees } from '@/server/services/taskService';
+import { getTask, listAssignableEmployees, listReviewerOptions } from '@/server/services/taskService';
 
 export const metadata: Metadata = { title: 'New task' };
 
@@ -37,7 +36,7 @@ export default async function NewTaskPage({ searchParams }: NewTaskPageProps) {
 
   const [assignees, reviewers, projects, clients] = await Promise.all([
     listAssignableEmployees(projectId ?? parent?.project_id),
-    listEmployeeOptions(),
+    listReviewerOptions([access.employee.id]),
     listProjectOptions(),
     listClientOptions(access),
   ]);
@@ -57,7 +56,7 @@ export default async function NewTaskPage({ searchParams }: NewTaskPageProps) {
             clientId: clientId ?? parent?.client_id ?? meeting?.client_id ?? undefined,
           }}
           assignees={assignees.map((person) => ({ value: person.id, label: person.full_name }))}
-          reviewers={reviewers.map((person) => ({ value: person.id, label: person.full_name }))}
+          reviewers={reviewers}
           projects={projects.map((project) => ({ value: project.id, label: project.name }))}
           clients={clients.map((client) => ({ value: client.id, label: client.company_name }))}
           cancelHref={parent ? `/tasks/${parent.id}` : meeting ? `/meetings/${meeting.id}` : '/tasks'}

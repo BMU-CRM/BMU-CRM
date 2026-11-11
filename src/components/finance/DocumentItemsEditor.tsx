@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import formStyles from '@/components/ui/FormFields.module.css';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { documentTotals, lineAmounts } from '@/lib/finance/documentTotals';
 import { formatQuantity, formatRupees } from '@/lib/finance/moneyFormat';
 import { standardTaxRates } from '@/lib/validation/financeSchema';
@@ -119,20 +120,14 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
             </label>
             <label className={styles.cell}>
               <span className={styles.mobileLabel}>GST</span>
-              <select
+              <SearchableSelect
                 id={`${id}-tax`}
                 name="itemTaxRate"
-                className={formStyles.control}
                 aria-label={`Item ${index + 1} GST rate`}
                 value={String(toNumber(line.taxRate))}
                 onChange={(event) => update(line.key, 'taxRate', event.target.value)}
-              >
-                {rateOptions.map((rate) => (
-                  <option key={rate} value={String(rate)}>
-                    {formatQuantity(rate)}%
-                  </option>
-                ))}
-              </select>
+                options={rateOptions.map((rate) => ({ value: String(rate), label: `${formatQuantity(rate)}%` }))}
+              />
             </label>
             <div className={styles.cell}>
               <span className={styles.mobileLabel}>Amount</span>

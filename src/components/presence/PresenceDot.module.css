@@ -1,0 +1,68 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.wrapper[data-variant='overlay'] {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+}
+
+.dot {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--color-surface);
+}
+
+.wrapper[data-variant='overlay'] .dot {
+  width: 12px;
+  height: 12px;
+}
+
+.dot[data-status='available'] {
+  background: #2f9e44;
+}
+
+.dot[data-status='busy'] {
+  background: #d63c3c;
+}
+
+/* Red with a white bar, as in Teams. */
+.dot[data-status='do_not_disturb'] {
+  background: #d63c3c;
+}
+
+.dot[data-status='do_not_disturb']::after {
+  position: absolute;
+  top: calc(50% - 1px);
+  left: 25%;
+  width: 50%;
+  height: 2px;
+  border-radius: 1px;
+  background: #ffffff;
+  content: '';
+}
+
+.dot[data-status='be_right_back'],
+.dot[data-status='away'] {
+  background: #e8a317;
+}
+
+.dot[data-status='offline'] {
+  background: transparent;
+  box-shadow:
+    inset 0 0 0 2px #8a8f98,
+    0 0 0 2px var(--color-surface);
+}
+
+.label {
+  font-size: var(--text-small);
+  color: var(--color-text-secondary);
+}

@@ -1,0 +1,209 @@
+.muted {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.attachment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.attachment:hover {
+  border-color: var(--color-primary);
+}
+
+.attachmentIcon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.attachmentText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.attachmentName {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.media {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.imageLink {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+.image {
+  display: block;
+  max-width: min(320px, 100%);
+  max-height: 320px;
+  border-radius: var(--radius-medium);
+  object-fit: cover;
+}
+
+.video {
+  max-width: min(360px, 100%);
+  max-height: 280px;
+  margin-top: var(--space-1);
+  border-radius: var(--radius-medium);
+  background: #000000;
+}
+
+.audio {
+  width: min(320px, 100%);
+  margin-top: var(--space-1);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: min(260px, 100%);
+  margin-top: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.card[data-done='true'] .attachmentName {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.contactHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+}
+
+.eventIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-medium);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cardButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: var(--text-small);
+  cursor: pointer;
+}
+
+.cardButton:hover {
+  background: var(--color-primary-soft);
+}
+
+.pollQuestion {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pollOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pollOption {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  overflow: hidden;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pollOption:disabled {
+  cursor: default;
+}
+
+.pollOption[aria-pressed='true'] {
+  border-color: var(--color-primary);
+}
+
+.pollMark {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+}
+
+.pollMark[data-multiple='true'] {
+  border-radius: 4px;
+}
+
+.pollOption[aria-pressed='true'] .pollMark {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  box-shadow: inset 0 0 0 2px var(--color-surface);
+}
+
+.pollLabel {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.pollCount {
+  position: relative;
+  z-index: 1;
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.pollBar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--color-primary-soft);
+  transition: width var(--motion-quick);
+}

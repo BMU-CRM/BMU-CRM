@@ -1,0 +1,116 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.searchBox {
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  top: 50%;
+  left: var(--space-3);
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search {
+  width: 100%;
+  min-height: 36px;
+  padding: var(--space-2) var(--space-3) var(--space-2) calc(var(--space-3) + 22px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+}
+
+.search:hover {
+  border-color: var(--color-text-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  font-size: var(--text-small);
+}
+
+.chipRemove {
+  display: inline-flex;
+  padding: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.chipRemove:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.list {
+  max-height: 224px;
+  overflow-y: auto;
+  margin-top: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+}
+
+.list[data-invalid='true'] {
+  border-color: var(--color-critical);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.option[hidden] {
+  display: none;
+}
+
+.option:hover {
+  background: var(--color-surface-muted);
+}
+
+.empty {
+  padding: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.hint {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.error {
+  font-size: var(--text-small);
+  color: var(--color-critical);
+}

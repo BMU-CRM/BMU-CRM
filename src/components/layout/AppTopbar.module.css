@@ -42,6 +42,7 @@
 }
 
 .userButton {
+  position: relative;
   display: inline-flex;
   padding: 2px;
   background: none;

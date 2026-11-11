@@ -5,6 +5,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { FormActions, FormGrid, TextField } from '@/components/ui/FormFields';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { idleResult } from '@/lib/actionResult';
 import type { PermissionScope } from '@/lib/access/permissionKeys';
@@ -63,19 +64,14 @@ export function RoleForm({ role, permissions }: RoleFormProps) {
                   </label>
                   <p className={styles.permissionDescription}>{permission.description}</p>
                 </div>
-                <select
+                <SearchableSelect
                   id={`permission-${permission.key}`}
                   name={`permission:${permission.key}`}
                   defaultValue={granted.get(permission.key) ?? ''}
                   className={styles.scope}
-                >
-                  <option value="">No access</option>
-                  {permission.allowed_scopes.map((scope) => (
-                    <option key={scope} value={scope}>
-                      {scopeLabels[scope]}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="No access"
+                  options={permission.allowed_scopes.map((scope) => ({ value: scope, label: scopeLabels[scope] }))}
+                />
               </div>
             ))}
         </fieldset>

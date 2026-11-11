@@ -565,6 +565,39 @@ export type Database = {
         }
         Relationships: []
       }
+      "employee_presence": {
+        Row: {
+          "chosen_status": string | null
+          "employee_id": string
+          "last_active_at": string | null
+          "last_seen_at": string | null
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "chosen_status"?: string | null
+          "employee_id": string
+          "last_active_at"?: string | null
+          "last_seen_at"?: string | null
+          "updated_at"?: string
+        }
+        Update: {
+          "chosen_status"?: string | null
+          "employee_id"?: string
+          "last_active_at"?: string | null
+          "last_seen_at"?: string | null
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_presence_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "employees": {
         Row: {
           "auth_user_id": string | null
@@ -1561,10 +1594,58 @@ export type Database = {
           },
         ]
       }
+      "message_poll_votes": {
+        Row: {
+          "conversation_id": string
+          "created_at": string
+          "employee_id": string
+          "message_id": string
+          "option_index": number
+        }
+        ComputedFields: never
+        Insert: {
+          "conversation_id": string
+          "created_at"?: string
+          "employee_id": string
+          "message_id": string
+          "option_index": number
+        }
+        Update: {
+          "conversation_id"?: string
+          "created_at"?: string
+          "employee_id"?: string
+          "message_id"?: string
+          "option_index"?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_poll_votes_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_poll_votes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_poll_votes_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "messages": {
         Row: {
           "author_id": string | null
           "body": string
+          "contact_employee_id": string | null
           "conversation_id": string
           "created_at": string
           "deleted_at": string | null
@@ -1572,14 +1653,19 @@ export type Database = {
           "edited_at": string | null
           "file_id": string | null
           "id": string
+          "meeting_id": string | null
           "pinned_at": string | null
           "pinned_by": string | null
+          "poll_allows_multiple": boolean
+          "poll_options": (string)[] | null
+          "poll_question": string | null
           "reply_to_id": string | null
         }
         ComputedFields: never
         Insert: {
           "author_id"?: string | null
           "body"?: string
+          "contact_employee_id"?: string | null
           "conversation_id": string
           "created_at"?: string
           "deleted_at"?: string | null
@@ -1587,13 +1673,18 @@ export type Database = {
           "edited_at"?: string | null
           "file_id"?: string | null
           "id"?: string
+          "meeting_id"?: string | null
           "pinned_at"?: string | null
           "pinned_by"?: string | null
+          "poll_allows_multiple"?: boolean
+          "poll_options"?: (string)[] | null
+          "poll_question"?: string | null
           "reply_to_id"?: string | null
         }
         Update: {
           "author_id"?: string | null
           "body"?: string
+          "contact_employee_id"?: string | null
           "conversation_id"?: string
           "created_at"?: string
           "deleted_at"?: string | null
@@ -1601,14 +1692,25 @@ export type Database = {
           "edited_at"?: string | null
           "file_id"?: string | null
           "id"?: string
+          "meeting_id"?: string | null
           "pinned_at"?: string | null
           "pinned_by"?: string | null
+          "poll_allows_multiple"?: boolean
+          "poll_options"?: (string)[] | null
+          "poll_question"?: string | null
           "reply_to_id"?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "messages_author_id_fkey"
             columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_contact_employee_id_fkey"
+            columns: ["contact_employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
@@ -1632,6 +1734,13 @@ export type Database = {
             columns: ["file_id"]
             isOneToOne: false
             referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
             referencedColumns: ["id"]
           },
           {
@@ -3022,6 +3131,11 @@ export type Database = {
           }; Returns: string }
       "current_employee_id":
         | { Args: Record<PropertyKey, never>; Returns: string }
+      "employee_has_permission":
+        | { Args: {
+            "p_employee": string
+            "p_key": string
+          }; Returns: boolean }
       "finalize_file_version":
         | { Args: {
             "p_version": string
@@ -3072,6 +3186,13 @@ export type Database = {
         | { Args: {
             "p_conversation": string
           }; Returns: string[] }
+      "get_conversation_read_state":
+        | { Args: {
+            "p_conversation": string
+          }; Returns: {
+            "others": number
+            "everyone_read_at": string
+          }[] }
       "get_directory_employee_ids":
         | { Args: Record<PropertyKey, never>; Returns: string[] }
       "get_leave_balances":
@@ -3096,6 +3217,7 @@ export type Database = {
             "department_name": string
             "project_name": string
             "client_name": string
+            "other_person_id": string
             "other_person_name": string
             "last_message_at": string
             "last_message_body": string
@@ -3130,6 +3252,14 @@ export type Database = {
         | { Args: {
             "p_other": string
           }; Returns: string }
+      "get_presence":
+        | { Args: {
+            "p_employees": (string)[]
+          }; Returns: {
+            "employee_id": string
+            "status": string
+            "chosen_status": string
+          }[] }
       "get_project_progress":
         | { Args: {
             "p_projects": (string)[]
@@ -3139,6 +3269,8 @@ export type Database = {
             "completed_tasks": number
             "overdue_tasks": number
           }[] }
+      "get_reviewer_ids":
+        | { Args: Record<PropertyKey, never>; Returns: string[] }
       "get_task_history":
         | { Args: {
             "p_task": string
@@ -3252,6 +3384,10 @@ export type Database = {
         | { Args: {
             "v_meeting": Omit<Database["public"]["Tables"]["meetings"]["Row"], Database["public"]["Tables"]["meetings"]["ComputedFields"]>
           }; Returns: string }
+      "message_preview":
+        | { Args: {
+            "v_message": Omit<Database["public"]["Tables"]["messages"]["Row"], Database["public"]["Tables"]["messages"]["ComputedFields"]>
+          }; Returns: string }
       "normalize_items":
         | { Args: {
             "p_items": Json
@@ -3275,6 +3411,18 @@ export type Database = {
         | { Args: {
             "p_permission": string
           }; Returns: Database["public"]["Enums"]["permission_scope"] }
+      "post_conversation_event":
+        | { Args: {
+            "p_conversation": string
+            "p_title": string
+            "p_starts_at": string
+            "p_ends_at": string
+            "p_meeting_link"?: string
+          }; Returns: string }
+      "presence_status":
+        | { Args: {
+            "v_presence": Omit<Database["public"]["Tables"]["employee_presence"]["Row"], Database["public"]["Tables"]["employee_presence"]["ComputedFields"]>
+          }; Returns: string }
       "process_task_deadlines":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "record_file_access":
@@ -3282,6 +3430,10 @@ export type Database = {
             "p_file": string
             "p_action": Database["public"]["Enums"]["file_access_action"]
             "p_version": number
+          }; Returns: undefined }
+      "record_presence":
+        | { Args: {
+            "p_active": boolean
           }; Returns: undefined }
       "role_is_assignable":
         | { Args: {
@@ -3319,10 +3471,19 @@ export type Database = {
             "p_client": string
             "p_services": (string)[]
           }; Returns: undefined }
+      "set_my_status":
+        | { Args: {
+            "p_status": string
+          }; Returns: string }
       "set_role_permissions":
         | { Args: {
             "p_role": string
             "p_permissions": Json
+          }; Returns: undefined }
+      "vote_in_poll":
+        | { Args: {
+            "p_message": string
+            "p_options": (number)[]
           }; Returns: undefined }
     }
     Enums: {

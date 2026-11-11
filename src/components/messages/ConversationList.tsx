@@ -1,5 +1,6 @@
 import { Megaphone, MessageCircle, Users } from 'lucide-react';
 import Link from 'next/link';
+import { PresenceDot } from '@/components/presence/PresenceDot';
 import { formatDateTime } from '@/lib/formatDate';
 import type { ConversationSummary } from '@/server/services/messageService';
 import styles from './ConversationList.module.css';
@@ -31,6 +32,7 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
           >
             <span className={styles.icon}>
               <ConversationIcon kind={conversation.kind} />
+              {conversation.kind === 'direct' && <PresenceDot employeeId={conversation.other_person_id} variant="overlay" />}
             </span>
             <span className={styles.text}>
               <span className={styles.title}>{conversation.displayTitle}</span>

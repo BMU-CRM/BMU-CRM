@@ -6,15 +6,19 @@ import { MessageComposer } from '@/components/messages/MessageComposer';
 import { MessagesShell } from '@/components/messages/MessagesShell';
 import { MessageThread } from '@/components/messages/MessageThread';
 import { ScrollToLatest } from '@/components/messages/ScrollToLatest';
+import { PresenceDot } from '@/components/presence/PresenceDot';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { conversationKindLabels } from '@/lib/messages/conversationTitle';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
+import { listEmployeeOptions } from '@/server/services/employeeService';
 import {
   getConversation,
+  getReadState,
   listMessages,
   listMyConversations,
   listPinnedMessages,
+  listPollVotes,
   listReadPositions,
   markConversationRead,
   type MessageItem,
@@ -51,12 +55,16 @@ export default async function ConversationPage({ params, searchParams }: Convers
   // Opening the conversation counts as reading it, and clears its notifications.
   await markConversationRead(conversationId);
 
-  const [conversations, messages, pinned, reads] = await Promise.all([
+  const [conversations, messages, pinned, reads, readState, pollVotes, people] = await Promise.all([
     listMyConversations(),
     listMessages(conversationId),
     listPinnedMessages(conversationId),
     listReadPositions(conversationId),
+    getReadState(conversationId),
+    listPollVotes(conversationId),
+    listEmployeeOptions(),
   ]);
+  const otherPerson = conversation.kind === 'direct' ? conversation.members.find((member) => member.id !== access.employee.id) : undefined;
 
   const replyId = parseId((await searchParams).reply);
   const replyMessage = replyId ? messages.find((message) => message.id === replyId && !message.deleted_at) : undefined;
@@ -73,6 +81,7 @@ export default async function ConversationPage({ params, searchParams }: Convers
           <h1 className={styles.title}>{conversation.displayTitle}</h1>
           <p className={styles.subtitle}>
             {conversationKindLabels[conversation.kind]}
+            {otherPerson && <PresenceDot employeeId={otherPerson.id} withLabel prefix="·" />}
             {conversation.kind === 'group' ? ` · ${conversation.members.length} members` : ''}
             {conversation.project_id && (
               <>
@@ -102,6 +111,9 @@ export default async function ConversationPage({ params, searchParams }: Convers
           myEmployeeId={access.employee.id}
           canPost={conversation.canPost}
           canModerate={canModerate}
+          showAuthorNames={conversation.kind !== 'direct'}
+          readState={readState}
+          pollVotes={pollVotes}
           seenLabel={seenLabel(messages, reads, access.employee.id, conversation.kind === 'direct')}
         />
       </div>
@@ -110,6 +122,9 @@ export default async function ConversationPage({ params, searchParams }: Convers
         conversationId={conversationId}
         myName={access.employee.full_name}
         canPost={conversation.canPost}
+        people={people.filter((person) => person.id !== access.employee.id).map((person) => ({ value: person.id, label: person.full_name }))}
+        canShareLinks={access.permissions[permissionKeys.filesUpload] !== undefined}
+        canSchedule={access.permissions[permissionKeys.meetingsCreate] !== undefined}
         replyTo={
           replyMessage
             ? { id: replyMessage.id, author: replyMessage.author?.full_name ?? 'Former employee', body: replyMessage.body }

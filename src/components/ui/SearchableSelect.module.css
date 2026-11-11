@@ -1,0 +1,113 @@
+.wrapper {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Carries the value for the form. Kept in place, so the browser's "please choose"
+   message points at the box. */
+.native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  min-height: 36px;
+  padding: var(--space-2) calc(var(--space-3) + 20px) var(--space-2) var(--space-3);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color var(--motion-quick);
+}
+
+.input:hover {
+  border-color: var(--color-text-muted);
+}
+
+.input[aria-expanded='true'] {
+  cursor: text;
+}
+
+.input[data-placeholder='true']:not([aria-expanded='true']) {
+  color: var(--color-text-secondary);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--color-critical);
+}
+
+.input:disabled {
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.list {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  min-width: 180px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  background: var(--color-surface-raised, var(--color-surface));
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-medium);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.14);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.option[data-active='true'] {
+  background: var(--color-primary-soft);
+}
+
+.option[aria-selected='true'] {
+  font-weight: 500;
+}
+
+.option[data-empty-choice='true'] {
+  color: var(--color-text-secondary);
+}
+
+.optionLabel {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.check {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.empty {
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text-muted);
+}

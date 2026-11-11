@@ -1,6 +1,8 @@
 import 'server-only';
 import webPush from 'web-push';
+import { todayInIndia } from '@/lib/formatDate';
 import { safeNotificationLink } from '@/lib/notifications/notificationKinds';
+import { buildPushMessage } from '@/lib/notifications/pushMessage';
 import { createAdminDatabaseClient } from '@/server/database/databaseClient';
 
 // Push services expire undeliverable messages after an hour.
@@ -27,7 +29,7 @@ export async function dispatchNotification(notificationId: string) {
 
   const { data: notification } = await admin
     .from('notifications')
-    .select('id, recipient_id, kind, priority, title, body, link, event_count, read_at')
+    .select('id, recipient_id, kind, priority, title, body, link, event_count, read_at, actor_name')
     .eq('id', notificationId)
     .maybeSingle();
 
@@ -42,6 +44,14 @@ export async function dispatchNotification(notificationId: string) {
 
   if (preference && !preference.push_enabled) return { sent: 0, skipped: 'turned off by the recipient' };
 
+  // "Do not disturb" pauses desktop and phone notifications. They still wait in the bell.
+  const { data: presence } = await admin
+    .from('employee_presence')
+    .select('chosen_status')
+    .eq('employee_id', notification.recipient_id)
+    .maybeSingle();
+  if (presence?.chosen_status === 'do_not_disturb') return { sent: 0, skipped: 'do not disturb' };
+
   const { data: subscriptions } = await admin
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
@@ -49,13 +59,30 @@ export async function dispatchNotification(notificationId: string) {
 
   if (!subscriptions?.length) return { sent: 0, skipped: 'no devices' };
 
+  // A task's deadline and priority go into the notification itself.
+  const taskId = /^\/tasks\/([0-9a-f-]{36})$/i.exec(notification.link ?? '')?.[1];
+  const { data: task } = taskId
+    ? await admin.from('tasks').select('due_date, priority').eq('id', taskId).maybeSingle()
+    : { data: null };
+
+  const message = buildPushMessage(
+    {
+      kind: notification.kind,
+      title: notification.title,
+      body: notification.body,
+      actorName: notification.actor_name,
+      eventCount: notification.event_count,
+      task: task ? { dueDate: task.due_date, priority: task.priority } : null,
+    },
+    todayInIndia(),
+  );
+
   const payload = JSON.stringify({
-    title: notification.title,
-    body:
-      notification.event_count > 1
-        ? `${notification.body ?? ''} (+${notification.event_count - 1} more)`.trim()
-        : (notification.body ?? ''),
+    id: notification.id,
+    title: message.title,
+    body: message.body,
     url: `/notifications/${notification.id}/open`,
+    readUrl: `/notifications/${notification.id}/read`,
     fallbackUrl: safeNotificationLink(notification.link),
     tag: notification.id,
     priority: notification.priority,

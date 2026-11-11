@@ -3,6 +3,8 @@
 import { LogOut, Menu, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { NotificationBell, type BellNotification } from '@/components/notifications/NotificationBell';
+import { PresenceDot } from '@/components/presence/PresenceDot';
+import { StatusMenu } from '@/components/presence/StatusMenu';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';
 import { signOutAction } from '@/server/actions/authActions';
 import { AppBreadcrumbs } from './AppBreadcrumbs';
@@ -45,8 +47,9 @@ export function AppTopbar({ user, notifications, onOpenMobileMenu }: AppTopbarPr
         />
         <ThemeToggle className={styles.iconButton} />
 
-        <button type="button" className={styles.userButton} popoverTarget="user-menu" aria-label="Open user menu">
+        <button type="button" className={styles.userButton} popoverTarget="user-menu" aria-label="Open user menu and status">
           <PersonAvatar name={user.fullName} size="small" />
+          <PresenceDot employeeId={user.employeeId} variant="overlay" />
         </button>
 
         <div id="user-menu" popover="auto" className={styles.userMenu}>
@@ -55,6 +58,7 @@ export function AppTopbar({ user, notifications, onOpenMobileMenu }: AppTopbarPr
             <p className={styles.userDetail}>{user.workEmail}</p>
             <p className={styles.userDetail}>{user.roleName}</p>
           </div>
+          <StatusMenu employeeId={user.employeeId} />
           <Link href="/profile" className={styles.menuItem}>
             <UserRound size={16} aria-hidden="true" />
             My profile

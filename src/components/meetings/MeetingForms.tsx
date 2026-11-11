@@ -10,9 +10,9 @@ import {
   TextField,
   type SelectOption,
 } from '@/components/ui/FormFields';
-import formStyles from '@/components/ui/FormFields.module.css';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
+import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { idleResult } from '@/lib/actionResult';
@@ -61,25 +61,16 @@ export function MeetingForm({ meeting, defaultDate, defaultClientId, people, cli
         <SelectField label="Client" name="clientId" options={clients} placeholder="None" defaultValue={meeting?.client_id ?? defaultClientId ?? ''} error={errors?.clientId} />
         <SelectField label="Project" name="projectId" options={projects} placeholder="None" defaultValue={meeting?.project_id ?? ''} error={errors?.projectId} />
       </FormGrid>
-      <div className={`${formStyles.field} ${layout.spaced}`}>
-        <label htmlFor="meeting-people" className={formStyles.label}>
-          People
-        </label>
-        <select
+      <div className={layout.spaced}>
+        <SearchableMultiSelect
           id="meeting-people"
           name="participantIds"
-          multiple
-          size={8}
+          label="People"
+          options={people}
           defaultValue={meeting?.participantIds ?? []}
-          className={formStyles.control}
-        >
-          {people.map((person) => (
-            <option key={person.value} value={person.value}>
-              {person.label}
-            </option>
-          ))}
-        </select>
-        <p className={formStyles.hint}>Hold Ctrl, or Cmd on a Mac, to choose several. Everyone invited is notified.</p>
+          hint="Tick everyone to invite. Everyone invited is notified."
+          error={errors?.participantIds}
+        />
       </div>
       <div className={layout.spaced}>
         <TextAreaField label="Agenda" name="agenda" rows={4} defaultValue={meeting?.agenda ?? ''} error={errors?.agenda} />

@@ -81,6 +81,8 @@ File contents live in the private `files` Storage bucket, at `{file id}/v{versio
 | `conversation_reads` | Read positions, for unread counts and "Seen" receipts |
 | `messages` | Messages, with replies, attachments, edits, soft deletes and pins |
 | `message_mentions` | Who was @mentioned |
+| `message_poll_votes` | Votes in chat polls. A message carries a poll (`poll_question`, `poll_options`), a contact card (`contact_employee_id`) or an event (`meeting_id`) as well as text and files |
+| `employee_presence` | Each person's chosen availability and when their app last checked in. Read only through `get_presence`; the status shown is worked out by `presence_status` |
 
 A department, project or client channel is created automatically when the department, project or client is created.
 

@@ -2,9 +2,9 @@
 
 import { useActionState } from 'react';
 import { FormActions, FormGrid, TextAreaField, TextField, type SelectOption } from '@/components/ui/FormFields';
-import formStyles from '@/components/ui/FormFields.module.css';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
+import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { idleResult } from '@/lib/actionResult';
 import { addDriveLinkAction, shareFileAction, updateFileDetailsAction } from '@/server/actions/fileActions';
@@ -41,32 +41,16 @@ export function FileShareForm({ fileId, employees, departments }: ShareFormProps
     <KeepValuesForm action={formAction}>
       <FormMessage result={result} />
       <FormGrid>
-        <div className={formStyles.field}>
-          <label htmlFor="share-employees" className={formStyles.label}>
-            People
-          </label>
-          <select id="share-employees" name="employeeIds" multiple size={6} className={`${formStyles.control} ${styles.multi}`}>
-            {employees.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <p className={formStyles.hint}>Hold Ctrl, or Cmd on a Mac, to choose several.</p>
-        </div>
-        <div className={formStyles.field}>
-          <label htmlFor="share-departments" className={formStyles.label}>
-            Departments
-          </label>
-          <select id="share-departments" name="departmentIds" multiple size={6} className={`${formStyles.control} ${styles.multi}`}>
-            {departments.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {result.fieldErrors?.employeeIds && <p className={formStyles.error}>{result.fieldErrors.employeeIds}</p>}
-        </div>
+        <SearchableMultiSelect
+          id="share-employees"
+          name="employeeIds"
+          label="People"
+          options={employees}
+          hint="Tick everyone to send it to."
+          error={result.fieldErrors?.employeeIds}
+        />
+        <SearchableMultiSelect id="share-departments" name="departmentIds" label="Departments" options={departments} />
+
       </FormGrid>
       <div className={styles.row}>
         <TextField label="Note" name="note" id="share-note" error={result.fieldErrors?.note} />

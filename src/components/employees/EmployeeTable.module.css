@@ -4,3 +4,9 @@
   gap: var(--space-3);
   min-width: 240px;
 }
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}

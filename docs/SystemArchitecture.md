@@ -134,6 +134,12 @@ Printable quotations and invoices live in `src/app/(print)/`, outside the app sh
 
 The finance report (`/finance`) is built from rows the user may see, by `src/lib/finance/financeReport.ts`, so it is tested without a database. `/finance/export` gives the same invoices as a spreadsheet for the accountant, with cells that could run as formulas made safe.
 
+## Chat and availability
+
+Messages are shown as in WhatsApp: yours on the right, others' on the left, with day dividers. Your messages carry two grey ticks once sent and turn light green once everyone else in the conversation has read them (`get_conversation_read_state`). The **+** menu sends documents, photos and videos, a camera photo, audio, a Drive or other link (kept under Files as a link), a colleague's contact card, a poll (`vote_in_poll`) or an event (`post_conversation_event`, which schedules a meeting and invites everyone in the conversation). Photos, videos and audio play inside the chat through the access-checked download route.
+
+Availability works as in Teams: Available, Busy, Do not disturb, Be right back, Appear away and Appear offline, chosen from the menu under your avatar, or Reset to work it out from activity. The app checks in about once a minute (`PresenceHeartbeat`); someone with no check-in for three minutes shows as offline, and someone idle for five minutes shows as away. Status dots read one shared copy in the browser (`presenceStore.ts`), refreshed every 30 seconds in one request. Do not disturb pauses desktop notifications; they still wait in the bell.
+
 ## Push notifications
 
 ```text
@@ -146,7 +152,7 @@ Something happens ──> database trigger creates a notification
                                                            web-push delivers it to each of the person's devices
 ```
 
-The service worker in `public/sw.js` shows the notification and opens the app when it is clicked. High-priority notifications stay on screen until dismissed. Until push is on in a browser, a prompt at the top of every page (`PushPrompt.tsx`) offers to turn it on in one click; "Not now" hides it for a week. People choose which kinds they want under **Profile > Notification settings**. If `NOTIFICATION_DISPATCH_URL` and `NOTIFICATION_DISPATCH_SECRET` are set, push requests go to that address instead, for a database hosted elsewhere.
+The service worker in `public/sw.js` shows the notification and opens the app when it is clicked. High-priority notifications stay on screen until dismissed. The wording is built in `src/lib/notifications/pushMessage.ts`: it names who acted ("Mukesh assigned you a task") and adds a task's deadline and priority. Each notification has **Open** and **Mark as read** buttons; Mark as read posts to `/notifications/<id>/read` with the person's own session. The icon is `public/images/notification-icon.png` (a placeholder letter mark until the logo arrives) and Android's status bar mark is `notification-badge.png`. Both are PNG, not WebP, because Windows notifications need PNG. Until push is on in a browser, a prompt at the top of every page (`PushPrompt.tsx`) offers to turn it on in one click; "Not now" hides it for a week. People choose which kinds they want under **Profile > Notification settings**. If `NOTIFICATION_DISPATCH_URL` and `NOTIFICATION_DISPATCH_SECRET` are set, push requests go to that address instead, for a database hosted elsewhere.
 
 ## Scheduled jobs
 

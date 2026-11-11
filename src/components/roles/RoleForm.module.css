@@ -35,14 +35,10 @@
   color: var(--color-text-muted);
 }
 
-.scope {
+/* The searchable dropdown draws its own box; this only sets its width in the row. */
+.permission > .scope {
   flex-shrink: 0;
-  width: 150px;
-  min-height: 36px;
-  padding: 0 var(--space-2);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-small);
+  width: 170px;
 }
 
 @media (max-width: 520px) {
@@ -52,7 +48,7 @@
     gap: var(--space-2);
   }
 
-  .scope {
+  .permission > .scope {
     width: 100%;
   }
 }

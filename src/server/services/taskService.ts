@@ -14,6 +14,7 @@ const taskListFields = `
   id, task_code, title, status, priority, due_date, completion_percentage, client_id, project_id,
   parent_task_id, created_by, assignee_id, reviewer_id, escalated_to,
   assignee:employees!tasks_assignee_id_fkey(id, full_name),
+  creator:employees!tasks_created_by_fkey(id, full_name),
   project:projects(id, name)
 `;
 
@@ -250,6 +251,23 @@ export async function listAssignableEmployees(projectId?: string | null) {
 
   if (error) throw error;
   return data;
+}
+
+// People who may sign off work: anyone whose role manages tasks, as the database
+// requires. The person who assigned a task may always review it, so they are kept,
+// as is a reviewer the task already has.
+export async function listReviewerOptions(keepIds: (string | null | undefined)[] = []) {
+  const database = await createDatabaseClient();
+
+  const ids = await database.rpc('get_reviewer_ids');
+  if (ids.error) throw ids.error;
+
+  const wanted = [...new Set([...ids.data, ...keepIds.filter((id): id is string => Boolean(id))])];
+  if (wanted.length === 0) return [];
+
+  const { data, error } = await database.from('employees').select('id, full_name').in('id', wanted).order('full_name');
+  if (error) throw error;
+  return data.map((person) => ({ value: person.id, label: person.full_name }));
 }
 
 export async function listDependencyOptions(task: TaskDetails) {

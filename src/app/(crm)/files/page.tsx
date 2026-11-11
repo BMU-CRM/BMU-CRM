@@ -53,15 +53,17 @@ export default async function FilesPage({ searchParams }: FilesPageProps) {
     <>
       <PageHeader title="Files" description="Upload, send and find files across the company." />
       <div className={layout.stack}>
-        {section === 'mine' && (
-          <Panel title="Upload">
-            <FileUploader />
-          </Panel>
-        )}
-        {section === 'links' && (
-          <Panel title="Add a Drive link" description="Share a Google Drive or other cloud link without uploading the file.">
-            <DriveLinkForm />
-          </Panel>
+        {(section === 'mine' || section === 'links') && (
+          <div className={layout.columns}>
+            {section === 'mine' && (
+              <Panel title="Upload">
+                <FileUploader />
+              </Panel>
+            )}
+            <Panel title="Add a Drive link" description="Share a Google Drive or other cloud link without uploading the file. It is kept under Links.">
+              <DriveLinkForm />
+            </Panel>
+          </div>
         )}
         <div>
           <FileSectionTabs current={section} />

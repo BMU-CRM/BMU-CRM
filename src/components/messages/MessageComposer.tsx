@@ -1,12 +1,14 @@
 'use client';
 
-import { Paperclip, SendHorizontal, X } from 'lucide-react';
+import { SendHorizontal, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition, type KeyboardEvent } from 'react';
+import type { SelectOption } from '@/components/ui/FormFields';
 import { FormMessage } from '@/components/ui/FormMessage';
 import type { ActionResult } from '@/lib/actionResult';
-import { acceptedFileTypes, checkUploadable, fileTypeOf } from '@/lib/files/fileTypes';
+import { checkUploadable, fileTypeOf } from '@/lib/files/fileTypes';
+import { ChatAttachMenu } from './ChatAttachMenu';
 import { sendTyping, subscribeLive } from '@/lib/live/liveUpdates';
 import { abandonUploadAction, finishUploadAction, startUploadAction } from '@/server/actions/fileActions';
 import { sendMessageAction } from '@/server/actions/messageActions';
@@ -17,6 +19,10 @@ type MessageComposerProps = {
   myName: string;
   canPost: boolean;
   replyTo: { id: string; author: string; body: string } | null;
+  // For the attach menu: colleagues to share as contacts, and what this person may do.
+  people: SelectOption[];
+  canShareLinks: boolean;
+  canSchedule: boolean;
 };
 
 const typingTimeoutMs = 4000;
@@ -45,7 +51,15 @@ async function uploadAttachment(file: File) {
 
 // The composer, typing indicator and live updates. The server only sends this
 // conversation's changes and typing signals to people who are in it.
-export function MessageComposer({ conversationId, myName, canPost, replyTo }: MessageComposerProps) {
+export function MessageComposer({
+  conversationId,
+  myName,
+  canPost,
+  replyTo,
+  people,
+  canShareLinks,
+  canSchedule,
+}: MessageComposerProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [body, setBody] = useState('');
@@ -54,7 +68,6 @@ export function MessageComposer({ conversationId, myName, canPost, replyTo }: Me
   const [typingNames, setTypingNames] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const lastTypingSentRef = useRef(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -69,6 +82,7 @@ export function MessageComposer({ conversationId, myName, canPost, replyTo }: Me
       topics: [
         { table: 'messages', column: 'conversation_id', value: conversationId },
         { table: 'conversation_reads', column: 'conversation_id', value: conversationId },
+        { table: 'message_poll_votes', column: 'conversation_id', value: conversationId },
       ],
       typingConversationId: conversationId,
       // Catches anything that arrived while connecting.
@@ -110,7 +124,6 @@ export function MessageComposer({ conversationId, myName, canPost, replyTo }: Me
         if (outcome.status === 'success') {
           setBody('');
           setAttachment(null);
-          if (fileInputRef.current) fileInputRef.current.value = '';
           if (replyTo) router.replace(pathname, { scroll: false });
         }
       } catch (error) {
@@ -161,43 +174,49 @@ export function MessageComposer({ conversationId, myName, canPost, replyTo }: Me
           </button>
         </div>
       )}
-      <form
-        className={styles.form}
-        onSubmit={(event) => {
-          event.preventDefault();
-          send();
-        }}
-      >
-        <label className={styles.attach} title="Attach a file">
-          <Paperclip size={18} aria-hidden="true" />
-          <span className={styles.hiddenLabel}>Attach a file</span>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={acceptedFileTypes}
-            className={styles.fileInput}
-            onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
-          />
-        </label>
-        <label htmlFor="message-body" className={styles.hiddenLabel}>
-          Message
-        </label>
-        <textarea
-          id="message-body"
-          className={styles.input}
-          rows={2}
-          value={body}
-          placeholder="Write a message. Use @Full Name to mention someone."
-          onChange={(event) => {
-            setBody(event.target.value);
-            announceTyping();
+      {/* The attach menu has its own forms, so it sits beside the message form, not in it. */}
+      <div className={styles.form}>
+        <ChatAttachMenu
+          conversationId={conversationId}
+          people={people}
+          canShareLinks={canShareLinks}
+          canSchedule={canSchedule}
+          onFile={(file) => {
+            const problem = checkUploadable(file);
+            if (problem) setResult({ status: 'error', message: problem });
+            else {
+              setResult({ status: 'idle' });
+              setAttachment(file);
+            }
           }}
-          onKeyDown={handleKeyDown}
         />
-        <button type="submit" className={styles.send} disabled={isPending || (!body.trim() && !attachment)} aria-label="Send">
-          <SendHorizontal size={18} aria-hidden="true" />
-        </button>
-      </form>
+        <form
+          className={styles.messageForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            send();
+          }}
+        >
+          <label htmlFor="message-body" className={styles.hiddenLabel}>
+            Message
+          </label>
+          <textarea
+            id="message-body"
+            className={styles.input}
+            rows={2}
+            value={body}
+            placeholder="Write a message. Use @Full Name to mention someone."
+            onChange={(event) => {
+              setBody(event.target.value);
+              announceTyping();
+            }}
+            onKeyDown={handleKeyDown}
+          />
+          <button type="submit" className={styles.send} disabled={isPending || (!body.trim() && !attachment)} aria-label="Send">
+            <SendHorizontal size={18} aria-hidden="true" />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

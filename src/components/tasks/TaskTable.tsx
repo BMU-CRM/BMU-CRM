@@ -14,6 +14,7 @@ export function TaskTable({ tasks }: { tasks: TaskListItem[] }) {
           <tr>
             <th scope="col">Task</th>
             <th scope="col">Assigned to</th>
+            <th scope="col">Assigned by</th>
             <th scope="col">Status</th>
             <th scope="col">Priority</th>
             <th scope="col">Due</th>
@@ -36,6 +37,7 @@ export function TaskTable({ tasks }: { tasks: TaskListItem[] }) {
                 </p>
               </td>
               <td>{task.assignee?.full_name ?? 'Unassigned'}</td>
+              <td>{task.creator?.full_name ?? 'System'}</td>
               <td>
                 <TaskStatusBadge status={task.status} dueDate={task.due_date} today={today} />
               </td>
