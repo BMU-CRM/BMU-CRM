@@ -19,11 +19,13 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+/* The full BMU Marketing logo, a thin divider, then "Workspace", on one centred line. */
 .brandLink {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 10px;
   min-width: 0;
+  height: 100%;
   border-radius: var(--radius-small);
 }
 
@@ -31,23 +33,42 @@
   color: var(--color-primary);
 }
 
-.brandMark {
-  height: 22px;
+.brandLogo {
+  height: 34px;
+}
+
+.brandLink .brandMark {
+  display: none;
+}
+
+.brandDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 24px;
+  background: var(--color-border-strong);
 }
 
 .brandName {
+  font-size: 1rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
   white-space: nowrap;
 }
 
-/* With the sidebar narrowed, the logo alone fits. */
+/* With the sidebar narrowed, the BMU mark alone fits. */
 .sidebar[data-collapsed='true'] .brand {
   justify-content: center;
   padding: 0 var(--space-2);
 }
 
+.sidebar[data-collapsed='true'] .brandLogo,
+.sidebar[data-collapsed='true'] .brandDivider {
+  display: none;
+}
+
 .sidebar[data-collapsed='true'] .brandMark {
-  height: auto;
+  display: inline-flex;
   width: 44px;
 }
 
@@ -163,6 +184,15 @@
   .sidebar[data-collapsed='true'] .brandName,
   .sidebar[data-collapsed='true'] .linkLabel {
     display: inline;
+  }
+
+  .sidebar[data-collapsed='true'] .brandLogo,
+  .sidebar[data-collapsed='true'] .brandDivider {
+    display: inline-flex;
+  }
+
+  .sidebar[data-collapsed='true'] .brandMark {
+    display: none;
   }
 
   .sidebar[data-collapsed='true'] .sectionTitle {

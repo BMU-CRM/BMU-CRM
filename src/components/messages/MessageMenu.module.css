@@ -1,22 +1,24 @@
 /* The ⌄ sits in the bubble's top corner and appears on hover, as in WhatsApp. */
 .wrapper {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 0;
+  right: 0;
   z-index: 3;
 }
 
+/* Fades in over the bubble's corner, over a soft wash of the bubble's own colour,
+   so it takes no space of its own. */
 .trigger {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 26px;
+  justify-content: flex-end;
+  width: 34px;
   height: 22px;
+  padding-right: 2px;
   border: 0;
-  border-radius: 999px;
-  background: var(--color-surface-raised);
-  color: var(--color-text-secondary);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.15);
+  border-radius: 0 6px 0 12px;
+  background: radial-gradient(at top right, var(--bubble, var(--color-surface)) 55%, transparent 75%);
+  color: var(--bubble-meta, var(--color-text-secondary));
   cursor: pointer;
   opacity: 0;
   transition: opacity var(--motion-quick);

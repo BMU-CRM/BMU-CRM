@@ -112,6 +112,40 @@ describe('message actions and task times', () => {
     });
   });
 
+  describe('clear chat and exit group', () => {
+    it('clears a chat for one person only', async () => {
+      const id = await send('Before clearing');
+      const { data: count, error } = await as.reader!.rpc('clear_conversation_for_me', { p_conversation: direct });
+      expect(error).toBeNull();
+      expect(count).toBeGreaterThan(0);
+
+      const readerHidden = await as.reader!.from('message_hidden').select('message_id').eq('message_id', id);
+      const senderHidden = await as.sender!.from('message_hidden').select('message_id').eq('message_id', id);
+      expect(readerHidden.data).toHaveLength(1);
+      expect(senderHidden.data).toEqual([]);
+    });
+
+    it('refuses to clear a chat someone cannot see', async () => {
+      const { error } = await as.outsider!.rpc('clear_conversation_for_me', { p_conversation: direct });
+      expect(error?.message).toContain('cannot clear');
+    });
+
+    it('lets someone exit a group, and hands the admin role on when the last admin leaves', async () => {
+      const { data: group } = await as.sender!.rpc('create_group_conversation', {
+        p_title: 'Exit test',
+        p_members: [ids.reader!, ids.outsider!],
+      });
+      const groupId = group as string;
+
+      expect((await as.sender!.rpc('leave_group', { p_conversation: groupId })).error).toBeNull();
+      const { data: members } = await admin.from('conversation_members').select('employee_id, is_admin').eq('conversation_id', groupId);
+      expect((members ?? []).some((member) => member.employee_id === ids.sender)).toBe(false);
+      expect((members ?? []).filter((member) => member.is_admin)).toHaveLength(1);
+
+      expect((await as.sender!.rpc('leave_group', { p_conversation: groupId })).error?.message).toContain('not in this group');
+    });
+  });
+
   describe('task times', () => {
     it('lets someone plan their own task with a time, and move it', async () => {
       const { data, error } = await as.sender!

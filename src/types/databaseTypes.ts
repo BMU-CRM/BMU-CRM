@@ -3218,6 +3218,10 @@ export type Database = {
             "p_client": string
             "p_project": string
           }; Returns: undefined }
+      "clear_conversation_for_me":
+        | { Args: {
+            "p_conversation": string
+          }; Returns: number }
       "client_in_finance_reach":
         | { Args: {
             "v_client": Omit<Database["public"]["Tables"]["clients"]["Row"], Database["public"]["Tables"]["clients"]["ComputedFields"]>
@@ -3486,6 +3490,10 @@ export type Database = {
             "p_year": number
             "p_exclude"?: string
           }; Returns: number }
+      "leave_group":
+        | { Args: {
+            "p_conversation": string
+          }; Returns: undefined }
       "line_tax_amount":
         | { Args: {
             "p_taxable": number

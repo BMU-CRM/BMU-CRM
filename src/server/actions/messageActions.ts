@@ -274,6 +274,81 @@ export async function forwardMessagesAction(messageIds: string[], conversationId
   return success(`Forwarded to ${targets.data.length} ${targets.data.length === 1 ? 'conversation' : 'conversations'}.`);
 }
 
+// Clear chat: every message so far disappears from your own view only.
+export async function clearChatAction(conversationId: string): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+
+  const database = await createDatabaseClient();
+  const { error } = await database.rpc('clear_conversation_for_me', { p_conversation: conversationId });
+  if (error) return databaseFailure(error);
+
+  revalidatePath(`/messages/${conversationId}`);
+  return success('Chat cleared for you.');
+}
+
+export async function leaveGroupAction(conversationId: string): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+
+  const database = await createDatabaseClient();
+  const { error } = await database.rpc('leave_group', { p_conversation: conversationId });
+  if (error) return databaseFailure(error);
+
+  revalidatePath('/messages', 'layout');
+  redirect('/messages');
+}
+
+export async function renameGroupAction(conversationId: string, title: string): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+  const parsed = z.string().trim().min(1, 'Name the group.').max(120, 'Use 120 characters or fewer.').safeParse(title);
+  if (!parsed.success) return failure(parsed.error.issues[0]?.message ?? 'Name the group.');
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('conversations')
+    .update({ title: parsed.data })
+    .eq('id', conversationId)
+    .select('id');
+  if (error) return databaseFailure(error);
+  if (data.length === 0) return failure('Only group admins can rename the group.');
+
+  revalidatePath('/messages', 'layout');
+  return success('Group renamed.');
+}
+
+export async function addGroupMembersAction(conversationId: string, employeeIds: string[]): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+  const parsed = z.array(z.uuid()).min(1, 'Choose at least one person.').max(100).safeParse(employeeIds);
+  if (!parsed.success) return failure('Choose at least one person.');
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('conversation_members')
+    .insert(parsed.data.map((employee_id) => ({ conversation_id: conversationId, employee_id })))
+    .select('employee_id');
+  if (error) return databaseFailure(error, 'They are already in the group.');
+  if (data.length === 0) return failure('Only group admins can add people.');
+
+  revalidatePath(`/messages/${conversationId}`);
+  return success(`${data.length} added.`);
+}
+
+export async function removeGroupMemberAction(conversationId: string, employeeId: string): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('conversation_members')
+    .delete()
+    .eq('conversation_id', conversationId)
+    .eq('employee_id', employeeId)
+    .select('employee_id');
+  if (error) return databaseFailure(error);
+  if (data.length === 0) return failure('Only group admins can remove people.');
+
+  revalidatePath(`/messages/${conversationId}`);
+  return success('Removed from the group.');
+}
+
 export type MessageInfoRow = { employeeId: string; name: string; readAt: string | null; delivered: boolean };
 
 // Who your message reached and who read it.

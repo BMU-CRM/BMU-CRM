@@ -23,11 +23,14 @@ export async function getConversation(conversationId: string, myEmployeeId: stri
   const { data, error } = await database
     .from('conversations')
     .select(
-      `id, kind, title, project_id, client_id,
+      `id, kind, title, project_id, client_id, created_at,
+       creator:employees!conversations_created_by_fkey(full_name),
        department:departments(name),
        project:projects(name),
        client:clients(company_name),
-       members:conversation_members(employee:employees(id, full_name))`,
+       members:conversation_members(is_admin, created_at,
+         employee:employees(id, full_name, work_email, phone,
+           designation:designations(title), department:departments!employees_department_id_fkey(name)))`,
     )
     .eq('id', conversationId)
     .maybeSingle();
@@ -35,7 +38,11 @@ export async function getConversation(conversationId: string, myEmployeeId: stri
   if (error) throw error;
   if (!data) return null;
 
-  const members = data.members.flatMap((member) => (member.employee ? [member.employee] : []));
+  // Group members with their details, admins first, for group and contact info.
+  const people = data.members
+    .flatMap((member) => (member.employee ? [{ ...member.employee, isAdmin: member.is_admin, joinedAt: member.created_at }] : []))
+    .sort((first, second) => Number(second.isAdmin) - Number(first.isAdmin) || first.full_name.localeCompare(second.full_name));
+  const members = people.map((person) => ({ id: person.id, full_name: person.full_name }));
   const other = members.find((member) => member.id !== myEmployeeId);
 
   const [canPost] = await Promise.all([database.rpc('can_post_in_conversation', { p_conversation: conversationId })]);
@@ -43,6 +50,8 @@ export async function getConversation(conversationId: string, myEmployeeId: stri
   return {
     ...data,
     members,
+    people,
+    isAdmin: people.some((person) => person.id === myEmployeeId && person.isAdmin),
     canPost: canPost.data === true,
     displayTitle: conversationTitle({
       kind: data.kind,

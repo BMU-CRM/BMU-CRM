@@ -2,7 +2,9 @@ import { Pin } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ChatHeaderActions } from '@/components/messages/ChatHeaderActions';
 import { MessageComposer } from '@/components/messages/MessageComposer';
+import { formatDate } from '@/lib/formatDate';
 import { MessagesShell } from '@/components/messages/MessagesShell';
 import { MessageThread } from '@/components/messages/MessageThread';
 import { ScrollToLatest } from '@/components/messages/ScrollToLatest';
@@ -91,6 +93,26 @@ export default async function ConversationPage({ params, searchParams }: Convers
             )}
           </p>
         </div>
+        <ChatHeaderActions
+          conversationId={conversationId}
+          kind={conversation.kind}
+          title={conversation.displayTitle}
+          myEmployeeId={access.employee.id}
+          isAdmin={conversation.isAdmin}
+          people={conversation.people}
+          createdLabel={
+            conversation.kind === 'group'
+              ? `Created${conversation.creator ? ` by ${conversation.creator.full_name}` : ''} on ${formatDate(conversation.created_at)}`
+              : null
+          }
+          addable={
+            conversation.kind === 'group' && conversation.isAdmin
+              ? people
+                  .filter((person) => !conversation.people.some((member) => member.id === person.id))
+                  .map((person) => ({ value: person.id, label: person.full_name }))
+              : []
+          }
+        />
       </header>
 
       {pinned.length > 0 && (

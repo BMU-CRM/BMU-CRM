@@ -33,7 +33,9 @@ export function AppSidebar({
       <aside className={styles.sidebar} data-collapsed={isCollapsed} data-mobile-open={isMobileOpen}>
         <div className={styles.brand}>
           <Link href="/overview" className={styles.brandLink} onClick={onCloseMobile} title="BMU Workspace: go to Overview">
+            <BrandLogo variant="full" className={styles.brandLogo} />
             <BrandLogo className={styles.brandMark} />
+            <span className={styles.brandDivider} aria-hidden="true" />
             <span className={styles.brandName}>Workspace</span>
           </Link>
           <button type="button" className={styles.mobileClose} onClick={onCloseMobile} aria-label="Close menu">

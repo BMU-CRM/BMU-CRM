@@ -28,6 +28,22 @@ type MessageThreadProps = {
 
 const clock = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
 
+// In groups each person's name has its own colour, as in WhatsApp.
+const nameColours = ['#06cf9c', '#53bdeb', '#ff8f6b', '#c48cf0', '#f5b700', '#ef6a9a', '#7fcb6b', '#5ec3c9'];
+
+function nameColour(id: string | null | undefined) {
+  if (!id) return nameColours[0];
+  let hash = 0;
+  for (const character of id) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  return nameColours[hash % nameColours.length];
+}
+
+// Room kept at the end of the last line for the time and ticks, so they never overlap
+// the text: about 54px for the time, plus the ticks, the "Edited" word and a star.
+function metaWidth(message: MessageItem, isMine: boolean) {
+  return 54 + (isMine ? 21 : 0) + (message.edited_at ? 40 : 0) + (message.isStarred ? 14 : 0);
+}
+
 function dayLabel(day: string, today: string) {
   if (day === today) return 'Today';
   const yesterday = new Date(`${today}T00:00:00Z`);
@@ -131,9 +147,15 @@ export function MessageThread({
                   <span>{dayLabel(day, today)}</span>
                 </p>
               )}
-              <div id={`message-${message.id}`} className={styles.message} data-mine={isMine} data-continues={continues}>
+              <div
+                id={`message-${message.id}`}
+                className={styles.message}
+                data-mine={isMine}
+                data-continues={continues}
+                data-search-text={isDeleted ? undefined : message.body.toLowerCase()}
+              >
                 {!isDeleted && <SelectBox messageId={message.id} />}
-                {!isMine && (
+                {!isMine && showAuthorNames && (
                   <span className={styles.avatar} aria-hidden={continues}>
                     {!continues && (
                       <>
@@ -144,7 +166,13 @@ export function MessageThread({
                   </span>
                 )}
 
-                <div className={styles.bubble} data-deleted={isDeleted}>
+                <div
+                  className={styles.bubble}
+                  data-deleted={isDeleted}
+                  // Text ends the bubble, so the time can sit at the end of its last line.
+                  data-inline-meta={Boolean((isDeleted || message.body) && !(message.id === lastOwnMessageId && seenLabel && showAuthorNames))}
+                  style={{ '--meta-width': `${metaWidth(message, isMine)}px` } as React.CSSProperties}
+                >
                   {!isDeleted && (
                     <MessageMenu
                       conversationId={conversationId}
@@ -162,7 +190,9 @@ export function MessageThread({
                     />
                   )}
                   {!isMine && showAuthorNames && !continues && (
-                    <p className={styles.author}>{message.author?.full_name ?? 'Former employee'}</p>
+                    <p className={styles.author} style={{ color: nameColour(message.author?.id) }}>
+                      {message.author?.full_name ?? 'Former employee'}
+                    </p>
                   )}
                   {message.forwarded && !isDeleted && (
                     <p className={styles.forwarded}>

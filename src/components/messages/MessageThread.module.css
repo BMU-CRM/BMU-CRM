@@ -1,7 +1,40 @@
+/* WhatsApp's chat colours, in light and dark. */
 .thread {
+  --chat-bg: #efeae2;
+  --bubble-in: #ffffff;
+  --bubble-out: #d9fdd3;
+  --bubble-text: #111b21;
+  --bubble-meta: #667781;
+  --chip: #ffffff;
+  --quote: rgb(11 20 26 / 0.05);
+
   display: flex;
   flex-direction: column;
-  padding: var(--space-3) var(--space-4);
+  min-height: 100%;
+  padding: var(--space-3) 5%;
+  background: var(--chat-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .thread {
+    --chat-bg: #0b141a;
+    --bubble-in: #202c33;
+    --bubble-out: #005c4b;
+    --bubble-text: #e9edef;
+    --bubble-meta: rgb(233 237 239 / 0.6);
+    --chip: #182229;
+    --quote: rgb(0 0 0 / 0.18);
+  }
+}
+
+:global(:root[data-theme='dark']) .thread {
+  --chat-bg: #0b141a;
+  --bubble-in: #202c33;
+  --bubble-out: #005c4b;
+  --bubble-text: #e9edef;
+  --bubble-meta: rgb(233 237 239 / 0.6);
+  --chip: #182229;
+  --quote: rgb(0 0 0 / 0.18);
 }
 
 .empty {
@@ -18,30 +51,30 @@
 .day {
   display: flex;
   justify-content: center;
-  margin: var(--space-3) 0;
+  margin: var(--space-3) 0 var(--space-2);
 }
 
 .day span {
-  padding: 2px 12px;
-  border-radius: 999px;
-  background: var(--color-surface-muted);
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: var(--chip);
+  box-shadow: 0 1px 0.5px rgb(11 20 26 / 0.13);
   font-size: 0.75rem;
-  color: var(--color-text-secondary);
+  color: var(--bubble-meta);
 }
 
-/* Others on the left, you on the right, as in WhatsApp. */
+/* Others on the left, you on the right. */
 .message {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: var(--space-2);
-  max-width: min(78%, 640px);
-  margin-top: var(--space-3);
-  border-radius: var(--radius-medium);
+  max-width: min(65%, 620px);
+  margin-top: 10px;
 }
 
 .message[data-continues='true'] {
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .message[data-mine='true'] {
@@ -49,8 +82,13 @@
   flex-direction: row-reverse;
 }
 
-.message:target .bubble {
-  outline: 2px solid var(--color-warning);
+.message:target .bubble,
+.message[data-current='true'] .bubble {
+  outline: 2px solid #f5c542;
+}
+
+.message[data-match='true'] .body {
+  background: linear-gradient(transparent 60%, rgb(245 197 66 / 0.45) 60%);
 }
 
 .avatar {
@@ -60,32 +98,55 @@
   width: 28px;
 }
 
-/* Room on the right for the ⌄ menu button, so it never covers the text. */
 .bubble {
+  --bubble: var(--bubble-in);
+
   position: relative;
-  min-width: 90px;
-  padding: var(--space-2) calc(var(--space-3) + 22px) 4px var(--space-3);
-  border-radius: 12px 12px 12px 4px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 1px 1px rgb(0 0 0 / 0.04);
+  min-width: 0;
+  padding: 6px 7px 8px 9px;
+  border-radius: 7.5px;
+  background: var(--bubble);
+  color: var(--bubble-text);
+  box-shadow: 0 1px 0.5px rgb(11 20 26 / 0.13);
+  font-size: 0.9375rem;
+  line-height: 1.35;
 }
 
 .message[data-mine='true'] .bubble {
-  border-radius: 12px 12px 4px 12px;
-  background: var(--color-primary-soft);
-  border-color: transparent;
+  --bubble: var(--bubble-out);
 }
 
-.message[data-continues='true'] .bubble {
-  border-radius: 12px;
+/* The little tail on the first message of a run, as in WhatsApp. */
+.message[data-continues='false'] .bubble::before {
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 8px;
+  height: 13px;
+  background: var(--bubble);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  content: '';
+}
+
+.message[data-continues='false'] .bubble {
+  border-top-left-radius: 0;
+}
+
+.message[data-mine='true'][data-continues='false'] .bubble {
+  border-top-left-radius: 7.5px;
+  border-top-right-radius: 0;
+}
+
+.message[data-mine='true'][data-continues='false'] .bubble::before {
+  right: -8px;
+  left: auto;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
 .author {
   margin-bottom: 2px;
-  font-size: var(--text-small);
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-primary);
 }
 
 .pinned {
@@ -93,22 +154,34 @@
   align-items: center;
   gap: 2px;
   font-size: 0.6875rem;
-  color: var(--color-warning);
+  color: var(--bubble-meta);
 }
 
+/* The time and ticks sit at the end of the last line when there is room, and on a
+   line of their own when there is not: the spacer keeps that room free. */
 .body {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-/* As in WhatsApp: "This message was deleted", with a no-entry sign. */
+.body::after {
+  display: inline-block;
+  width: var(--meta-width, 60px);
+  content: '';
+}
+
 .deleted {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-right: var(--space-4);
   font-style: italic;
-  color: var(--color-text-muted);
+  color: var(--bubble-meta);
+}
+
+.deleted::after {
+  display: inline-block;
+  width: var(--meta-width, 60px);
+  content: '';
 }
 
 .forwarded {
@@ -117,7 +190,7 @@
   gap: 4px;
   font-size: 0.75rem;
   font-style: italic;
-  color: var(--color-text-muted);
+  color: var(--bubble-meta);
 }
 
 /* The quoted message in a reply: a coloured bar, the name in colour, then a snippet. */
@@ -125,22 +198,22 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  margin: 2px 0 var(--space-1);
-  padding: 6px var(--space-2) 6px 10px;
-  border-left: 4px solid #3ba3ff;
+  margin: 0 0 4px;
+  padding: 5px var(--space-2) 5px 10px;
+  border-left: 4px solid #06cf9c;
   border-radius: 6px;
-  background: rgb(0 0 0 / 0.08);
-  font-size: var(--text-small);
-  color: var(--color-text-secondary);
+  background: var(--quote);
+  font-size: 0.8125rem;
+  color: var(--bubble-meta);
 }
 
 .reply:hover {
-  background: rgb(0 0 0 / 0.12);
+  filter: brightness(0.97);
 }
 
 .replyAuthor {
   font-weight: 600;
-  color: #3ba3ff;
+  color: #06cf9c;
 }
 
 .replyFile {
@@ -154,31 +227,40 @@
 
 .replyMuted {
   font-style: italic;
-  color: var(--color-text-muted);
 }
 
 .replyBody {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-/* Time and ticks sit in the bubble's bottom corner. */
 .meta {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 3px;
   margin-top: 2px;
   font-size: 0.6875rem;
+  line-height: 15px;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-muted);
+  color: var(--bubble-meta);
+  white-space: nowrap;
+}
+
+/* After text, the time floats into the spacer at the end of the last line. */
+.bubble[data-inline-meta='true'] .meta {
+  position: absolute;
+  right: 7px;
+  bottom: 4px;
+  margin: 0;
 }
 
 .ticks {
   flex-shrink: 0;
   fill: none;
-  stroke: #8a8f98;
+  stroke: var(--bubble-meta);
   stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -186,7 +268,7 @@
 
 /* Green once read, as the owner chose. */
 .ticks[data-state='read'] {
-  stroke: #3fbf7f;
+  stroke: #25d366;
 }
 
 .star {
@@ -196,12 +278,16 @@
 .seenBy {
   margin-top: 2px;
   font-size: 0.6875rem;
-  color: var(--color-text-muted);
+  color: var(--bubble-meta);
   text-align: right;
 }
 
 @media (max-width: 720px) {
+  .thread {
+    padding: var(--space-2) var(--space-3);
+  }
+
   .message {
-    max-width: 90%;
+    max-width: 85%;
   }
 }
