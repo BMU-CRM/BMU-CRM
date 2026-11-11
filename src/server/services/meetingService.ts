@@ -57,7 +57,7 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
     // Finished work stays on the calendar, struck through. Rejected work does not.
     database
       .from('tasks')
-      .select('id, title, due_date, status')
+      .select('id, title, due_date, due_time, status')
       .eq('assignee_id', access.employee.id)
       .neq('status', 'rejected')
       .gte('due_date', from)
@@ -93,7 +93,7 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
       kind: 'task' as const,
       date: task.due_date as string,
       title: task.status === 'completed' ? `Done: ${task.title}` : `Due: ${task.title}`,
-      time: null,
+      time: task.due_time ? task.due_time.slice(0, 5) : null,
       href: `/tasks/${task.id}`,
       isDone: task.status === 'completed',
       canMove: task.status !== 'completed',

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { BrandLogo } from '@/components/layout/BrandLogo';
 import styles from './AuthLayout.module.css';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
@@ -6,8 +7,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <main className={styles.page}>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <span className={styles.brandMark} aria-hidden="true" />
-          <span className={styles.brandName}>Workspace</span>
+          <BrandLogo variant="full" className={styles.brandMark} />
+          <span className={styles.brandName}>BMU Workspace</span>
         </div>
         {children}
       </div>

@@ -117,7 +117,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
           />
         ) : (
           <>
-            <TaskTable tasks={tasks} />
+            <TaskTable tasks={tasks} showAssignee={access.permissions[permissionKeys.tasksView] !== 'own'} />
             <PaginationBar page={page} perPage={tasksPerPage} total={total} hrefForPage={hrefForPage} />
           </>
         )}

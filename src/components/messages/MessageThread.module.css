@@ -60,9 +60,11 @@
   width: 28px;
 }
 
+/* Room on the right for the ⌄ menu button, so it never covers the text. */
 .bubble {
-  min-width: 0;
-  padding: var(--space-2) var(--space-3) 4px;
+  position: relative;
+  min-width: 90px;
+  padding: var(--space-2) calc(var(--space-3) + 22px) 4px var(--space-3);
   border-radius: 12px 12px 12px 4px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -99,25 +101,60 @@
   overflow-wrap: anywhere;
 }
 
+/* As in WhatsApp: "This message was deleted", with a no-entry sign. */
 .deleted {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: var(--space-4);
   font-style: italic;
   color: var(--color-text-muted);
 }
 
+.forwarded {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+/* The quoted message in a reply: a coloured bar, the name in colour, then a snippet. */
 .reply {
   display: flex;
   flex-direction: column;
-  margin-bottom: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  border-left: 3px solid var(--color-primary);
-  border-radius: 4px;
-  background: rgb(0 0 0 / 0.05);
+  gap: 1px;
+  margin: 2px 0 var(--space-1);
+  padding: 6px var(--space-2) 6px 10px;
+  border-left: 4px solid #3ba3ff;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 0.08);
   font-size: var(--text-small);
   color: var(--color-text-secondary);
 }
 
+.reply:hover {
+  background: rgb(0 0 0 / 0.12);
+}
+
 .replyAuthor {
-  font-weight: 500;
+  font-weight: 600;
+  color: #3ba3ff;
+}
+
+.replyFile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.replyMuted {
+  font-style: italic;
+  color: var(--color-text-muted);
 }
 
 .replyBody {
@@ -139,13 +176,21 @@
 }
 
 .ticks {
-  display: inline-flex;
-  color: #8a8f98;
+  flex-shrink: 0;
+  fill: none;
+  stroke: #8a8f98;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-/* Light green once seen. */
-.ticks[data-seen='true'] {
-  color: #3fbf7f;
+/* Green once read, as the owner chose. */
+.ticks[data-state='read'] {
+  stroke: #3fbf7f;
+}
+
+.star {
+  fill: currentColor;
 }
 
 .seenBy {

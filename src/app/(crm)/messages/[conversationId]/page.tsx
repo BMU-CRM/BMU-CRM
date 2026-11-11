@@ -112,6 +112,9 @@ export default async function ConversationPage({ params, searchParams }: Convers
           canPost={conversation.canPost}
           canModerate={canModerate}
           showAuthorNames={conversation.kind !== 'direct'}
+          forwardTargets={conversations
+            .filter((item) => item.id !== conversationId)
+            .map((item) => ({ value: item.id, label: item.displayTitle }))}
           readState={readState}
           pollVotes={pollVotes}
           seenLabel={seenLabel(messages, reads, access.employee.id, conversation.kind === 'direct')}

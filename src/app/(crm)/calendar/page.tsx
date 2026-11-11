@@ -61,7 +61,12 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
           ))}
         </nav>
       </div>
-      <CalendarView range={range} items={items} today={today} />
+      <CalendarView
+        range={range}
+        items={items}
+        today={today}
+        canAddTasks={access.permissions[permissionKeys.tasksCreate] !== undefined}
+      />
     </>
   );
 }

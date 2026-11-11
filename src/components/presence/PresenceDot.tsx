@@ -22,7 +22,7 @@ export function PresenceDot({ employeeId, variant = 'inline', withLabel = false,
   const label = presenceLabels[presence.status];
   return (
     <span className={styles.wrapper} data-variant={variant}>
-      {prefix}
+      {prefix && <span className={styles.prefix}>{prefix}</span>}
       <span className={styles.dot} data-status={presence.status} role="img" aria-label={label} title={label} />
       {withLabel && <span className={styles.label}>{label}</span>}
     </span>

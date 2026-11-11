@@ -1563,6 +1563,40 @@ export type Database = {
           },
         ]
       }
+      "message_hidden": {
+        Row: {
+          "created_at": string
+          "employee_id": string
+          "message_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "employee_id": string
+          "message_id": string
+        }
+        Update: {
+          "created_at"?: string
+          "employee_id"?: string
+          "message_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_hidden_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_hidden_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "message_mentions": {
         Row: {
           "employee_id": string
@@ -1641,6 +1675,74 @@ export type Database = {
           },
         ]
       }
+      "message_reads": {
+        Row: {
+          "employee_id": string
+          "message_id": string
+          "read_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "employee_id": string
+          "message_id": string
+          "read_at"?: string
+        }
+        Update: {
+          "employee_id"?: string
+          "message_id"?: string
+          "read_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reads_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "message_stars": {
+        Row: {
+          "created_at": string
+          "employee_id": string
+          "message_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "employee_id": string
+          "message_id": string
+        }
+        Update: {
+          "created_at"?: string
+          "employee_id"?: string
+          "message_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_stars_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_stars_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "messages": {
         Row: {
           "author_id": string | null
@@ -1652,6 +1754,7 @@ export type Database = {
           "deleted_by": string | null
           "edited_at": string | null
           "file_id": string | null
+          "forwarded": boolean
           "id": string
           "meeting_id": string | null
           "pinned_at": string | null
@@ -1672,6 +1775,7 @@ export type Database = {
           "deleted_by"?: string | null
           "edited_at"?: string | null
           "file_id"?: string | null
+          "forwarded"?: boolean
           "id"?: string
           "meeting_id"?: string | null
           "pinned_at"?: string | null
@@ -1691,6 +1795,7 @@ export type Database = {
           "deleted_by"?: string | null
           "edited_at"?: string | null
           "file_id"?: string | null
+          "forwarded"?: boolean
           "id"?: string
           "meeting_id"?: string | null
           "pinned_at"?: string | null
@@ -2598,6 +2703,7 @@ export type Database = {
           "department_id": string | null
           "description": string | null
           "due_date": string | null
+          "due_time": string | null
           "escalated_at": string | null
           "escalated_to": string | null
           "escalation_reason": string | null
@@ -2631,6 +2737,7 @@ export type Database = {
           "department_id"?: string | null
           "description"?: string | null
           "due_date"?: string | null
+          "due_time"?: string | null
           "escalated_at"?: string | null
           "escalated_to"?: string | null
           "escalation_reason"?: string | null
@@ -2663,6 +2770,7 @@ export type Database = {
           "department_id"?: string | null
           "description"?: string | null
           "due_date"?: string | null
+          "due_time"?: string | null
           "escalated_at"?: string | null
           "escalated_to"?: string | null
           "escalation_reason"?: string | null
@@ -3065,6 +3173,10 @@ export type Database = {
         | { Args: {
             "v_meeting": Omit<Database["public"]["Tables"]["meetings"]["Row"], Database["public"]["Tables"]["meetings"]["ComputedFields"]>
           }; Returns: boolean }
+      "can_view_message":
+        | { Args: {
+            "p_message": string
+          }; Returns: boolean }
       "can_view_project":
         | { Args: {
             "p_project": string
@@ -3192,6 +3304,7 @@ export type Database = {
           }; Returns: {
             "others": number
             "everyone_read_at": string
+            "everyone_delivered_at": string
           }[] }
       "get_directory_employee_ids":
         | { Args: Record<PropertyKey, never>; Returns: string[] }
@@ -3208,6 +3321,15 @@ export type Database = {
             "approved": number
             "pending": number
             "remaining": number
+          }[] }
+      "get_message_info":
+        | { Args: {
+            "p_message": string
+          }; Returns: {
+            "employee_id": string
+            "full_name": string
+            "read_at": string
+            "delivered": boolean
           }[] }
       "get_my_conversations":
         | { Args: Record<PropertyKey, never>; Returns: {

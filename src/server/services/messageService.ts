@@ -58,35 +58,77 @@ export async function getConversation(conversationId: string, myEmployeeId: stri
 export type ConversationDetails = NonNullable<Awaited<ReturnType<typeof getConversation>>>;
 
 const messageFields = `
-  id, body, created_at, edited_at, deleted_at, pinned_at, author_id, reply_to_id, file_id,
+  id, body, created_at, edited_at, deleted_at, pinned_at, author_id, reply_to_id, file_id, forwarded,
   contact_employee_id, meeting_id, poll_question, poll_options, poll_allows_multiple,
   author:employees!messages_author_id_fkey(id, full_name),
   file:files(id, name, kind, size_bytes, status, external_url),
   contact:employees!messages_contact_employee_id_fkey(id, full_name, work_email, phone,
     designation:designations(title), department:departments!employees_department_id_fkey(name)),
   meeting:meetings(id, title, starts_at, ends_at, status, meeting_link),
-  reply:reply_to_id(id, body, deleted_at, author:employees!messages_author_id_fkey(full_name))
+  reply:reply_to_id(id, body, deleted_at, poll_question, author:employees!messages_author_id_fkey(id, full_name),
+    file:files(name, kind))
 `;
+
+// Edits and deleting for everyone are allowed for five minutes after sending.
+export const messageChangeWindowMs = 5 * 60_000;
 
 export async function listMessages(conversationId: string) {
   const database = await createDatabaseClient();
 
-  const { data, error } = await database
+  // Messages this person deleted for themselves stay hidden from them only.
+  const [hidden, starred] = await Promise.all([
+    database.from('message_hidden').select('message_id'),
+    database.from('message_stars').select('message_id'),
+  ]);
+  if (hidden.error) throw hidden.error;
+  if (starred.error) throw starred.error;
+  const hiddenIds = hidden.data.map((row) => row.message_id);
+  const starredIds = new Set(starred.data.map((row) => row.message_id));
+
+  let query = database
     .from('messages')
     .select(messageFields)
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: false })
     .limit(messagesPerPage);
+  if (hiddenIds.length > 0) query = query.not('id', 'in', `(${hiddenIds.join(',')})`);
 
+  const { data, error } = await query;
   if (error) throw error;
   const now = Date.now();
-  // An event that has ended is shown struck through.
   return data.reverse().map((message) => ({
     ...message,
+    isStarred: starredIds.has(message.id),
+    // Until when the author may still edit it or delete it for everyone.
+    changeableUntil: new Date(message.created_at).getTime() + messageChangeWindowMs,
+    isChangeableNow: now < new Date(message.created_at).getTime() + messageChangeWindowMs,
+    // An event that has ended is shown struck through.
     meetingIsOver: message.meeting
       ? message.meeting.status !== 'scheduled' || new Date(message.meeting.ends_at).getTime() < now
       : false,
   }));
+}
+
+// The person's starred messages, newest first, across every conversation they can see.
+export async function listStarredMessages() {
+  const database = await createDatabaseClient();
+  const { data: stars, error } = await database
+    .from('message_stars')
+    .select('message_id, created_at')
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  if (stars.length === 0) return [];
+
+  const { data, error: messagesError } = await database
+    .from('messages')
+    .select(`${messageFields}, conversation_id`)
+    .in('id', stars.map((star) => star.message_id))
+    .is('deleted_at', null);
+  if (messagesError) throw messagesError;
+
+  const order = new Map(stars.map((star, index) => [star.message_id, index]));
+  return data.sort((first, second) => (order.get(first.id) ?? 0) - (order.get(second.id) ?? 0));
 }
 
 export type MessageItem = Awaited<ReturnType<typeof listMessages>>[number];
@@ -125,9 +167,12 @@ export async function getReadState(conversationId: string) {
   if (error) throw error;
   const row = data[0];
   // The database says "-infinity" when someone has never opened the conversation.
-  const readAt = row?.everyone_read_at;
-  const everyoneReadAt = readAt && !Number.isNaN(new Date(readAt).getTime()) ? readAt : null;
-  return { others: row?.others ?? 0, everyoneReadAt };
+  const usable = (value: string | null | undefined) => (value && !Number.isNaN(new Date(value).getTime()) ? value : null);
+  return {
+    others: row?.others ?? 0,
+    everyoneReadAt: usable(row?.everyone_read_at),
+    everyoneDeliveredAt: usable(row?.everyone_delivered_at),
+  };
 }
 
 export async function listPollVotes(conversationId: string) {

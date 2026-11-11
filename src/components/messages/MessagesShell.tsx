@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
 import styles from '@/app/(crm)/messages/MessagesLayout.module.css';
@@ -18,10 +18,15 @@ export function MessagesShell({ conversations, activeId, search, children }: Mes
     <div className={styles.layout} data-has-conversation={Boolean(activeId)}>
       <aside className={styles.sidebar} aria-label="Conversations">
         <div className={styles.sidebarHeader}>
-          <ButtonLink href="/messages/new" variant="primary">
-            <Plus size={16} aria-hidden="true" />
-            New message
-          </ButtonLink>
+          <div className={styles.sidebarButtons}>
+            <ButtonLink href="/messages/new" variant="primary">
+              <Plus size={16} aria-hidden="true" />
+              New message
+            </ButtonLink>
+            <ButtonLink href="/messages/starred" aria-label="Starred messages" title="Starred messages">
+              <Star size={16} aria-hidden="true" />
+            </ButtonLink>
+          </div>
           <form method="get" action="/messages" className={styles.search} role="search">
             <label htmlFor="message-search" className="visually-hidden">
               Search messages

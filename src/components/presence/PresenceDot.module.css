@@ -15,15 +15,21 @@
   position: relative;
   display: inline-block;
   flex-shrink: 0;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   box-shadow: 0 0 0 2px var(--color-surface);
 }
 
+.wrapper[data-variant='overlay'] {
+  right: -1px;
+  bottom: -1px;
+}
+
 .wrapper[data-variant='overlay'] .dot {
-  width: 12px;
-  height: 12px;
+  width: 9px;
+  height: 9px;
+  box-shadow: 0 0 0 1.5px var(--color-surface);
 }
 
 .dot[data-status='available'] {
@@ -41,10 +47,10 @@
 
 .dot[data-status='do_not_disturb']::after {
   position: absolute;
-  top: calc(50% - 1px);
+  top: calc(50% - 0.75px);
   left: 25%;
   width: 50%;
-  height: 2px;
+  height: 1.5px;
   border-radius: 1px;
   background: #ffffff;
   content: '';
@@ -56,10 +62,14 @@
 }
 
 .dot[data-status='offline'] {
-  background: transparent;
+  background: var(--color-surface);
   box-shadow:
-    inset 0 0 0 2px #8a8f98,
-    0 0 0 2px var(--color-surface);
+    inset 0 0 0 1.5px #8a8f98,
+    0 0 0 1.5px var(--color-surface);
+}
+
+.prefix {
+  margin-left: 4px;
 }
 
 .label {

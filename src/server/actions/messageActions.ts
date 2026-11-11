@@ -178,6 +178,116 @@ export async function deleteMessageAction(conversationId: string, messageId: str
   return success('Message deleted.');
 }
 
+const messageIdsSchema = z.array(z.uuid()).min(1).max(100);
+
+export async function setMessageStarredAction(conversationId: string, messageId: string, starred: boolean): Promise<ActionResult> {
+  const access = await getActionAccess(permissionKeys.messagesUse);
+  if (!access) return failure(noPermission);
+
+  const database = await createDatabaseClient();
+  const { error } = starred
+    ? await database.from('message_stars').upsert({ message_id: messageId, employee_id: access.employee.id }).select('message_id')
+    : await database.from('message_stars').delete().eq('message_id', messageId).select('message_id');
+  if (error) return databaseFailure(error);
+
+  revalidatePath(`/messages/${conversationId}`);
+  revalidatePath('/messages/starred');
+  return success(starred ? 'Starred.' : 'Unstarred.');
+}
+
+// Delete for me: the messages disappear from this person's view only.
+export async function hideMessagesAction(conversationId: string, messageIds: string[]): Promise<ActionResult> {
+  const access = await getActionAccess(permissionKeys.messagesUse);
+  if (!access) return failure(noPermission);
+  const parsed = messageIdsSchema.safeParse(messageIds);
+  if (!parsed.success) return failure('Choose the messages to delete.');
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('message_hidden')
+    .upsert(parsed.data.map((message_id) => ({ message_id, employee_id: access.employee.id })))
+    .select('message_id');
+  if (error) return databaseFailure(error);
+  if (data.length === 0) return failure(noPermission);
+
+  revalidatePath(`/messages/${conversationId}`);
+  return success(parsed.data.length === 1 ? 'Deleted for you.' : `${parsed.data.length} messages deleted for you.`);
+}
+
+// Delete for everyone: within five minutes of sending, as the database enforces.
+export async function deleteMessagesForEveryoneAction(conversationId: string, messageIds: string[]): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+  const parsed = messageIdsSchema.safeParse(messageIds);
+  if (!parsed.success) return failure('Choose the messages to delete.');
+
+  const database = await createDatabaseClient();
+  for (const messageId of parsed.data) {
+    const { data, error } = await database
+      .from('messages')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', messageId)
+      .select('id');
+    if (error) return databaseFailure(error);
+    if (data.length === 0) return failure(noPermission);
+  }
+
+  revalidatePath(`/messages/${conversationId}`);
+  return success('Deleted for everyone.');
+}
+
+// Sends copies of messages to other conversations, marked as forwarded. Polls are not
+// forwarded, because their votes belong to the original conversation.
+export async function forwardMessagesAction(messageIds: string[], conversationIds: string[]): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+  const messages = messageIdsSchema.safeParse(messageIds);
+  const targets = z.array(z.uuid()).min(1, 'Choose where to forward.').max(20).safeParse(conversationIds);
+  if (!messages.success) return failure('Choose the messages to forward.');
+  if (!targets.success) return failure('Choose at least one conversation.');
+
+  const database = await createDatabaseClient();
+  const { data: originals, error } = await database
+    .from('messages')
+    .select('id, body, file_id, contact_employee_id, meeting_id, poll_question, deleted_at, created_at')
+    .in('id', messages.data)
+    .order('created_at');
+  if (error) return databaseFailure(error);
+
+  const sendable = originals.filter((message) => !message.deleted_at && !message.poll_question);
+  if (sendable.length === 0) return failure('These messages cannot be forwarded.');
+
+  for (const conversationId of targets.data) {
+    const { error: insertError } = await database.from('messages').insert(
+      sendable.map((message) => ({
+        conversation_id: conversationId,
+        body: message.body,
+        file_id: message.file_id,
+        contact_employee_id: message.contact_employee_id,
+        meeting_id: message.meeting_id,
+        forwarded: true,
+      })),
+    );
+    if (insertError) return databaseFailure(insertError);
+    revalidatePath(`/messages/${conversationId}`);
+  }
+
+  revalidatePath('/messages', 'layout');
+  return success(`Forwarded to ${targets.data.length} ${targets.data.length === 1 ? 'conversation' : 'conversations'}.`);
+}
+
+export type MessageInfoRow = { employeeId: string; name: string; readAt: string | null; delivered: boolean };
+
+// Who your message reached and who read it.
+export async function getMessageInfoAction(messageId: string): Promise<MessageInfoRow[]> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return [];
+  const parsed = z.uuid().safeParse(messageId);
+  if (!parsed.success) return [];
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('get_message_info', { p_message: parsed.data });
+  if (error) return [];
+  return data.map((row) => ({ employeeId: row.employee_id, name: row.full_name, readAt: row.read_at, delivered: row.delivered }));
+}
+
 export async function setMessagePinnedAction(
   conversationId: string,
   messageId: string,

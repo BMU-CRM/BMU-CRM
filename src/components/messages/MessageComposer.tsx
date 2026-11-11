@@ -124,6 +124,8 @@ export function MessageComposer({
         if (outcome.status === 'success') {
           setBody('');
           setAttachment(null);
+          const box = document.getElementById('message-body');
+          if (box) box.style.height = '';
           if (replyTo) router.replace(pathname, { scroll: false });
         }
       } catch (error) {
@@ -203,12 +205,17 @@ export function MessageComposer({
           <textarea
             id="message-body"
             className={styles.input}
-            rows={2}
+            rows={1}
             value={body}
-            placeholder="Write a message. Use @Full Name to mention someone."
+            placeholder="Type a message"
+            title="Use @Full Name to mention someone. Shift and Enter starts a new line."
             onChange={(event) => {
               setBody(event.target.value);
               announceTyping();
+              // One line to start with; grows with the text, up to a few lines.
+              const box = event.target;
+              box.style.height = 'auto';
+              box.style.height = `${Math.min(box.scrollHeight, 160)}px`;
             }}
             onKeyDown={handleKeyDown}
           />

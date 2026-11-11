@@ -4,7 +4,9 @@ import { formatDate, todayInIndia } from '@/lib/formatDate';
 import type { TaskListItem } from '@/server/services/taskService';
 import { PriorityBadge, TaskStatusBadge } from './TaskBadges';
 
-export function TaskTable({ tasks }: { tasks: TaskListItem[] }) {
+// showAssignee is for people who oversee others' work. Someone who only sees their own
+// tasks would just see their own name in that column.
+export function TaskTable({ tasks, showAssignee = true }: { tasks: TaskListItem[]; showAssignee?: boolean }) {
   const today = todayInIndia();
 
   return (
@@ -13,7 +15,7 @@ export function TaskTable({ tasks }: { tasks: TaskListItem[] }) {
         <thead>
           <tr>
             <th scope="col">Task</th>
-            <th scope="col">Assigned to</th>
+            {showAssignee && <th scope="col">Assigned to</th>}
             <th scope="col">Assigned by</th>
             <th scope="col">Status</th>
             <th scope="col">Priority</th>
@@ -36,7 +38,7 @@ export function TaskTable({ tasks }: { tasks: TaskListItem[] }) {
                     .join(' · ')}
                 </p>
               </td>
-              <td>{task.assignee?.full_name ?? 'Unassigned'}</td>
+              {showAssignee && <td>{task.assignee?.full_name ?? 'Unassigned'}</td>}
               <td>{task.creator?.full_name ?? 'System'}</td>
               <td>
                 <TaskStatusBadge status={task.status} dueDate={task.due_date} today={today} />

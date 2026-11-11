@@ -7,7 +7,7 @@ import './globals.css';
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: { default: 'Company Workspace', template: '%s | Company Workspace' },
+  title: { default: 'BMU Workspace', template: '%s | BMU Workspace' },
   description: 'Internal company operating platform.',
   robots: { index: false, follow: false },
 };

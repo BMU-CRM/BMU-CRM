@@ -48,6 +48,7 @@ type TaskFormProps = {
     complexity: number;
     start_date: string | null;
     due_date: string | null;
+    due_time: string | null;
     estimated_hours: number | null;
     recurrence: string;
     reference_links: string[];
@@ -114,6 +115,13 @@ export function TaskForm({
         <TextField label="Estimated hours" name="estimatedHours" type="number" min={0} step="0.25" defaultValue={task?.estimated_hours ?? ''} error={errors?.estimatedHours} />
         <TextField label="Start date" name="startDate" type="date" defaultValue={task?.start_date ?? ''} error={errors?.startDate} />
         <TextField label="Due date" name="dueDate" type="date" defaultValue={task?.due_date ?? ''} error={errors?.dueDate} />
+        <TextField
+          label="Due time (optional)"
+          name="dueTime"
+          type="time"
+          defaultValue={task?.due_time?.slice(0, 5) ?? ''}
+          error={errors?.dueTime}
+        />
         <SelectField
           label="Project"
           name="projectId"

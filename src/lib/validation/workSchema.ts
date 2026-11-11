@@ -19,6 +19,12 @@ const optionalDate = z
   .transform((value) => (value === '' ? null : value))
   .pipe(z.iso.date('Enter a valid date.').nullable());
 
+const optionalTime = z
+  .string()
+  .trim()
+  .transform((value) => (value === '' ? null : value.slice(0, 5)))
+  .pipe(z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Enter a valid time.').nullable());
+
 const optionalHours = z
   .string()
   .trim()
@@ -78,11 +84,21 @@ export const taskSchema = z
     complexity: z.coerce.number().int().min(1, 'Choose a complexity.').max(5, 'Choose a complexity.'),
     startDate: optionalDate,
     dueDate: optionalDate,
+    dueTime: optionalTime,
     estimatedHours: optionalHours,
     recurrence: z.enum(['none', 'daily', 'weekly', 'monthly'], { error: 'Choose how often it repeats.' }),
     referenceLinks,
   })
-  .refine(datesInOrder, datesMessage);
+  .refine(datesInOrder, datesMessage)
+  .refine((values) => !values.dueTime || values.dueDate, { message: 'Choose a due date for the time.', path: ['dueTime'] });
+
+// A task someone plans for themselves from the calendar.
+export const myTaskSchema = z.object({
+  title: z.string().trim().min(2, 'Enter a task title.').max(200, 'Use 200 characters or fewer.'),
+  dueDate: z.iso.date('Choose a date.'),
+  dueTime: optionalTime,
+  priority: z.enum(priorities, { error: 'Choose a priority.' }),
+});
 
 export const taskProgressSchema = z.object({
   completionPercentage: z.coerce

@@ -15,6 +15,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import type { TaskStatus } from '@/lib/tasks/taskWorkflow';
 import {
+  myTaskSchema,
   checklistItemSchema,
   taskCommentSchema,
   taskEscalationSchema,
@@ -42,6 +43,7 @@ function taskValues(formData: FormData) {
     complexity: formData.get('complexity'),
     startDate: formData.get('startDate') ?? '',
     dueDate: formData.get('dueDate') ?? '',
+    dueTime: formData.get('dueTime') ?? '',
     estimatedHours: formData.get('estimatedHours') ?? '',
     recurrence: formData.get('recurrence'),
     referenceLinks: formData.get('referenceLinks') ?? '',
@@ -73,6 +75,7 @@ export async function saveTaskAction(
     complexity: values.complexity,
     start_date: values.startDate,
     due_date: values.dueDate,
+    due_time: values.dueTime,
     estimated_hours: values.estimatedHours,
     recurrence: parentTaskId ? ('none' as const) : values.recurrence,
     reference_links: values.referenceLinks,
@@ -146,6 +149,39 @@ export async function changeTaskStatusAction(
 
   refreshTask(taskId);
   return success('Task updated.');
+}
+
+// A task for yourself, planned on the calendar. Nobody else is involved, so it starts
+// as accepted and you mark it complete yourself.
+export async function createMyTaskAction(values: {
+  title: string;
+  dueDate: string;
+  dueTime: string;
+  priority: string;
+}): Promise<ActionResult> {
+  const access = await getActionAccess(permissionKeys.tasksCreate);
+  if (!access) return failure(noPermission);
+
+  const parsed = myTaskSchema.safeParse(values);
+  if (!parsed.success) return validationFailure(parsed.error);
+
+  const database = await createDatabaseClient();
+  const { error } = await database
+    .from('tasks')
+    .insert({
+      title: parsed.data.title,
+      assignee_id: access.employee.id,
+      due_date: parsed.data.dueDate,
+      due_time: parsed.data.dueTime,
+      priority: parsed.data.priority,
+    })
+    .select('id')
+    .single();
+  if (error) return databaseFailure(error);
+
+  revalidatePath('/calendar');
+  revalidatePath('/tasks');
+  return success('Task added.');
 }
 
 const rescheduleSchema = z.iso.date();

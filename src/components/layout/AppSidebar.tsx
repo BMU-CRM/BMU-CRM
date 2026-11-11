@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { buildNavigation } from '@/lib/access/navigationRegistry';
 import type { PermissionMap } from '@/lib/access/permissionKeys';
 import styles from './AppSidebar.module.css';
+import { BrandLogo } from './BrandLogo';
 
 type AppSidebarProps = {
   permissions: PermissionMap;
@@ -31,8 +32,10 @@ export function AppSidebar({
       {isMobileOpen && <div className={styles.backdrop} onClick={onCloseMobile} aria-hidden="true" />}
       <aside className={styles.sidebar} data-collapsed={isCollapsed} data-mobile-open={isMobileOpen}>
         <div className={styles.brand}>
-          <span className={styles.brandMark} aria-hidden="true" />
-          <span className={styles.brandName}>Workspace</span>
+          <Link href="/overview" className={styles.brandLink} onClick={onCloseMobile} title="BMU Workspace: go to Overview">
+            <BrandLogo className={styles.brandMark} />
+            <span className={styles.brandName}>Workspace</span>
+          </Link>
           <button type="button" className={styles.mobileClose} onClick={onCloseMobile} aria-label="Close menu">
             <X size={18} aria-hidden="true" />
           </button>

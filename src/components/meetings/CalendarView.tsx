@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { CalendarRange } from '@/lib/calendar/calendarRange';
 import { formatDate } from '@/lib/formatDate';
 import type { CalendarItem } from '@/server/services/meetingService';
+import { CalendarDayMenu } from './CalendarDayMenu';
 import { CalendarDragArea, TaskMoveButton } from './CalendarTaskMove';
 import styles from './CalendarView.module.css';
 
@@ -68,15 +69,23 @@ function Legend() {
 }
 
 // The month grid for wide screens, and the same items as an agenda list on phones.
-export function CalendarView({ range, items, today }: { range: CalendarRange; items: CalendarItem[]; today: string }) {
+type CalendarViewProps = {
+  range: CalendarRange;
+  items: CalendarItem[];
+  today: string;
+  // Whether this person may add their own tasks from the calendar.
+  canAddTasks: boolean;
+};
+
+export function CalendarView({ range, items, today, canAddTasks }: CalendarViewProps) {
   const groups = groupByDate(items);
   const monthPrefix = range.focus.slice(0, 7);
 
   const agenda = (
     <ol className={styles.agenda}>
-      {/* A week lists every day, so a task can be moved to a free one. */}
+      {/* Every day is listed, so you can tap a free one to add to it or move a task there. */}
       {range.days
-        .filter((day) => (range.view === 'week' || groups.has(day)) && (range.view !== 'month' || day.startsWith(monthPrefix)))
+        .filter((day) => range.view !== 'month' || day.startsWith(monthPrefix))
         .map((day) => (
           <li key={day} className={styles.agendaDay} data-drop-date={day}>
             <p className={styles.agendaDate} data-today={day === today}>
@@ -86,24 +95,21 @@ export function CalendarView({ range, items, today }: { range: CalendarRange; it
               {(groups.get(day) ?? []).map((item) => (
                 <AgendaLine key={item.id} item={item} />
               ))}
-              {!groups.has(day) && <span className={styles.freeDay}>Nothing scheduled</span>}
+              {!groups.has(day) && <span className={styles.freeDay}>Nothing scheduled. Tap to add.</span>}
             </div>
           </li>
         ))}
-      {range.view !== 'week' && !range.days.some((day) => groups.has(day)) && (
-        <li className={styles.empty}>Nothing scheduled.</li>
-      )}
     </ol>
   );
 
   return (
+    <CalendarDayMenu canAddTasks={canAddTasks}>
     <CalendarDragArea>
       <Legend />
-      {items.some((item) => item.canMove) && (
-        <p className={styles.hint}>
-          To postpone or bring forward one of your tasks, drag it to another day, or use its Move button in the list.
-        </p>
-      )}
+      <p className={styles.hint}>
+        Click any day to add your own task or schedule a meeting.
+        {items.some((item) => item.canMove) && ' Drag one of your tasks to another day, or use its Move button, to postpone or bring it forward.'}
+      </p>
       {range.view === 'month' ? (
         <>
           <div className={styles.month}>
@@ -143,6 +149,7 @@ export function CalendarView({ range, items, today }: { range: CalendarRange; it
         agenda
       )}
     </CalendarDragArea>
+    </CalendarDayMenu>
   );
 }
 

@@ -1,0 +1,34 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.logo img {
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.onDark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .onLight {
+    display: none;
+  }
+
+  :global(:root:not([data-theme='light'])) .onDark {
+    display: block;
+  }
+}
+
+:global(:root[data-theme='dark']) .onLight {
+  display: none;
+}
+
+:global(:root[data-theme='dark']) .onDark {
+  display: block;
+}
