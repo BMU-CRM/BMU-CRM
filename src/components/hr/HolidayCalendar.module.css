@@ -1,0 +1,162 @@
+.month {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.weekdays,
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.weekdays {
+  margin-bottom: var(--space-1);
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 84px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.day[data-off='true'] {
+  background: var(--color-surface-muted);
+}
+
+/* Public and company holidays differ by label as well as colour. */
+.day[data-holiday='public'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.day[data-holiday='company'] {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.day[data-today='true'] .number {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.number {
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.holiday {
+  font-size: var(--text-small);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+a.holiday:hover {
+  text-decoration: underline;
+}
+
+.kind,
+.offLabel {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.add {
+  position: absolute;
+  inset: auto var(--space-1) var(--space-1) auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  opacity: 0;
+}
+
+.day:hover .add,
+.add:focus-visible {
+  opacity: 1;
+  background: var(--color-surface-muted);
+}
+
+.blank {
+  min-height: 84px;
+}
+
+.year {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.miniTitle {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.miniTitle a:hover {
+  color: var(--color-primary);
+}
+
+.miniWeekdays,
+.miniDays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+  text-align: center;
+}
+
+.miniWeekdays {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.miniDay {
+  padding: 2px 0;
+  border-radius: var(--radius-small);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.miniDay[data-holiday='public'] {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-weight: 700;
+}
+
+.miniDay[data-holiday='company'] {
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+  font-weight: 700;
+}
+
+.miniDay[data-today='true'] {
+  outline: 1px solid var(--color-primary);
+}
+
+@media (max-width: 640px) {
+  .day,
+  .blank {
+    min-height: 56px;
+    padding: 2px 4px;
+  }
+
+  .kind,
+  .offLabel {
+    display: none;
+  }
+}

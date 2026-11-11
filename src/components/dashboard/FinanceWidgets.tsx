@@ -18,8 +18,8 @@ export async function FinanceStatsWidget() {
   return (
     <StatTiles
       tiles={[
-        { label: 'Invoiced this month', value: formatRupees(summary.invoiced), href: '/finance?period=this-month' },
-        { label: 'Collected this month', value: formatRupees(summary.collected), href: '/finance?period=this-month' },
+        { label: 'Invoiced this month', value: formatRupees(summary.invoiced), href: '/finance/reports?period=this-month' },
+        { label: 'Collected this month', value: formatRupees(summary.collected), href: '/finance/reports?period=this-month' },
         { label: 'Owed to us', value: formatRupees(summary.outstanding), href: '/invoices?status=unpaid' },
         { label: 'Overdue', value: formatRupees(summary.overdue), href: '/invoices?status=overdue' },
       ]}

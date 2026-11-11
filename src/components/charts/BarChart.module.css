@@ -1,0 +1,55 @@
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.empty {
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.bar {
+  fill: var(--series-1);
+}
+
+.hit {
+  fill: transparent;
+}
+
+.mark:hover .bar {
+  filter: brightness(1.12);
+}
+
+.mark:hover .hit {
+  fill: var(--color-surface-muted);
+  fill-opacity: 0.5;
+}
+
+.grid {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+
+.baseline {
+  stroke: var(--chart-axis);
+  stroke-width: 1;
+}
+
+.category {
+  fill: var(--color-text);
+  font-size: 13px;
+}
+
+.value {
+  fill: var(--color-text-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.axisLabel {
+  fill: var(--chart-muted);
+  font-size: 11px;
+}

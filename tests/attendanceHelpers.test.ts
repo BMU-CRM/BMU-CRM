@@ -35,7 +35,7 @@ describe('summariseAttendance', () => {
     const [person] = summariseAttendance(data(), '2027-01-04', '2027-01-10', '2027-01-11');
 
     expect(person?.workingDays).toBe(5);
-    expect(person?.days['2027-01-09']).toBe('off');
+    expect(person?.days['2027-01-09']).toBe('week_off');
   });
 
   it('marks someone late only after the grace period', () => {
@@ -46,7 +46,8 @@ describe('summariseAttendance', () => {
       '2027-01-06',
     );
 
-    expect(person?.days).toEqual({ '2027-01-04': 'present', '2027-01-05': 'late' });
+    expect(person?.days).toEqual({ '2027-01-04': 'present', '2027-01-05': 'present' });
+    expect(person?.details.map((day) => day.lateMinutes)).toEqual([0, 16]);
     expect(person?.late).toBe(1);
     expect(person?.present).toBe(2);
   });
@@ -91,7 +92,50 @@ describe('summariseAttendance', () => {
       '2027-01-05',
     );
 
-    expect(person).toMatchObject({ present: 1, leaveDays: 0.5 });
+    expect(person).toMatchObject({ present: 1, halfDays: 1, leaveDays: 0.5 });
+    expect(person?.days['2027-01-04']).toBe('half_day');
+  });
+
+  it('takes breaks off the hours worked and counts overtime only once HR sets it', () => {
+    const long = { ...record('2027-01-04', '09:00', '20:00'), break_minutes: 60 };
+    const [withoutRule] = summariseAttendance(data({ records: [long] }), '2027-01-04', '2027-01-04', '2027-01-05');
+    expect(withoutRule).toMatchObject({ workedMinutes: 600, breakMinutes: 60, overtimeMinutes: 0 });
+
+    const [withRule] = summariseAttendance(
+      data({ settings: { ...settings, overtime_after_minutes: 540 }, records: [long] }),
+      '2027-01-04',
+      '2027-01-04',
+      '2027-01-05',
+    );
+    expect(withRule?.overtimeMinutes).toBe(60);
+  });
+
+  it('marks a short day as a half day once HR sets the threshold', () => {
+    const short = record('2027-01-04', '09:30', '13:00');
+    const [person] = summariseAttendance(
+      data({ settings: { ...settings, half_day_minutes: 240 }, records: [short] }),
+      '2027-01-04',
+      '2027-01-04',
+      '2027-01-05',
+    );
+    expect(person?.days['2027-01-04']).toBe('half_day');
+    expect(person?.details[0]?.earlyMinutes).toBe(330);
+  });
+
+  it('counts days worked from home and uses the status HR set', () => {
+    const [person] = summariseAttendance(
+      data({
+        records: [
+          { ...record('2027-01-04', '09:30', '18:30'), work_mode: 'wfh' },
+          { ...record('2027-01-05', '09:30', '18:30'), status_override: 'absent' },
+        ],
+      }),
+      '2027-01-04',
+      '2027-01-05',
+      '2027-01-06',
+    );
+    expect(person).toMatchObject({ wfhDays: 1, present: 1, absent: 1 });
+    expect(person?.details[1]?.isOverridden).toBe(true);
   });
 });
 

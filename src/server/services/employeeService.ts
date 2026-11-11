@@ -8,10 +8,12 @@ const employeeFields = `
   id, employee_code, full_name, work_email, phone, avatar_url, skills, joining_date,
   employment_status, is_active, invite_accepted_at, auth_user_id,
   role_id, designation_id, department_id, reporting_manager_id,
+  employment_type_id, probation_months, probation_end_date, confirmation_date,
   role:roles(name),
   designation:designations(title),
   department:departments!employees_department_id_fkey(name),
-  manager:reporting_manager_id(id, full_name)
+  manager:reporting_manager_id(id, full_name),
+  employment_type:employment_types(name)
 `;
 
 export const employeesPerPage = 25;
@@ -41,16 +43,11 @@ export async function canViewEmployeeProfile(access: CurrentAccess, employeeId: 
   return data === true;
 }
 
-export async function listEmployees(access: CurrentAccess, { search, departmentId, roleId, accountStatus, page }: EmployeeFilters) {
+async function employeeQuery(access: CurrentAccess, { search, departmentId, roleId, accountStatus }: Omit<EmployeeFilters, 'page'>) {
   const database = await createDatabaseClient();
-  const from = (page - 1) * employeesPerPage;
   const ids = await directoryIds(access);
 
-  let query = database
-    .from('employees')
-    .select(employeeFields, { count: 'exact' })
-    .order('full_name')
-    .range(from, from + employeesPerPage - 1);
+  let query = database.from('employees').select(employeeFields, { count: 'exact' }).order('full_name');
   if (ids) query = query.in('id', ids);
 
   const term = search ? cleanSearchTerm(search) : '';
@@ -60,11 +57,26 @@ export async function listEmployees(access: CurrentAccess, { search, departmentI
   if (departmentId) query = query.eq('department_id', departmentId);
   if (roleId) query = query.eq('role_id', roleId);
   if (accountStatus) query = query.eq('is_active', accountStatus === 'active');
+  // Wrapped, because returning the query itself from an async function would run it.
+  return { query };
+}
 
-  const { data, count, error } = await query;
+export async function listEmployees(access: CurrentAccess, filters: EmployeeFilters) {
+  const from = (filters.page - 1) * employeesPerPage;
+  const { query } = await employeeQuery(access, filters);
+  const { data, count, error } = await query.range(from, from + employeesPerPage - 1);
   if (error) throw error;
 
   return { employees: data, total: count ?? 0 };
+}
+
+// The directory as a spreadsheet: the same people and filters as the Employees page,
+// work details only. Private details never go into the export.
+export async function listEmployeesForExport(access: CurrentAccess, filters: Omit<EmployeeFilters, 'page'>) {
+  const { query } = await employeeQuery(access, filters);
+  const { data, error } = await query.range(0, 4999);
+  if (error) throw error;
+  return data;
 }
 
 export async function getEmployee(employeeId: string) {
@@ -122,6 +134,22 @@ export async function listManagerOptions(access: CurrentAccess, permission: Perm
   return everyone.filter((person) => team.has(person.id));
 }
 
+// The extra roles someone can switch to, for whoever may assign roles to them.
+export async function listExtraRoleIds(employeeId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database.from('employee_extra_roles').select('role_id').eq('employee_id', employeeId);
+  if (error) throw error;
+  return data.map((row) => row.role_id);
+}
+
+// The roles the signed-in person can switch between, with the one in use marked.
+export async function listMyRoles() {
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('get_my_roles');
+  if (error) throw error;
+  return data.map((row) => ({ id: row.role_id, name: row.name, isMain: row.is_main, isCurrent: row.is_current }));
+}
+
 // The role given to people added by someone who cannot choose roles.
 export async function getDefaultRole() {
   const database = await createDatabaseClient();
@@ -143,6 +171,108 @@ export async function listHierarchyPeople() {
     .eq('is_active', true)
     .order('full_name');
 
+  if (error) throw error;
+  return data;
+}
+
+// Who may see and change each part of the employee record. Mirrors the database rules:
+// personal details for the person, HR and their managers; identity and bank details for
+// the person (read only) and HR; documents for the person and HR.
+export async function getEmployeeRecordAccess(access: CurrentAccess, employeeId: string) {
+  const database = await createDatabaseClient();
+  const isSelf = employeeId === access.employee.id;
+  const isHr = access.permissions[permissionKeys.employeesPrivateView] === 'organisation';
+
+  const [seesPersonal, managesEmployee] = await Promise.all([
+    database.rpc('can_see_personal_details', { p_employee: employeeId }),
+    isSelf
+      ? Promise.resolve({ data: false })
+      : database.rpc('can_access_employee', { p_permission: permissionKeys.employeesUpdate, p_target: employeeId }),
+  ]);
+
+  return {
+    isSelf,
+    canSeePersonal: seesPersonal.data === true,
+    // Date of birth and gender are changed by HR or a manager, never by the person.
+    canEditPersonalFully: isHr || managesEmployee.data === true,
+    canEditPersonal: seesPersonal.data === true,
+    canSeePrivate: isSelf || isHr,
+    canEditPrivate: isHr,
+    canSeeDocuments: isSelf || isHr,
+    canAddDocuments: (isSelf || isHr) && access.permissions[permissionKeys.filesUpload] !== undefined,
+  };
+}
+
+export type EmployeeRecordAccess = Awaited<ReturnType<typeof getEmployeeRecordAccess>>;
+
+export async function getPersonalDetails(employeeId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('employee_personal_details')
+    .select(
+      'date_of_birth, gender, personal_email, address, emergency_contact_name, emergency_contact_relation, emergency_contact_phone, updated_at',
+    )
+    .eq('employee_id', employeeId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export type PersonalDetails = NonNullable<Awaited<ReturnType<typeof getPersonalDetails>>>;
+
+// Only the last four digits of the encrypted numbers ever leave this function.
+export async function getPrivateDetails(employeeId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('employee_private_details')
+    .select('aadhaar_last4, pan, bank_name, account_last4, ifsc, account_holder, updated_at')
+    .eq('employee_id', employeeId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export type PrivateDetails = NonNullable<Awaited<ReturnType<typeof getPrivateDetails>>>;
+
+// The encrypted value, read with the signed-in person's own access.
+export async function getEncryptedDetail(employeeId: string, field: 'aadhaar' | 'account_number') {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('employee_private_details')
+    .select('aadhaar_encrypted, account_number_encrypted')
+    .eq('employee_id', employeeId)
+    .maybeSingle();
+  if (error) throw error;
+  return (field === 'aadhaar' ? data?.aadhaar_encrypted : data?.account_number_encrypted) ?? null;
+}
+
+export async function listEmployeeDocuments(employeeId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('files')
+    .select('id, name, kind, size_bytes, document_type, created_at, owner_id, owner:employees!files_owner_id_fkey(full_name)')
+    .eq('employee_id', employeeId)
+    .eq('status', 'ready')
+    .eq('is_archived', false)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getEmploymentHistory(employeeId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('get_employment_history', { p_employee: employeeId });
+  if (error) throw error;
+  return data;
+}
+
+export async function listEmploymentTypes() {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('employment_types')
+    .select('id, name, is_active')
+    .order('sort_order')
+    .order('name');
   if (error) throw error;
   return data;
 }

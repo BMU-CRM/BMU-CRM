@@ -181,7 +181,7 @@ describe('finance access', () => {
 
   it('shows the finance pages and revenue widgets from permissions alone', () => {
     const labels = buildNavigation(finance).flatMap((section) => section.items.map((item) => item.label));
-    expect(labels).toEqual(['Overview', 'Quotations', 'Invoices', 'Reports', 'Finance settings']);
+    expect(labels).toEqual(['Overview', 'Quotations', 'Invoices', 'Finance reports', 'Finance settings']);
     expect(buildDashboard(finance).map((widget) => widget.key)).toEqual(['financeStats', 'overdueInvoices', 'awaitingQuotations', 'myProfile']);
   });
 });

@@ -44,6 +44,13 @@ export const createEmployeeSchema = z.object({
   joiningDate: optionalDate,
 });
 
+const optionalWholeNumber = (max: number, message: string) =>
+  z
+    .string()
+    .trim()
+    .transform((value) => (value === '' ? null : Number(value)))
+    .pipe(z.number({ error: message }).int(message).min(0, message).max(max, message).nullable());
+
 export const updateEmployeeSchema = z.object({
   fullName,
   phone,
@@ -53,6 +60,64 @@ export const updateEmployeeSchema = z.object({
   joiningDate: optionalDate,
   employmentStatus: z.enum(employmentStatuses, { error: 'Choose a status.' }),
   roleId: z.uuid('Choose a role.').optional(),
+  employmentTypeId: optionalId,
+  probationMonths: optionalWholeNumber(24, 'Enter 0 to 24 months.'),
+  confirmationDate: optionalDate,
+});
+
+export const genders = ['female', 'male', 'other', 'prefer_not_to_say'] as const;
+
+const limitedText = (max: number) =>
+  optionalText.pipe(z.string().max(max, `Use ${max} characters or fewer.`).nullable());
+
+// Date of birth and gender are left out when the person editing is the employee, who
+// cannot change them.
+export const personalDetailsSchema = z.object({
+  dateOfBirth: optionalDate
+    .refine((value) => value === null || value > '1900-01-01', 'Enter a valid date.')
+    .optional(),
+  gender: z
+    .string()
+    .trim()
+    .transform((value) => (value === '' ? null : value))
+    .pipe(z.enum(genders, { error: 'Choose an option.' }).nullable())
+    .optional(),
+  personalEmail: optionalText.pipe(z.email('Enter a valid email.').max(254).nullable()),
+  address: limitedText(1000),
+  emergencyContactName: limitedText(120),
+  emergencyContactRelation: limitedText(60),
+  emergencyContactPhone: phone,
+});
+
+// Each number is optional, and left unchanged when its box is empty, because the saved
+// numbers are never sent back to the browser.
+const digitsOnly = (value: string) => value.replace(/[\s-]/g, '');
+
+export const privateDetailsSchema = z.object({
+  aadhaar: z
+    .string()
+    .transform(digitsOnly)
+    .pipe(z.string().regex(/^(\d{12})?$/, 'Enter the 12-digit Aadhaar number.')),
+  pan: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .pipe(z.string().regex(/^([A-Z]{5}\d{4}[A-Z])?$/, 'Enter a PAN such as ABCDE1234F.'))
+    .transform((value) => (value === '' ? null : value)),
+  bankName: optionalText.pipe(z.string().min(2, 'Enter the bank name.').max(120, 'Use 120 characters or fewer.').nullable()),
+  accountNumber: z
+    .string()
+    .transform(digitsOnly)
+    .pipe(z.string().regex(/^(\d{6,18})?$/, 'Enter 6 to 18 digits.')),
+  ifsc: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .pipe(z.string().regex(/^([A-Z]{4}0[A-Z0-9]{6})?$/, 'Enter an IFSC such as HDFC0001234.'))
+    .transform((value) => (value === '' ? null : value)),
+  accountHolder: optionalText.pipe(z.string().min(2, 'Enter the account holder.').max(120, 'Use 120 characters or fewer.').nullable()),
+  clearAadhaar: z.boolean(),
+  clearAccountNumber: z.boolean(),
 });
 
 export const updateMyProfileSchema = z.object({

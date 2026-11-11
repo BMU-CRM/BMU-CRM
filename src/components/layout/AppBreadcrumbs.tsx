@@ -20,7 +20,8 @@ const segmentLabels: Record<string, string> = {
   attendance: 'Attendance',
   report: 'Report',
   approvals: 'Approvals',
-  hr: 'HR settings',
+  hr: 'HR',
+  reports: 'Reports',
   calendar: 'Calendar',
   meetings: 'Meetings',
   tickets: 'Support',
@@ -37,12 +38,23 @@ const segmentLabels: Record<string, string> = {
   settings: 'Settings',
   roles: 'Roles',
   'audit-log': 'Audit log',
+  holidays: 'Holidays',
+  utilisation: 'Leave report',
+  personal: 'Personal details',
+  private: 'ID and bank',
   new: 'Add',
   edit: 'Edit',
 };
 
+// The same word means a different page under some parents: under Settings, "hr" and
+// "finance" are those areas' settings pages, and under HR, "leave" is everyone's leave.
+const labelsUnder: Record<string, Record<string, string>> = {
+  settings: { hr: 'HR settings', finance: 'Finance settings' },
+  hr: { leave: 'Leave requests' },
+};
+
 // These segments only group pages, so they have no page of their own to link to.
-const groupSegments = new Set(['people', 'settings']);
+const groupSegments = new Set(['people', 'settings', 'personal', 'private']);
 
 export function AppBreadcrumbs() {
   const pathname = usePathname();
@@ -51,7 +63,8 @@ export function AppBreadcrumbs() {
   return (
     <nav aria-label="Breadcrumb" className={styles.breadcrumbs}>
       {segments.map((segment, index) => {
-        const label = segmentLabels[segment] ?? 'Details';
+        const parent = segments[index - 1];
+        const label = (parent ? labelsUnder[parent]?.[segment] : undefined) ?? segmentLabels[segment] ?? 'Details';
         const isLast = index === segments.length - 1;
         const href = `/${segments.slice(0, index + 1).join('/')}`;
 

@@ -9,6 +9,7 @@ import {
   type ActionResult,
 } from '@/lib/actionResult';
 import { permissionKeys } from '@/lib/access/permissionKeys';
+import type { EmployeeDocumentType } from '@/lib/employees/employeeRecordLabels';
 import { checkUploadable } from '@/lib/files/fileTypes';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import {
@@ -40,16 +41,30 @@ function linkFields(links: FileLinks) {
     taskId: links.taskId ?? '',
     meetingId: links.meetingId ?? '',
     ticketId: links.ticketId ?? '',
+    employeeId: links.employeeId ?? '',
+    documentType: links.documentType ?? '',
   };
 }
 
-function linkColumns(links: { clientId: string | null; projectId: string | null; taskId: string | null; meetingId: string | null; ticketId: string | null }) {
+type ParsedLinks = {
+  clientId: string | null;
+  projectId: string | null;
+  taskId: string | null;
+  meetingId: string | null;
+  ticketId: string | null;
+  employeeId: string | null;
+  documentType: EmployeeDocumentType | null;
+};
+
+function linkColumns(links: ParsedLinks) {
   return {
     client_id: links.clientId,
     project_id: links.projectId,
     task_id: links.taskId,
     meeting_id: links.meetingId,
     ticket_id: links.ticketId,
+    employee_id: links.employeeId,
+    document_type: links.documentType,
   };
 }
 
@@ -57,6 +72,10 @@ function revalidateLinkedPages(links: FileLinks) {
   if (links.taskId) revalidatePath(`/tasks/${links.taskId}`);
   if (links.meetingId) revalidatePath(`/meetings/${links.meetingId}`);
   if (links.ticketId) revalidatePath(`/tickets/${links.ticketId}`);
+  if (links.employeeId) {
+    revalidatePath(`/people/employees/${links.employeeId}`);
+    revalidatePath('/profile');
+  }
 }
 
 // Step 1 of an upload: create the file record and a signed link for the browser to

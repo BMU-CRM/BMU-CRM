@@ -1,6 +1,8 @@
 import {
   Building2,
+  CalendarCheck,
   CalendarCog,
+  CalendarHeart,
   CalendarDays,
   ChartColumn,
   Clock,
@@ -14,7 +16,9 @@ import {
   Gauge,
   MessagesSquare,
   Handshake,
+  HeartHandshake,
   IdCard,
+  Wallet,
   LayoutDashboard,
   LifeBuoy,
   ListChecks,
@@ -41,6 +45,8 @@ export type NavigationItem = {
   permission: PermissionKey;
   // For pages that need wider access than simply having the permission.
   minimumScope?: PermissionScope;
+  // Shown only alongside this permission too, such as HR's own copy of Employees.
+  alsoRequires?: PermissionKey;
 };
 
 export type NavigationSection = {
@@ -64,6 +70,26 @@ const navigationSections: NavigationSection[] = [
       { label: 'Workload', href: '/workload', icon: Gauge, permission: permissionKeys.workloadView },
     ],
   },
+  // The HR person's own section. Each page also appears elsewhere for other people,
+  // but for HR it is grouped here, once.
+  {
+    title: 'HR',
+    items: [
+      { label: 'HR dashboard', href: '/hr', icon: HeartHandshake, permission: permissionKeys.hrDashboard },
+      { label: 'Employees', href: '/people/employees', icon: Users, permission: permissionKeys.employeesView, alsoRequires: permissionKeys.hrDashboard },
+      { label: 'Attendance', href: '/attendance', icon: Clock, permission: permissionKeys.attendanceView, alsoRequires: permissionKeys.hrDashboard },
+      {
+        label: 'Leave requests',
+        href: '/hr/leave',
+        icon: Plane,
+        permission: permissionKeys.leaveApprove,
+        minimumScope: 'organisation',
+        alsoRequires: permissionKeys.hrDashboard,
+      },
+      { label: 'Holidays', href: '/hr/holidays', icon: CalendarHeart, permission: permissionKeys.hrManage, alsoRequires: permissionKeys.hrDashboard },
+      { label: 'HR settings', href: '/settings/hr', icon: CalendarCog, permission: permissionKeys.hrManage, alsoRequires: permissionKeys.hrDashboard },
+    ],
+  },
   {
     title: 'CRM',
     items: [{ label: 'Clients', href: '/clients', icon: Handshake, permission: permissionKeys.clientsView }],
@@ -71,9 +97,11 @@ const navigationSections: NavigationSection[] = [
   {
     title: 'Finance',
     items: [
+      { label: 'Finance dashboard', href: '/finance', icon: Wallet, permission: permissionKeys.financeDashboard },
       { label: 'Quotations', href: '/quotations', icon: FileText, permission: permissionKeys.quotationsView },
       { label: 'Invoices', href: '/invoices', icon: ReceiptIndianRupee, permission: permissionKeys.invoicesView },
-      { label: 'Reports', href: '/finance', icon: ChartColumn, permission: permissionKeys.financeReports },
+      { label: 'Finance reports', href: '/finance/reports', icon: ChartColumn, permission: permissionKeys.financeReports },
+      { label: 'Finance settings', href: '/settings/finance', icon: Landmark, permission: permissionKeys.financeManage, alsoRequires: permissionKeys.financeDashboard },
     ],
   },
   {
@@ -82,6 +110,7 @@ const navigationSections: NavigationSection[] = [
       { label: 'Leave', href: '/leave', icon: Plane, permission: permissionKeys.leaveRequest },
       { label: 'Attendance', href: '/attendance', icon: Clock, permission: permissionKeys.attendanceView },
       { label: 'Approvals', href: '/approvals', icon: Stamp, permission: permissionKeys.leaveApprove },
+      { label: 'Leave requests', href: '/hr/leave', icon: CalendarCheck, permission: permissionKeys.leaveApprove, minimumScope: 'organisation' },
     ],
   },
   {
@@ -117,11 +146,20 @@ function hasReach(scope: PermissionScope | undefined, minimum: PermissionScope |
   return !minimum || permissionScopes.indexOf(scope) >= permissionScopes.indexOf(minimum);
 }
 
+// A page shows once, in the first section that offers it to this person.
 export function buildNavigation(permissions: PermissionMap): NavigationSection[] {
+  const shown = new Set<string>();
   return navigationSections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => hasReach(permissions[item.permission], item.minimumScope)),
+      items: section.items.filter((item) => {
+        const allowed =
+          hasReach(permissions[item.permission], item.minimumScope) &&
+          (!item.alsoRequires || permissions[item.alsoRequires] !== undefined);
+        if (!allowed || shown.has(item.href)) return false;
+        shown.add(item.href);
+        return true;
+      }),
     }))
     .filter((section) => section.items.length > 0);
 }

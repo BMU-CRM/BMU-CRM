@@ -1,0 +1,64 @@
+﻿.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-small);
+  color: var(--color-text-secondary);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.grid th,
+.grid td {
+  white-space: nowrap;
+}
+
+.dayHeading,
+.dayCell {
+  width: 28px;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+  text-align: center;
+}
+
+/* Each status also has its own letter, so the grid never relies on colour alone. */
+.cell {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-small);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-muted);
+}
+
+.cell[data-status='present'] {
+  color: var(--color-good);
+  background: var(--color-good-soft);
+}
+
+.cell[data-status='half_day'] {
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.cell[data-status='absent'] {
+  color: var(--color-critical);
+  background: var(--color-critical-soft);
+}
+
+.cell[data-status='leave'] {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.cell[data-status='upcoming'] {
+  background: transparent;
+}

@@ -1,0 +1,26 @@
+.chart {
+  display: block;
+  width: min(200px, 100%);
+  height: auto;
+  margin: 0 auto;
+}
+
+.empty {
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.slice {
+  fill: none;
+}
+
+.slice:hover {
+  stroke-width: 30px;
+}
+
+.total {
+  fill: var(--color-text);
+  font-size: 18px;
+  font-weight: 600;
+}

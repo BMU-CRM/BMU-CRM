@@ -19,7 +19,17 @@ const entityLabels: Record<string, string> = {
   services: 'sub service',
   industries: 'industry',
   google_account: 'Google account',
+  employee_extra_roles: 'additional role',
+  employee_personal_details: 'personal details of',
+  employee_private_details: 'ID and bank details of',
+  employment_types: 'employment type',
+  leave_carry_forwards: 'carried forward leave',
+  holidays: 'holiday',
+  leave_types: 'leave type',
+  files: 'file',
 };
+
+const revealedFields: Record<string, string> = { aadhaar: 'Aadhaar number', account_number: 'bank account number' };
 
 const fieldLabels: Record<string, string> = {
   full_name: 'name',
@@ -34,6 +44,7 @@ const fieldLabels: Record<string, string> = {
   is_active: 'account status',
   invite_accepted_at: 'invitation',
   auth_user_id: 'login account',
+  acting_role_id: 'role in use',
   scope: 'access scope',
   management_level: 'management level',
   parent_department_id: 'parent department',
@@ -64,6 +75,28 @@ const fieldLabels: Record<string, string> = {
   industry_id: 'industry',
   service_id: 'service',
   group_id: 'group',
+  employment_type_id: 'employment type',
+  probation_months: 'probation',
+  confirmation_date: 'confirmation date',
+  date_of_birth: 'date of birth',
+  personal_email: 'personal email',
+  emergency_contact_name: 'emergency contact',
+  emergency_contact_relation: 'emergency contact relationship',
+  emergency_contact_phone: 'emergency contact phone',
+  aadhaar_encrypted: 'Aadhaar number',
+  account_number_encrypted: 'account number',
+  bank_name: 'bank',
+  ifsc: 'IFSC',
+  pan: 'PAN',
+  account_holder: 'account holder',
+  status_override: 'day status',
+  work_mode: 'work location',
+  check_in_at: 'check-in',
+  check_out_at: 'check-out',
+  carry_forward_cap: 'carry forward limit',
+  carry_forward_expiry_months: 'carry forward expiry',
+  is_encashable: 'encashment',
+  document_type: 'document type',
 };
 
 // Worked out from other fields, so listing them alongside the change adds nothing.
@@ -89,9 +122,17 @@ export function describeAuditEntry({ action, entity_type, details }: AuditEntry)
   const label = typeof detailRecord.label === 'string' ? detailRecord.label : undefined;
   const subject = label ? `${verb} ${entity} ${label}` : `${verb} ${entity}`;
 
+  // Someone looked at a full identity or bank number.
+  if (action === 'revealed') {
+    const field = revealedFields[String(detailRecord.field)] ?? 'private detail';
+    return `Viewed the full ${field} of ${label ?? 'an employee'}`;
+  }
+
   if (action !== 'updated') return subject;
 
-  const fields = Object.keys(recordOf(detailRecord.changes))
+  // Personal and private details record field names only, never values.
+  const changed = Array.isArray(detailRecord.fields) ? detailRecord.fields.map(String) : Object.keys(recordOf(detailRecord.changes));
+  const fields = changed
     .filter((field) => !hiddenFields.has(field))
     .map((field) => fieldLabels[field] ?? field.replaceAll('_', ' '));
 

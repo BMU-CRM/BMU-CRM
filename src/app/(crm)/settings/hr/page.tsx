@@ -1,38 +1,40 @@
 import type { Metadata } from 'next';
-import { LeaveTypeForm, WorkingHoursForm } from '@/components/hr/HrForms';
-import { ActionButton } from '@/components/ui/ActionButton';
-import { TextField } from '@/components/ui/FormFields';
-import { InlineActionForm } from '@/components/ui/InlineActionForm';
+import { EmploymentTypeForm, LeaveTypeForm, WorkingHoursForm } from '@/components/hr/HrForms';
+import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { formatDate, todayInIndia } from '@/lib/formatDate';
-import { addHolidayAction, removeHolidayAction } from '@/server/actions/hrActions';
 import { requirePagePermission } from '@/server/services/accessService';
-import { getCompanySettings, listHolidays, listLeaveTypes } from '@/server/services/hrService';
+import { listEmploymentTypes } from '@/server/services/employeeService';
+import { getCompanySettings, listHolidaysBetween, listLeaveTypes } from '@/server/services/hrService';
 
 export const metadata: Metadata = { title: 'HR settings' };
 
 export default async function HrSettingsPage() {
   await requirePagePermission(permissionKeys.hrManage);
-  const year = Number(todayInIndia().slice(0, 4));
+  const today = todayInIndia();
 
-  const [settings, leaveTypes, holidays, nextYearHolidays] = await Promise.all([
+  const [settings, leaveTypes, employmentTypes, upcomingHolidays] = await Promise.all([
     getCompanySettings(),
     listLeaveTypes(),
-    listHolidays(year),
-    listHolidays(year + 1),
+    listEmploymentTypes(),
+    listHolidaysBetween(today, `${Number(today.slice(0, 4)) + 1}-12-31`),
   ]);
 
   return (
     <>
-      <PageHeader title="HR settings" description="Working hours, holidays and leave types for the whole company." />
+      <PageHeader title="HR settings" description="Working hours, leave types, employment types and holidays for the whole company." />
       <div className={layout.stack}>
-        <Panel title="Working hours" description="Used for late arrivals, early departures and counting leave days.">
+        <Panel title="Working hours" description="Used for late arrivals, early departures, half days, overtime and counting leave days.">
           <WorkingHoursForm settings={settings} />
         </Panel>
-        <Panel title="Leave types" description="Allowances are per calendar year. Turning a type off hides it from new requests." flush>
+        <Panel
+          title="Leave types"
+          description="Allowances are per calendar year. Unused days carry forward on 1 January, up to each type's limit. Turning a type off hides it from new requests."
+          flush
+        >
           <ul className={layout.list}>
             {leaveTypes.map((leaveType) => (
               <li key={leaveType.id} className={layout.sectionForm}>
@@ -45,24 +47,38 @@ export default async function HrSettingsPage() {
             </li>
           </ul>
         </Panel>
-        <Panel title="Holidays" description="Holidays are not counted as working days or leave." flush>
+        <Panel title="Employment types" description="Offered when editing an employee. Turning one off keeps it on the people who already have it." flush>
           <ul className={layout.list}>
-            {[...holidays, ...nextYearHolidays].map((holiday) => (
-              <li key={holiday.id} className={layout.row}>
-                <span className={layout.rowMain}>
-                  <span className={layout.rowTitle}>{holiday.name}</span> <span className={layout.muted}>{formatDate(holiday.holiday_date)}</span>
-                </span>
-                <ActionButton label="Remove" action={removeHolidayAction.bind(null, holiday.id)} />
+            {employmentTypes.map((employmentType) => (
+              <li key={employmentType.id} className={layout.sectionForm}>
+                <EmploymentTypeForm employmentType={employmentType} />
               </li>
             ))}
+            <li className={layout.sectionForm}>
+              <p className={`${layout.rowTitle} ${layout.muted}`}>Add an employment type</p>
+              <EmploymentTypeForm />
+            </li>
           </ul>
-          {holidays.length + nextYearHolidays.length === 0 && <p className={layout.emptyText}>No holidays added yet.</p>}
-          <div className={layout.sectionForm}>
-            <InlineActionForm action={addHolidayAction} submitLabel="Add holiday">
-              <TextField label="Date" name="holidayDate" type="date" required />
-              <TextField label="Name" name="name" required />
-            </InlineActionForm>
-          </div>
+        </Panel>
+        <Panel
+          title="Holidays"
+          description="Holidays are not counted as working days or leave."
+          action={<ButtonLink href="/hr/holidays">Open the holiday calendar</ButtonLink>}
+          flush
+        >
+          {upcomingHolidays.length === 0 ? (
+            <p className={layout.emptyText}>No upcoming holidays. Add them from the holiday calendar.</p>
+          ) : (
+            <ul className={layout.list}>
+              {upcomingHolidays.slice(0, 5).map((holiday) => (
+                <li key={holiday.id} className={layout.row}>
+                  <span className={layout.rowMain}>
+                    <span className={layout.rowTitle}>{holiday.name}</span> <span className={layout.muted}>{formatDate(holiday.holiday_date)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
       </div>
     </>

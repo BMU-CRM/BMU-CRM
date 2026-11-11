@@ -1,0 +1,129 @@
+/* The reference chart palette: eight validated categorical slots, a one-hue blue ramp,
+   and recessive chrome, stepped separately for light and dark. */
+.frame {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
+  --ramp-250: #86b6ef;
+  --ramp-350: #5598e7;
+  --ramp-450: #2a78d6;
+  --ramp-550: #1c5cab;
+  --ramp-650: #104281;
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-muted: #898781;
+  --chart-surface: var(--color-surface);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:where(:not([data-theme='light']))) .frame {
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --ramp-250: #184f95;
+    --ramp-350: #1c5cab;
+    --ramp-450: #2a78d6;
+    --ramp-550: #5598e7;
+    --ramp-650: #86b6ef;
+    --chart-grid: #2c2c2a;
+    --chart-axis: #383835;
+  }
+}
+
+:global(:root[data-theme='dark']) .frame {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --ramp-250: #184f95;
+  --ramp-350: #1c5cab;
+  --ramp-450: #2a78d6;
+  --ramp-550: #5598e7;
+  --ramp-650: #86b6ef;
+  --chart-grid: #2c2c2a;
+  --chart-axis: #383835;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--text-small);
+  color: var(--color-text-secondary);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legendLabel {
+  color: var(--color-text);
+}
+
+.legendValue {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.tableToggle summary {
+  width: fit-content;
+  font-size: var(--text-small);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.table {
+  width: 100%;
+  margin-top: var(--space-2);
+  border-collapse: collapse;
+  font-size: var(--text-small);
+}
+
+.table th,
+.table td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.table td {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.table thead th {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.table thead th:not(:first-child) {
+  text-align: right;
+}

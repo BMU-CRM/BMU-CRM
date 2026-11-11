@@ -1,21 +1,34 @@
-import { Pencil } from 'lucide-react';
+import { Pencil, Printer } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmployeeAccountActions } from '@/components/employees/EmployeeAccountActions';
+import { EmployeeDocumentsPanel } from '@/components/employees/EmployeeDocumentsPanel';
+import { EmployeePersonalPanel } from '@/components/employees/EmployeePersonalPanel';
+import { EmployeePrivatePanel } from '@/components/employees/EmployeePrivatePanel';
 import { EmployeeProfileDetails } from '@/components/employees/EmployeeProfileDetails';
+import { EmployeeRecordTabs, employeeRecordTabs, type EmployeeRecordTab } from '@/components/employees/EmployeeRecordTabs';
+import { EmploymentHistoryPanel } from '@/components/employees/EmploymentHistoryPanel';
 import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';
 import { permissionKeys } from '@/lib/access/permissionKeys';
+import { todayInIndia } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
+import { isEncryptionReady } from '@/server/security/fieldEncryption';
 import { requirePagePermission } from '@/server/services/accessService';
 import {
   canViewEmployeeProfile,
   getEmployee,
   getEmployeeControls,
+  getEmployeeRecordAccess,
+  getEmploymentHistory,
+  getPersonalDetails,
+  getPrivateDetails,
   listDirectReports,
+  listEmployeeDocuments,
+  type EmployeeDetails,
 } from '@/server/services/employeeService';
 import styles from './EmployeeProfilePage.module.css';
 
@@ -23,9 +36,10 @@ export const metadata: Metadata = { title: 'Employee' };
 
 type EmployeeProfilePageProps = {
   params: Promise<{ employeeId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 };
 
-export default async function EmployeeProfilePage({ params }: EmployeeProfilePageProps) {
+export default async function EmployeeProfilePage({ params, searchParams }: EmployeeProfilePageProps) {
   const access = await requirePagePermission(permissionKeys.employeesView);
   const employeeId = parseId((await params).employeeId);
   if (!employeeId) notFound();
@@ -34,10 +48,18 @@ export default async function EmployeeProfilePage({ params }: EmployeeProfilePag
   const [employee, canView] = await Promise.all([getEmployee(employeeId), canViewEmployeeProfile(access, employeeId)]);
   if (!employee || !canView) notFound();
 
-  const [controls, reports] = await Promise.all([
-    getEmployeeControls(access, employee),
-    listDirectReports(employee.id),
-  ]);
+  const recordAccess = await getEmployeeRecordAccess(access, employee.id);
+  const tabs = employeeRecordTabs.filter(
+    (tab) =>
+      tab === 'overview' ||
+      ((tab === 'personal' || tab === 'history') && recordAccess.canSeePersonal) ||
+      (tab === 'private' && recordAccess.canSeePrivate) ||
+      (tab === 'documents' && recordAccess.canSeeDocuments),
+  );
+  const requested = (await searchParams).tab as EmployeeRecordTab | undefined;
+  const tab = requested && tabs.includes(requested) ? requested : 'overview';
+
+  const controls = await getEmployeeControls(access, employee);
 
   return (
     <>
@@ -54,6 +76,10 @@ export default async function EmployeeProfilePage({ params }: EmployeeProfilePag
                 controls.canCreateSignInLink ? (employee.invite_accepted_at === null ? 'invite' : 'recovery') : null
               }
             />
+            <ButtonLink href={`/people/employees/${employee.id}/print`} variant="ghost">
+              <Printer size={16} aria-hidden="true" />
+              Print
+            </ButtonLink>
             {controls.canEdit && (
               <ButtonLink href={`/people/employees/${employee.id}/edit`}>
                 <Pencil size={16} aria-hidden="true" />
@@ -63,28 +89,56 @@ export default async function EmployeeProfilePage({ params }: EmployeeProfilePag
           </>
         }
       />
-      <div className={styles.layout}>
-        <EmployeeProfileDetails employee={employee} />
-        <Panel title="Direct reports" description={`${reports.length} active`} flush>
-          {reports.length === 0 ? (
-            <p className={styles.empty}>No one reports to this employee.</p>
-          ) : (
-            <ul>
-              {reports.map((report) => (
-                <li key={report.id}>
-                  <Link href={`/people/employees/${report.id}`} className={styles.report}>
-                    <PersonAvatar name={report.full_name} size="small" />
-                    <div>
-                      <p className={styles.reportName}>{report.full_name}</p>
-                      <p className={styles.muted}>{report.designation?.title ?? 'No designation'}</p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-      </div>
+      {tabs.length > 1 && <EmployeeRecordTabs employeeId={employee.id} tabs={tabs} current={tab} />}
+      {tab === 'overview' && <OverviewTab employee={employee} />}
+      {tab === 'personal' && (
+        <EmployeePersonalPanel employeeId={employee.id} details={await getPersonalDetails(employee.id)} canEdit={recordAccess.canEditPersonal} />
+      )}
+      {tab === 'private' && (
+        <EmployeePrivatePanel
+          employeeId={employee.id}
+          details={await getPrivateDetails(employee.id)}
+          canEdit={recordAccess.canEditPrivate}
+          encryptionReady={isEncryptionReady()}
+        />
+      )}
+      {tab === 'documents' && (
+        <EmployeeDocumentsPanel
+          employeeId={employee.id}
+          documents={await listEmployeeDocuments(employee.id)}
+          canAdd={recordAccess.canAddDocuments}
+          viewerId={access.employee.id}
+        />
+      )}
+      {tab === 'history' && <EmploymentHistoryPanel entries={await getEmploymentHistory(employee.id)} />}
     </>
+  );
+}
+
+async function OverviewTab({ employee }: { employee: EmployeeDetails }) {
+  const reports = await listDirectReports(employee.id);
+  return (
+    <div className={styles.layout}>
+      <EmployeeProfileDetails employee={employee} today={todayInIndia()} />
+      <Panel title="Direct reports" description={`${reports.length} active`} flush>
+        {reports.length === 0 ? (
+          <p className={styles.empty}>No one reports to this employee.</p>
+        ) : (
+          <ul>
+            {reports.map((report) => (
+              <li key={report.id}>
+                <Link href={`/people/employees/${report.id}`} className={styles.report}>
+                  <PersonAvatar name={report.full_name} size="small" />
+                  <div>
+                    <p className={styles.reportName}>{report.full_name}</p>
+                    <p className={styles.muted}>{report.designation?.title ?? 'No designation'}</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+    </div>
   );
 }

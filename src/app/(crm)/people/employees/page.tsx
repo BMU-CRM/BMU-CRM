@@ -1,4 +1,4 @@
-import { UserPlus, Users } from 'lucide-react';
+import { Download, UserPlus, Users } from 'lucide-react';
 import type { Metadata } from 'next';
 import { EmployeeDirectoryFilters } from '@/components/employees/EmployeeDirectoryFilters';
 import { EmployeeTable } from '@/components/employees/EmployeeTable';
@@ -52,12 +52,17 @@ export default async function EmployeesPage({ searchParams }: EmployeesPageProps
   const isFiltered = Boolean(params.search || departmentId || roleId || accountStatus);
   const reach = directoryReach[access.permissions[permissionKeys.employeesView] ?? 'own'];
 
-  function hrefForPage(target: number) {
+  function filterQuery() {
     const query = new URLSearchParams();
     if (params.search) query.set('search', params.search);
     if (departmentId) query.set('departmentId', departmentId);
     if (roleId) query.set('roleId', roleId);
     if (accountStatus) query.set('accountStatus', accountStatus);
+    return query;
+  }
+
+  function hrefForPage(target: number) {
+    const query = filterQuery();
     query.set('page', String(target));
     return `/people/employees?${query.toString()}`;
   }
@@ -68,12 +73,20 @@ export default async function EmployeesPage({ searchParams }: EmployeesPageProps
         title="Employees"
         description={`${reach}: ${total} ${total === 1 ? 'person' : 'people'}`}
         actions={
-          canCreate && (
-            <ButtonLink href="/people/employees/new" variant="primary">
-              <UserPlus size={16} aria-hidden="true" />
-              Add employee
-            </ButtonLink>
-          )
+          <>
+            {total > 0 && (
+              <ButtonLink href={`/people/employees/export?${filterQuery().toString()}`} prefetch={false}>
+                <Download size={16} aria-hidden="true" />
+                Export CSV
+              </ButtonLink>
+            )}
+            {canCreate && (
+              <ButtonLink href="/people/employees/new" variant="primary">
+                <UserPlus size={16} aria-hidden="true" />
+                Add employee
+              </ButtonLink>
+            )}
+          </>
         }
       />
       <EmployeeDirectoryFilters

@@ -6,6 +6,49 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      "attendance_breaks": {
+        Row: {
+          "attendance_id": string
+          "created_at": string
+          "employee_id": string
+          "ended_at": string | null
+          "id": string
+          "started_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "attendance_id": string
+          "created_at"?: string
+          "employee_id": string
+          "ended_at"?: string | null
+          "id"?: string
+          "started_at"?: string
+        }
+        Update: {
+          "attendance_id"?: string
+          "created_at"?: string
+          "employee_id"?: string
+          "ended_at"?: string | null
+          "id"?: string
+          "started_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_breaks_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_breaks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "attendance_records": {
         Row: {
           "check_in_at": string | null
@@ -15,9 +58,11 @@ export type Database = {
           "id": string
           "note": string | null
           "source": Database["public"]["Enums"]["attendance_source"]
+          "status_override": Database["public"]["Enums"]["attendance_day_status"] | null
           "updated_at": string
           "updated_by": string | null
           "work_date": string
+          "work_mode": Database["public"]["Enums"]["attendance_work_mode"]
         }
         ComputedFields: never
         Insert: {
@@ -28,9 +73,11 @@ export type Database = {
           "id"?: string
           "note"?: string | null
           "source"?: Database["public"]["Enums"]["attendance_source"]
+          "status_override"?: Database["public"]["Enums"]["attendance_day_status"] | null
           "updated_at"?: string
           "updated_by"?: string | null
           "work_date": string
+          "work_mode"?: Database["public"]["Enums"]["attendance_work_mode"]
         }
         Update: {
           "check_in_at"?: string | null
@@ -40,9 +87,11 @@ export type Database = {
           "id"?: string
           "note"?: string | null
           "source"?: Database["public"]["Enums"]["attendance_source"]
+          "status_override"?: Database["public"]["Enums"]["attendance_day_status"] | null
           "updated_at"?: string
           "updated_by"?: string | null
           "work_date"?: string
+          "work_mode"?: Database["public"]["Enums"]["attendance_work_mode"]
         }
         Relationships: [
           {
@@ -322,8 +371,11 @@ export type Database = {
       }
       "company_settings": {
         Row: {
+          "default_probation_months": number | null
+          "half_day_minutes": number | null
           "id": boolean
           "late_grace_minutes": number
+          "overtime_after_minutes": number | null
           "updated_at": string
           "work_end": string
           "work_start": string
@@ -331,16 +383,22 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          "default_probation_months"?: number | null
+          "half_day_minutes"?: number | null
           "id"?: boolean
           "late_grace_minutes"?: number
+          "overtime_after_minutes"?: number | null
           "updated_at"?: string
           "work_end"?: string
           "work_start"?: string
           "working_days"?: (number)[]
         }
         Update: {
+          "default_probation_months"?: number | null
+          "half_day_minutes"?: number | null
           "id"?: boolean
           "late_grace_minutes"?: number
+          "overtime_after_minutes"?: number | null
           "updated_at"?: string
           "work_end"?: string
           "work_start"?: string
@@ -565,6 +623,98 @@ export type Database = {
         }
         Relationships: []
       }
+      "employee_extra_roles": {
+        Row: {
+          "created_at": string
+          "employee_id": string
+          "role_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "employee_id": string
+          "role_id": string
+        }
+        Update: {
+          "created_at"?: string
+          "employee_id"?: string
+          "role_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_extra_roles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_extra_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "employee_personal_details": {
+        Row: {
+          "address": string | null
+          "created_at": string
+          "date_of_birth": string | null
+          "emergency_contact_name": string | null
+          "emergency_contact_phone": string | null
+          "emergency_contact_relation": string | null
+          "employee_id": string
+          "gender": string | null
+          "personal_email": string | null
+          "updated_at": string
+          "updated_by": string | null
+        }
+        ComputedFields: never
+        Insert: {
+          "address"?: string | null
+          "created_at"?: string
+          "date_of_birth"?: string | null
+          "emergency_contact_name"?: string | null
+          "emergency_contact_phone"?: string | null
+          "emergency_contact_relation"?: string | null
+          "employee_id": string
+          "gender"?: string | null
+          "personal_email"?: string | null
+          "updated_at"?: string
+          "updated_by"?: string | null
+        }
+        Update: {
+          "address"?: string | null
+          "created_at"?: string
+          "date_of_birth"?: string | null
+          "emergency_contact_name"?: string | null
+          "emergency_contact_phone"?: string | null
+          "emergency_contact_relation"?: string | null
+          "employee_id"?: string
+          "gender"?: string | null
+          "personal_email"?: string | null
+          "updated_at"?: string
+          "updated_by"?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_personal_details_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_personal_details_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "employee_presence": {
         Row: {
           "chosen_status": string | null
@@ -598,21 +748,87 @@ export type Database = {
           },
         ]
       }
+      "employee_private_details": {
+        Row: {
+          "aadhaar_encrypted": string | null
+          "aadhaar_last4": string | null
+          "account_holder": string | null
+          "account_last4": string | null
+          "account_number_encrypted": string | null
+          "bank_name": string | null
+          "created_at": string
+          "employee_id": string
+          "ifsc": string | null
+          "pan": string | null
+          "updated_at": string
+          "updated_by": string | null
+        }
+        ComputedFields: never
+        Insert: {
+          "aadhaar_encrypted"?: string | null
+          "aadhaar_last4"?: string | null
+          "account_holder"?: string | null
+          "account_last4"?: string | null
+          "account_number_encrypted"?: string | null
+          "bank_name"?: string | null
+          "created_at"?: string
+          "employee_id": string
+          "ifsc"?: string | null
+          "pan"?: string | null
+          "updated_at"?: string
+          "updated_by"?: string | null
+        }
+        Update: {
+          "aadhaar_encrypted"?: string | null
+          "aadhaar_last4"?: string | null
+          "account_holder"?: string | null
+          "account_last4"?: string | null
+          "account_number_encrypted"?: string | null
+          "bank_name"?: string | null
+          "created_at"?: string
+          "employee_id"?: string
+          "ifsc"?: string | null
+          "pan"?: string | null
+          "updated_at"?: string
+          "updated_by"?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_private_details_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_private_details_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "employees": {
         Row: {
+          "acting_role_id": string | null
           "auth_user_id": string | null
           "avatar_url": string | null
+          "confirmation_date": string | null
           "created_at": string
           "department_id": string | null
           "designation_id": string | null
           "employee_code": string
           "employment_status": Database["public"]["Enums"]["employment_status"]
+          "employment_type_id": string | null
           "full_name": string
           "id": string
           "invite_accepted_at": string | null
           "is_active": boolean
           "joining_date": string | null
           "phone": string | null
+          "probation_end_date": string | null
+          "probation_months": number | null
           "reporting_manager_id": string | null
           "role_id": string
           "skills": (string)[]
@@ -621,19 +837,24 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          "acting_role_id"?: string | null
           "auth_user_id"?: string | null
           "avatar_url"?: string | null
+          "confirmation_date"?: string | null
           "created_at"?: string
           "department_id"?: string | null
           "designation_id"?: string | null
           "employee_code"?: string
           "employment_status"?: Database["public"]["Enums"]["employment_status"]
+          "employment_type_id"?: string | null
           "full_name": string
           "id"?: string
           "invite_accepted_at"?: string | null
           "is_active"?: boolean
           "joining_date"?: string | null
           "phone"?: string | null
+          "probation_end_date"?: never
+          "probation_months"?: number | null
           "reporting_manager_id"?: string | null
           "role_id": string
           "skills"?: (string)[]
@@ -641,19 +862,24 @@ export type Database = {
           "work_email": string
         }
         Update: {
+          "acting_role_id"?: string | null
           "auth_user_id"?: string | null
           "avatar_url"?: string | null
+          "confirmation_date"?: string | null
           "created_at"?: string
           "department_id"?: string | null
           "designation_id"?: string | null
           "employee_code"?: string
           "employment_status"?: Database["public"]["Enums"]["employment_status"]
+          "employment_type_id"?: string | null
           "full_name"?: string
           "id"?: string
           "invite_accepted_at"?: string | null
           "is_active"?: boolean
           "joining_date"?: string | null
           "phone"?: string | null
+          "probation_end_date"?: never
+          "probation_months"?: number | null
           "reporting_manager_id"?: string | null
           "role_id"?: string
           "skills"?: (string)[]
@@ -676,6 +902,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "employees_employment_type_id_fkey"
+            columns: ["employment_type_id"]
+            isOneToOne: false
+            referencedRelation: "employment_types"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "employees_reporting_manager_id_fkey"
             columns: ["reporting_manager_id"]
             isOneToOne: false
@@ -690,6 +923,34 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      "employment_types": {
+        Row: {
+          "created_at": string
+          "id": string
+          "is_active": boolean
+          "name": string
+          "sort_order": number
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "name": string
+          "sort_order"?: number
+          "updated_at"?: string
+        }
+        Update: {
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "name"?: string
+          "sort_order"?: number
+          "updated_at"?: string
+        }
+        Relationships: []
       }
       "file_access_logs": {
         Row: {
@@ -907,6 +1168,8 @@ export type Database = {
           "current_version": number
           "department_id": string | null
           "description": string | null
+          "document_type": Database["public"]["Enums"]["employee_document_type"] | null
+          "employee_id": string | null
           "external_url": string | null
           "id": string
           "is_archived": boolean
@@ -929,6 +1192,8 @@ export type Database = {
           "current_version"?: number
           "department_id"?: string | null
           "description"?: string | null
+          "document_type"?: Database["public"]["Enums"]["employee_document_type"] | null
+          "employee_id"?: string | null
           "external_url"?: string | null
           "id"?: string
           "is_archived"?: boolean
@@ -950,6 +1215,8 @@ export type Database = {
           "current_version"?: number
           "department_id"?: string | null
           "description"?: string | null
+          "document_type"?: Database["public"]["Enums"]["employee_document_type"] | null
+          "employee_id"?: string | null
           "external_url"?: string | null
           "id"?: string
           "is_archived"?: boolean
@@ -978,6 +1245,13 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "files_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
@@ -1078,21 +1352,27 @@ export type Database = {
       "holidays": {
         Row: {
           "created_at": string
+          "description": string | null
           "holiday_date": string
           "id": string
+          "kind": string
           "name": string
         }
         ComputedFields: never
         Insert: {
           "created_at"?: string
+          "description"?: string | null
           "holiday_date": string
           "id"?: string
+          "kind"?: string
           "name": string
         }
         Update: {
           "created_at"?: string
+          "description"?: string | null
           "holiday_date"?: string
           "id"?: string
+          "kind"?: string
           "name"?: string
         }
         Relationships: []
@@ -1315,6 +1595,52 @@ export type Database = {
           },
         ]
       }
+      "leave_carry_forwards": {
+        Row: {
+          "created_at": string
+          "days": number
+          "employee_id": string
+          "expires_on": string | null
+          "from_year": number
+          "id": string
+          "leave_type_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "days": number
+          "employee_id": string
+          "expires_on"?: string | null
+          "from_year": number
+          "id"?: string
+          "leave_type_id": string
+        }
+        Update: {
+          "created_at"?: string
+          "days"?: number
+          "employee_id"?: string
+          "expires_on"?: string | null
+          "from_year"?: number
+          "id"?: string
+          "leave_type_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_carry_forwards_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_carry_forwards_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "leave_requests": {
         Row: {
           "approver_id": string | null
@@ -1411,9 +1737,12 @@ export type Database = {
       }
       "leave_types": {
         Row: {
+          "carry_forward_cap": number | null
+          "carry_forward_expiry_months": number | null
           "created_at": string
           "id": string
           "is_active": boolean
+          "is_encashable": boolean
           "is_paid": boolean
           "name": string
           "requires_attachment": boolean
@@ -1423,9 +1752,12 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          "carry_forward_cap"?: number | null
+          "carry_forward_expiry_months"?: number | null
           "created_at"?: string
           "id"?: string
           "is_active"?: boolean
+          "is_encashable"?: boolean
           "is_paid"?: boolean
           "name": string
           "requires_attachment"?: boolean
@@ -1434,9 +1766,12 @@ export type Database = {
           "yearly_allowance"?: number | null
         }
         Update: {
+          "carry_forward_cap"?: number | null
+          "carry_forward_expiry_months"?: number | null
           "created_at"?: string
           "id"?: string
           "is_active"?: boolean
+          "is_encashable"?: boolean
           "is_paid"?: boolean
           "name"?: string
           "requires_attachment"?: boolean
@@ -3059,8 +3394,14 @@ export type Database = {
     }
     Functions: {
       "attendance_check_in":
-        | { Args: Record<PropertyKey, never>; Returns: undefined }
+        | { Args: {
+            "p_work_mode"?: Database["public"]["Enums"]["attendance_work_mode"]
+          }; Returns: undefined }
       "attendance_check_out":
+        | { Args: Record<PropertyKey, never>; Returns: undefined }
+      "attendance_end_break":
+        | { Args: Record<PropertyKey, never>; Returns: undefined }
+      "attendance_start_break":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "can_access_employee":
         | { Args: {
@@ -3089,6 +3430,8 @@ export type Database = {
         | { Args: {
             "v_invoice": Omit<Database["public"]["Tables"]["invoices"]["Row"], Database["public"]["Tables"]["invoices"]["ComputedFields"]>
           }; Returns: boolean }
+      "can_manage_private_details":
+        | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_manage_project":
         | { Args: {
             "p_project": string
@@ -3112,6 +3455,10 @@ export type Database = {
       "can_read_file_object":
         | { Args: {
             "p_path": string
+          }; Returns: boolean }
+      "can_see_personal_details":
+        | { Args: {
+            "p_employee": string
           }; Returns: boolean }
       "can_update_client":
         | { Args: {
@@ -3213,6 +3560,10 @@ export type Database = {
         | { Args: {
             "p_task": string
           }; Returns: boolean }
+      "carry_forward_leave":
+        | { Args: {
+            "p_year": number
+          }; Returns: number }
       "check_finance_links":
         | { Args: {
             "p_client": string
@@ -3247,11 +3598,23 @@ export type Database = {
           }; Returns: string }
       "current_employee_id":
         | { Args: Record<PropertyKey, never>; Returns: string }
+      "current_role_id":
+        | { Args: Record<PropertyKey, never>; Returns: string }
       "employee_has_permission":
         | { Args: {
             "p_employee": string
             "p_key": string
           }; Returns: boolean }
+      "employee_history_value":
+        | { Args: {
+            "p_field": string
+            "p_value": string
+          }; Returns: string }
+      "employees_with_permission":
+        | { Args: {
+            "p_permission": string
+            "p_scope": Database["public"]["Enums"]["permission_scope"]
+          }; Returns: string[] }
       "finalize_file_version":
         | { Args: {
             "p_version": string
@@ -3312,6 +3675,21 @@ export type Database = {
           }[] }
       "get_directory_employee_ids":
         | { Args: Record<PropertyKey, never>; Returns: string[] }
+      "get_employment_history":
+        | { Args: {
+            "p_employee": string
+          }; Returns: {
+            "changed_at": string
+            "actor_name": string
+            "field": string
+            "old_value": string
+            "new_value": string
+          }[] }
+      "get_hr_dashboard":
+        | { Args: {
+            "p_from": string
+            "p_to": string
+          }; Returns: Json }
       "get_leave_balances":
         | { Args: {
             "p_employee"?: string
@@ -3325,6 +3703,24 @@ export type Database = {
             "approved": number
             "pending": number
             "remaining": number
+            "carried_forward": number
+            "is_encashable": boolean
+          }[] }
+      "get_leave_utilisation":
+        | { Args: {
+            "p_year": number
+          }; Returns: {
+            "employee_id": string
+            "full_name": string
+            "department_name": string
+            "leave_type_id": string
+            "leave_type": string
+            "yearly_allowance": number
+            "carried_forward": number
+            "approved": number
+            "pending": number
+            "remaining": number
+            "is_encashable": boolean
           }[] }
       "get_message_info":
         | { Args: {
@@ -3354,6 +3750,13 @@ export type Database = {
         | { Args: Record<PropertyKey, never>; Returns: {
             "permission_key": string
             "scope": Database["public"]["Enums"]["permission_scope"]
+          }[] }
+      "get_my_roles":
+        | { Args: Record<PropertyKey, never>; Returns: {
+            "role_id": string
+            "name": string
+            "is_main": boolean
+            "is_current": boolean
           }[] }
       "get_my_team_ids":
         | { Args: Record<PropertyKey, never>; Returns: string[] }
@@ -3421,6 +3824,12 @@ export type Database = {
             "end_date": string
             "is_half_day": boolean
           }[] }
+      "get_upcoming_birthdays":
+        | { Args: Record<PropertyKey, never>; Returns: {
+            "employee_id": string
+            "full_name": string
+            "birthday": string
+          }[] }
       "get_workload_rows":
         | { Args: Record<PropertyKey, never>; Returns: {
             "employee_id": string
@@ -3483,6 +3892,13 @@ export type Database = {
             "taxable_amount": number
             "tax_amount": number
           }[] }
+      "leave_carried_in":
+        | { Args: {
+            "p_employee": string
+            "p_type": string
+            "p_year": number
+            "p_on": string
+          }; Returns: number }
       "leave_days_taken":
         | { Args: {
             "p_employee": string
@@ -3565,6 +3981,11 @@ export type Database = {
         | { Args: {
             "p_active": boolean
           }; Returns: undefined }
+      "record_private_detail_reveal":
+        | { Args: {
+            "p_employee": string
+            "p_field": string
+          }; Returns: undefined }
       "role_is_assignable":
         | { Args: {
             "p_role": string
@@ -3601,6 +4022,11 @@ export type Database = {
             "p_client": string
             "p_services": (string)[]
           }; Returns: undefined }
+      "set_employee_extra_roles":
+        | { Args: {
+            "p_employee": string
+            "p_roles": (string)[]
+          }; Returns: undefined }
       "set_my_status":
         | { Args: {
             "p_status": string
@@ -3610,6 +4036,10 @@ export type Database = {
             "p_role": string
             "p_permissions": Json
           }; Returns: undefined }
+      "switch_my_role":
+        | { Args: {
+            "p_role": string
+          }; Returns: undefined }
       "vote_in_poll":
         | { Args: {
             "p_message": string
@@ -3617,11 +4047,14 @@ export type Database = {
           }; Returns: undefined }
     }
     Enums: {
+      "attendance_day_status": "present" | "half_day" | "absent" | "leave" | "holiday" | "week_off"
       "attendance_source": "web" | "manual" | "import"
+      "attendance_work_mode": "office" | "wfh"
       "client_record_kind": "note" | "requirement" | "feedback" | "complaint" | "follow_up"
       "client_service_status": "active" | "paused" | "ended"
       "client_status": "lead" | "onboarding" | "active" | "on_hold" | "inactive"
       "conversation_kind": "direct" | "group" | "department" | "project" | "client" | "announcement"
+      "employee_document_type": "aadhaar" | "pan" | "certificate" | "resume" | "bank" | "offer_letter" | "appointment_letter" | "other"
       "employment_status": "active" | "on_leave" | "notice_period" | "exited"
       "file_access_action": "view" | "download"
       "file_kind": "upload" | "link"
@@ -3715,11 +4148,14 @@ export type Enums<
 export const Constants = {
   public: {
     Enums: {
+      "attendance_day_status": ["present", "half_day", "absent", "leave", "holiday", "week_off"],
       "attendance_source": ["web", "manual", "import"],
+      "attendance_work_mode": ["office", "wfh"],
       "client_record_kind": ["note", "requirement", "feedback", "complaint", "follow_up"],
       "client_service_status": ["active", "paused", "ended"],
       "client_status": ["lead", "onboarding", "active", "on_hold", "inactive"],
       "conversation_kind": ["direct", "group", "department", "project", "client", "announcement"],
+      "employee_document_type": ["aadhaar", "pan", "certificate", "resume", "bank", "offer_letter", "appointment_letter", "other"],
       "employment_status": ["active", "on_leave", "notice_period", "exited"],
       "file_access_action": ["view", "download"],
       "file_kind": ["upload", "link"],

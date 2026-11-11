@@ -38,7 +38,7 @@ export default async function LeavePage() {
       <div className={layout.stack}>
         <StatTiles
           tiles={balances.map((balance) => ({
-            label: balance.name,
+            label: Number(balance.carried_forward) > 0 ? `${balance.name} (incl. ${balance.carried_forward} carried forward)` : balance.name,
             value: balance.remaining === null ? 'No limit' : `${balance.remaining} left`,
           }))}
         />

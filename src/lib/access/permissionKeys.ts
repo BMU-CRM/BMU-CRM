@@ -47,6 +47,9 @@ export const permissionKeys = {
   financeReports: 'finance.reports',
   financeManage: 'finance.manage',
   catalogManage: 'catalog.manage',
+  hrDashboard: 'hr.dashboard',
+  financeDashboard: 'finance.dashboard',
+  employeesPrivateView: 'employees.private_view',
 } as const;
 
 export type PermissionKey = (typeof permissionKeys)[keyof typeof permissionKeys];

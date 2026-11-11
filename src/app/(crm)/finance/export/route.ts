@@ -1,4 +1,5 @@
 import { permissionKeys } from '@/lib/access/permissionKeys';
+import { csvCell, csvResponse } from '@/lib/csv/csvCell';
 import { isCalendarDate } from '@/lib/calendar/calendarRange';
 import { periodRange } from '@/lib/finance/financialPeriods';
 import { todayInIndia } from '@/lib/formatDate';
@@ -6,14 +7,7 @@ import { invoiceStatusLabels } from '@/lib/validation/financeSchema';
 import { getActionAccess } from '@/server/services/accessService';
 import { listInvoicesForExport } from '@/server/services/financeService';
 
-// A cell that starts with = + - @ could run as a formula in a spreadsheet, so it is
-// prefixed with an apostrophe. Numbers are written as plain digits.
-function cell(value: string | number | null | undefined) {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'number') return value.toFixed(2);
-  const text = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-  return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-}
+const cell = csvCell;
 
 export async function GET(request: Request) {
   const access = await getActionAccess(permissionKeys.financeReports);
@@ -51,13 +45,5 @@ export async function GET(request: Request) {
     cell(invoice.cancel_reason),
   ]);
 
-  const csv = [header.map(cell), ...rows].map((row) => row.join(',')).join('\r\n');
-
-  return new Response(`﻿${csv}\r\n`, {
-    headers: {
-      'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="invoices-${range.from}-to-${range.to}.csv"`,
-      'Cache-Control': 'no-store',
-    },
-  });
+  return csvResponse(header, rows, `invoices-${range.from}-to-${range.to}.csv`);
 }

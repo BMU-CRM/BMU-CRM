@@ -1,0 +1,19 @@
+.person {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+}
+
+.note {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.noteTitle {
+  margin-bottom: var(--space-1);
+  font-weight: 600;
+  color: var(--color-text);
+}

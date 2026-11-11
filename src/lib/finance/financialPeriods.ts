@@ -81,6 +81,21 @@ export function periodRange(key: PeriodKey, today: string): DateRange {
   }
 }
 
+// The period a page shows, from its address: chosen dates win, then a named period,
+// then the given default.
+export function chooseRange(
+  params: { period?: string; from?: string; to?: string },
+  today: string,
+  fallback: PeriodKey = 'this-year',
+): { range: DateRange; period?: PeriodKey } {
+  const isDate = (value?: string): value is string => Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)));
+  if (isDate(params.from) && isDate(params.to) && params.from <= params.to) {
+    return { range: { from: params.from, to: params.to } };
+  }
+  const period = periodKeys.find((key) => key === params.period) ?? fallback;
+  return { range: periodRange(period, today), period };
+}
+
 // Every month the range touches, as YYYY-MM.
 export function monthsInRange({ from, to }: DateRange) {
   const months: string[] = [];

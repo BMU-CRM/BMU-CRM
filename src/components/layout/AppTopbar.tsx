@@ -8,6 +8,7 @@ import { StatusMenu } from '@/components/presence/StatusMenu';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';
 import { signOutAction } from '@/server/actions/authActions';
 import { AppBreadcrumbs } from './AppBreadcrumbs';
+import { RoleSwitcher, type RoleChoice } from './RoleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import styles from './AppTopbar.module.css';
 
@@ -16,6 +17,8 @@ export type TopbarUser = {
   fullName: string;
   workEmail: string;
   roleName: string;
+  // Every role this person can switch between. One role means no switch is shown.
+  roles: RoleChoice[];
 };
 
 export type TopbarNotifications = {
@@ -59,6 +62,7 @@ export function AppTopbar({ user, notifications, onOpenMobileMenu }: AppTopbarPr
             <p className={styles.userDetail}>{user.roleName}</p>
           </div>
           <StatusMenu employeeId={user.employeeId} />
+          <RoleSwitcher roles={user.roles} />
           <Link href="/profile" className={styles.menuItem}>
             <UserRound size={16} aria-hidden="true" />
             My profile

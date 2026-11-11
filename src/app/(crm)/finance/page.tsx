@@ -1,211 +1,81 @@
-import { Download } from 'lucide-react';
+import { ChartColumn } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { Button, ButtonLink } from '@/components/ui/Button';
-import styles from '@/components/ui/DataTable.module.css';
-import { SelectField, TextField } from '@/components/ui/FormFields';
-import filterStyles from '@/components/ui/ListFilters.module.css';
+import { BarChart } from '@/components/charts/BarChart';
+import { StackedBar } from '@/components/charts/StackedBar';
+import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
+import { PeriodFilter } from '@/components/ui/PeriodFilter';
 import { StatTiles } from '@/components/ui/StatTiles';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { permissionKeys } from '@/lib/access/permissionKeys';
-import { isCalendarDate } from '@/lib/calendar/calendarRange';
-import { periodKeys, periodLabels, periodRange, type DateRange, type PeriodKey } from '@/lib/finance/financialPeriods';
+import { chooseRange, periodLabels } from '@/lib/finance/financialPeriods';
 import { formatRupees } from '@/lib/finance/moneyFormat';
 import { formatDate, todayInIndia } from '@/lib/formatDate';
 import { requirePagePermission } from '@/server/services/accessService';
 import { getFinanceReport } from '@/server/services/financeService';
 
-export const metadata: Metadata = { title: 'Finance reports' };
+export const metadata: Metadata = { title: 'Finance dashboard' };
 
-const periodOptions = periodKeys.map((key) => ({ value: key, label: periodLabels[key] }));
-
-type FinancePageProps = {
+type FinanceDashboardProps = {
   searchParams: Promise<{ period?: string; from?: string; to?: string }>;
 };
 
-function chooseRange(params: { period?: string; from?: string; to?: string }, today: string): { range: DateRange; period?: PeriodKey } {
-  if (isCalendarDate(params.from) && isCalendarDate(params.to) && params.from <= params.to) {
-    return { range: { from: params.from, to: params.to } };
-  }
-  const period = periodKeys.find((key) => key === params.period) ?? 'this-year';
-  return { range: periodRange(period, today), period };
-}
-
-export default async function FinancePage({ searchParams }: FinancePageProps) {
-  const access = await requirePagePermission(permissionKeys.financeReports);
-  const canOpenClient = access.permissions[permissionKeys.clientsView] !== undefined;
+// The Finance person's overview. Today it shows invoice money: what came in, what is
+// owed and how late. Expenses, bank balances, payables and payroll join it as those
+// parts are built, rather than showing empty figures now.
+export default async function FinanceDashboardPage({ searchParams }: FinanceDashboardProps) {
+  const access = await requirePagePermission(permissionKeys.financeDashboard);
   const params = await searchParams;
-  const today = todayInIndia();
-  const { range, period } = chooseRange(params, today);
+  const { range, period } = chooseRange(params, todayInIndia());
   const report = await getFinanceReport(range);
   const { summary } = report;
-
-  const rangeText = `${formatDate(range.from)} to ${formatDate(range.to)}`;
-  const exportHref = `/finance/export?${new URLSearchParams({ from: range.from, to: range.to }).toString()}`;
-  const showIgst = report.months.some((month) => month.igst > 0);
+  const canOpenReports = access.permissions[permissionKeys.financeReports] !== undefined;
 
   return (
     <>
       <PageHeader
-        title="Finance reports"
-        description={`${period ? `${periodLabels[period]}: ` : ''}${rangeText}. Only issued invoices count. Drafts and cancelled invoices do not.`}
+        title="Finance dashboard"
+        description={`${period ? `${periodLabels[period]}: ` : ''}${formatDate(range.from)} to ${formatDate(range.to)}. Income is money received against invoices.`}
         actions={
-          <ButtonLink href={exportHref} variant="secondary">
-            <Download size={16} aria-hidden="true" />
-            Download invoices (CSV)
-          </ButtonLink>
+          canOpenReports && (
+            <ButtonLink href={`/finance/reports?${new URLSearchParams(period ? { period } : range).toString()}`}>
+              <ChartColumn size={16} aria-hidden="true" />
+              Finance reports
+            </ButtonLink>
+          )
         }
       />
-      <form method="get" className={filterStyles.filters}>
-        <SelectField label="Period" name="period" options={periodOptions} defaultValue={period ?? ''} placeholder="Chosen dates" />
-        <TextField label="From" name="from" type="date" defaultValue={period ? '' : range.from} />
-        <TextField label="To" name="to" type="date" defaultValue={period ? '' : range.to} />
-        <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
-          <ButtonLink href="/finance" variant="ghost">
-            Clear
-          </ButtonLink>
-        </div>
-      </form>
+      <PeriodFilter basePath="/finance" range={range} period={period} />
 
       <div className={layout.stack}>
         <StatTiles
           tiles={[
-            { label: `Invoiced (${summary.invoiceCount})`, value: formatRupees(summary.invoiced) },
-            { label: 'Collected', value: formatRupees(summary.collected) },
-            { label: `Owed to us now (${summary.outstandingCount})`, value: formatRupees(summary.outstanding), href: '/invoices?status=unpaid' },
+            { label: 'Income received', value: formatRupees(summary.collected) },
+            { label: `Invoiced (${summary.invoiceCount})`, value: formatRupees(summary.invoiced), href: '/invoices' },
+            { label: `Receivables now (${summary.outstandingCount})`, value: formatRupees(summary.outstanding), href: '/invoices?status=unpaid' },
             { label: `Overdue now (${summary.overdueCount})`, value: formatRupees(summary.overdue), href: '/invoices?status=overdue' },
           ]}
         />
 
-        <Panel
-          title="Month by month"
-          description={`Taxable value ${formatRupees(summary.taxable)} and GST ${formatRupees(summary.gst)} in this period. Use these figures for GST returns.`}
-          flush
-        >
-          <div className={styles.scroller}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">Month</th>
-                  <th scope="col" className={styles.numeric}>
-                    Invoices
-                  </th>
-                  <th scope="col" className={styles.numeric}>
-                    Taxable value
-                  </th>
-                  <th scope="col" className={styles.numeric}>
-                    CGST
-                  </th>
-                  <th scope="col" className={styles.numeric}>
-                    SGST
-                  </th>
-                  {showIgst && (
-                    <th scope="col" className={styles.numeric}>
-                      IGST
-                    </th>
-                  )}
-                  <th scope="col" className={styles.numeric}>
-                    Invoiced
-                  </th>
-                  <th scope="col" className={styles.numeric}>
-                    Collected
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.months.map((month) => (
-                  <tr key={month.month}>
-                    <th scope="row" className={styles.primaryText}>
-                      {month.label}
-                    </th>
-                    <td className={styles.numeric}>{month.invoiceCount}</td>
-                    <td className={styles.numeric}>{formatRupees(month.taxable)}</td>
-                    <td className={styles.numeric}>{formatRupees(month.cgst)}</td>
-                    <td className={styles.numeric}>{formatRupees(month.sgst)}</td>
-                    {showIgst && <td className={styles.numeric}>{formatRupees(month.igst)}</td>}
-                    <td className={styles.numeric}>{formatRupees(month.invoiced)}</td>
-                    <td className={styles.numeric}>{formatRupees(month.collected)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-
         <div className={layout.columns}>
-          <Panel title="Top clients" description="By amount invoiced in this period." flush>
-            {report.clients.length === 0 ? (
-              <p className={layout.emptyText}>No invoices or payments in this period.</p>
-            ) : (
-              <div className={styles.scroller}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th scope="col">Client</th>
-                      <th scope="col" className={styles.numeric}>
-                        Invoiced
-                      </th>
-                      <th scope="col" className={styles.numeric}>
-                        Collected
-                      </th>
-                      <th scope="col" className={styles.numeric}>
-                        Owed now
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.clients.map((client) => (
-                      <tr key={client.clientId}>
-                        <td>
-                          {/* Client 360 for people with the Clients section; their invoices for everyone else. */}
-                          <Link
-                            href={canOpenClient ? `/clients/${client.clientId}` : `/invoices?clientId=${client.clientId}`}
-                            className={`${styles.primaryText} ${styles.primaryLink}`}
-                          >
-                            {client.name}
-                          </Link>
-                        </td>
-                        <td className={styles.numeric}>{formatRupees(client.invoiced)}</td>
-                        <td className={styles.numeric}>{formatRupees(client.collected)}</td>
-                        <td className={styles.numeric}>{formatRupees(client.outstanding)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+          <Panel title="Income by month" description="Money received against invoices, month by month.">
+            <BarChart
+              label="Income received by month"
+              orientation="vertical"
+              data={report.months.map((month) => ({ label: month.label.replace(/ \d{2}(\d{2})$/, " '$1"), value: month.collected }))}
+              formatValue={formatRupees}
+              valueHeading="Received"
+            />
           </Panel>
-
-          <Panel title="Money owed, by age" description="Every unpaid invoice today, whatever the period." flush>
-            <div className={styles.scroller}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th scope="col">How late</th>
-                    <th scope="col" className={styles.numeric}>
-                      Invoices
-                    </th>
-                    <th scope="col" className={styles.numeric}>
-                      Amount
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.ageing.map((bucket) => (
-                    <tr key={bucket.key}>
-                      <th scope="row" className={styles.primaryText}>
-                        {bucket.label}
-                      </th>
-                      <td className={styles.numeric}>{bucket.count}</td>
-                      <td className={styles.numeric}>{formatRupees(bucket.amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <Panel title="Money owed, by age" description="Every unpaid invoice today, whatever the period.">
+            <StackedBar
+              label="Unpaid invoices by how late they are"
+              colouring="ordered"
+              segments={report.ageing.map((bucket) => ({ label: bucket.label, value: bucket.amount }))}
+              formatValue={formatRupees}
+              valueHeading="Owed"
+            />
           </Panel>
         </div>
       </div>

@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import {
   databaseFailure,
   failure,
@@ -13,6 +14,7 @@ import { parseAttendanceCsv } from '@/lib/attendance/summariseAttendance';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import {
   attendanceCorrectionSchema,
+  employmentTypeSchema,
   holidaySchema,
   leaveDecisionSchema,
   leaveRequestSchema,
@@ -71,6 +73,7 @@ export async function decideLeaveAction(requestId: string, decision: string, not
   if (data.length === 0) return failure(noPermission);
 
   revalidatePath('/approvals');
+  revalidatePath('/hr/leave');
   return success(parsed.data.decision === 'approved' ? 'Leave approved.' : 'Leave rejected.');
 }
 
@@ -89,13 +92,14 @@ export async function cancelLeaveAction(requestId: string): Promise<ActionResult
   return success('Leave cancelled.');
 }
 
-export async function checkInAction(): Promise<ActionResult> {
+// Where the person is working today is chosen as they check in.
+export async function checkInAction(workMode: 'office' | 'wfh'): Promise<ActionResult> {
   const database = await createDatabaseClient();
-  const { error } = await database.rpc('attendance_check_in');
+  const { error } = await database.rpc('attendance_check_in', { p_work_mode: workMode === 'wfh' ? 'wfh' : 'office' });
   if (error) return databaseFailure(error);
 
   revalidatePath('/', 'layout');
-  return success('Checked in.');
+  return success(workMode === 'wfh' ? 'Checked in, working from home.' : 'Checked in.');
 }
 
 export async function checkOutAction(): Promise<ActionResult> {
@@ -105,6 +109,24 @@ export async function checkOutAction(): Promise<ActionResult> {
 
   revalidatePath('/', 'layout');
   return success('Checked out.');
+}
+
+export async function startBreakAction(): Promise<ActionResult> {
+  const database = await createDatabaseClient();
+  const { error } = await database.rpc('attendance_start_break');
+  if (error) return databaseFailure(error);
+
+  revalidatePath('/attendance');
+  return success('Break started.');
+}
+
+export async function endBreakAction(): Promise<ActionResult> {
+  const database = await createDatabaseClient();
+  const { error } = await database.rpc('attendance_end_break');
+  if (error) return databaseFailure(error);
+
+  revalidatePath('/attendance');
+  return success('Welcome back.');
 }
 
 function indiaTimestamp(date: string, clock: string) {
@@ -119,11 +141,13 @@ export async function correctAttendanceAction(_previous: ActionResult, formData:
     workDate: formData.get('workDate'),
     checkIn: formData.get('checkIn') ?? '',
     checkOut: formData.get('checkOut') ?? '',
+    workMode: formData.get('workMode') || 'office',
+    statusOverride: formData.get('statusOverride') ?? '',
     note: formData.get('note') ?? '',
   });
   if (!parsed.success) return validationFailure(parsed.error);
 
-  const { employeeId, workDate, checkIn, checkOut, note } = parsed.data;
+  const { employeeId, workDate, checkIn, checkOut, workMode, statusOverride, note } = parsed.data;
   if (checkIn && checkOut && checkOut < checkIn) {
     return { status: 'error', message: 'Check-out must be after check-in.', fieldErrors: { checkOut: 'Must be after check-in.' } };
   }
@@ -137,6 +161,8 @@ export async function correctAttendanceAction(_previous: ActionResult, formData:
         work_date: workDate,
         check_in_at: indiaTimestamp(workDate, checkIn),
         check_out_at: indiaTimestamp(workDate, checkOut),
+        work_mode: workMode,
+        status_override: statusOverride,
         note,
       },
       { onConflict: 'employee_id,work_date' },
@@ -188,9 +214,13 @@ export async function saveWorkingHoursAction(_previous: ActionResult, formData: 
     workEnd: formData.get('workEnd'),
     lateGraceMinutes: formData.get('lateGraceMinutes'),
     workingDays: formData.getAll('workingDays'),
+    overtimeAfterHours: formData.get('overtimeAfterHours') ?? '',
+    halfDayHours: formData.get('halfDayHours') ?? '',
+    defaultProbationMonths: formData.get('defaultProbationMonths') ?? '',
   });
   if (!parsed.success) return validationFailure(parsed.error);
 
+  const toMinutes = (hours: number | null) => (hours === null ? null : Math.round(hours * 60));
   const database = await createDatabaseClient();
   const { data, error } = await database
     .from('company_settings')
@@ -199,6 +229,9 @@ export async function saveWorkingHoursAction(_previous: ActionResult, formData: 
       work_end: parsed.data.workEnd,
       late_grace_minutes: parsed.data.lateGraceMinutes,
       working_days: parsed.data.workingDays,
+      overtime_after_minutes: toMinutes(parsed.data.overtimeAfterHours),
+      half_day_minutes: toMinutes(parsed.data.halfDayHours),
+      default_probation_months: parsed.data.defaultProbationMonths,
     })
     .eq('id', true)
     .select('id');
@@ -210,18 +243,34 @@ export async function saveWorkingHoursAction(_previous: ActionResult, formData: 
   return success('Working hours saved.');
 }
 
-export async function addHolidayAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
+// Adds a holiday, or changes one when an id is given, then goes back to that month.
+export async function saveHolidayAction(holidayId: string | null, _previous: ActionResult, formData: FormData): Promise<ActionResult> {
   if (!(await getActionAccess(permissionKeys.hrManage))) return failure(noPermission);
 
-  const parsed = holidaySchema.safeParse({ holidayDate: formData.get('holidayDate'), name: formData.get('name') });
+  const parsed = holidaySchema.safeParse({
+    holidayDate: formData.get('holidayDate'),
+    name: formData.get('name'),
+    kind: formData.get('kind'),
+    description: formData.get('description') ?? '',
+  });
   if (!parsed.success) return validationFailure(parsed.error);
 
+  const row = {
+    holiday_date: parsed.data.holidayDate,
+    name: parsed.data.name,
+    kind: parsed.data.kind,
+    description: parsed.data.description,
+  };
   const database = await createDatabaseClient();
-  const { error } = await database.from('holidays').insert({ holiday_date: parsed.data.holidayDate, name: parsed.data.name });
+  const { data, error } = holidayId
+    ? await database.from('holidays').update(row).eq('id', holidayId).select('id')
+    : await database.from('holidays').insert(row).select('id');
   if (error) return databaseFailure(error, 'There is already a holiday on that date.');
+  if (data.length === 0) return failure(noPermission);
 
+  revalidatePath('/hr/holidays', 'layout');
   revalidatePath('/settings/hr');
-  return success('Holiday added.');
+  redirect(`/hr/holidays?month=${parsed.data.holidayDate.slice(0, 7)}`);
 }
 
 export async function removeHolidayAction(holidayId: string): Promise<ActionResult> {
@@ -230,8 +279,49 @@ export async function removeHolidayAction(holidayId: string): Promise<ActionResu
   if (error) return databaseFailure(error);
   if (data.length === 0) return failure(noPermission);
 
-  revalidatePath('/settings/hr');
+  revalidatePath('/hr/holidays', 'layout');
   return success('Holiday removed.');
+}
+
+export async function saveEmploymentTypeAction(
+  employmentTypeId: string | null,
+  _previous: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.hrManage))) return failure(noPermission);
+
+  const parsed = employmentTypeSchema.safeParse({
+    name: formData.get('name'),
+    isActive: employmentTypeId ? formData.get('isActive') === 'on' : true,
+  });
+  if (!parsed.success) return validationFailure(parsed.error);
+
+  const row = { name: parsed.data.name, is_active: parsed.data.isActive };
+  const database = await createDatabaseClient();
+  const { data, error } = employmentTypeId
+    ? await database.from('employment_types').update(row).eq('id', employmentTypeId).select('id')
+    : await database.from('employment_types').insert(row).select('id');
+
+  if (error) return databaseFailure(error, 'An employment type with this name already exists.');
+  if (data.length === 0) return failure(noPermission);
+
+  revalidatePath('/settings/hr');
+  return success(employmentTypeId ? 'Employment type saved.' : 'Employment type added.');
+}
+
+// Moves unused leave from last year into this one. The same job runs by itself early on
+// 1 January; running it again recalculates instead of adding twice.
+export async function carryForwardLeaveAction(year: number): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.hrManage))) return failure(noPermission);
+  if (!Number.isInteger(year)) return failure('Choose a year.');
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('carry_forward_leave', { p_year: year });
+  if (error) return databaseFailure(error);
+
+  revalidatePath('/hr/leave', 'layout');
+  revalidatePath('/leave');
+  return success(`Carried forward unused ${year} leave for ${data} ${data === 1 ? 'balance' : 'balances'}.`);
 }
 
 export async function saveLeaveTypeAction(
@@ -247,6 +337,9 @@ export async function saveLeaveTypeAction(
     isPaid: formData.get('isPaid') === 'on',
     requiresAttachment: formData.get('requiresAttachment') === 'on',
     isActive: leaveTypeId ? formData.get('isActive') === 'on' : true,
+    carryForwardCap: formData.get('carryForwardCap') ?? '',
+    carryForwardExpiryMonths: formData.get('carryForwardExpiryMonths') ?? '',
+    isEncashable: formData.get('isEncashable') === 'on',
   });
   if (!parsed.success) return validationFailure(parsed.error);
 
@@ -256,6 +349,9 @@ export async function saveLeaveTypeAction(
     is_paid: parsed.data.isPaid,
     requires_attachment: parsed.data.requiresAttachment,
     is_active: parsed.data.isActive,
+    carry_forward_cap: parsed.data.carryForwardCap,
+    carry_forward_expiry_months: parsed.data.carryForwardCap === null ? null : parsed.data.carryForwardExpiryMonths,
+    is_encashable: parsed.data.isEncashable,
   };
 
   const database = await createDatabaseClient();

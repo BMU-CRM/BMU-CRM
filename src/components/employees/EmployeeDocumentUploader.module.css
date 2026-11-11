@@ -1,0 +1,14 @@
+.uploader {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  align-items: end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 640px) {
+  .uploader {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

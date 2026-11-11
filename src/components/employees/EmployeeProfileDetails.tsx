@@ -2,19 +2,22 @@ import Link from 'next/link';
 import { Panel } from '@/components/ui/Panel';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { employmentStatusLabels } from '@/lib/employees/employeeRecordLabels';
 import { formatDate } from '@/lib/formatDate';
 import type { EmployeeDetails } from '@/server/services/employeeService';
 import { EmployeeAccountBadge } from './EmployeeAccountBadge';
 import styles from './EmployeeProfileDetails.module.css';
 
-const employmentStatusLabels: Record<string, string> = {
-  active: 'Active',
-  on_leave: 'On leave',
-  notice_period: 'Notice period',
-  exited: 'Exited',
-};
+function probationText(employee: EmployeeDetails, today: string) {
+  if (employee.confirmation_date) return `Confirmed on ${formatDate(employee.confirmation_date)}`;
+  if (employee.probation_months === null) return 'Not set';
+  if (employee.probation_months === 0) return 'No probation';
+  if (!employee.probation_end_date) return `${employee.probation_months} months, from the joining date`;
+  const ended = employee.probation_end_date < today;
+  return `${employee.probation_months} months, ${ended ? 'ended' : 'ends'} ${formatDate(employee.probation_end_date)}`;
+}
 
-export function EmployeeProfileDetails({ employee }: { employee: EmployeeDetails }) {
+export function EmployeeProfileDetails({ employee, today }: { employee: EmployeeDetails; today: string }) {
   return (
     <Panel>
       <div className={styles.identity}>
@@ -65,6 +68,14 @@ export function EmployeeProfileDetails({ employee }: { employee: EmployeeDetails
         <div>
           <dt>Employment status</dt>
           <dd>{employmentStatusLabels[employee.employment_status]}</dd>
+        </div>
+        <div>
+          <dt>Employment type</dt>
+          <dd>{employee.employment_type?.name ?? 'Not set'}</dd>
+        </div>
+        <div>
+          <dt>Probation</dt>
+          <dd>{probationText(employee, today)}</dd>
         </div>
         <div>
           <dt>Skills</dt>

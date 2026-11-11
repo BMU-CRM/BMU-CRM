@@ -9,7 +9,7 @@ import { Panel } from '@/components/ui/Panel';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { permissionKeys } from '@/lib/access/permissionKeys';
-import { formatWorkedTime, indiaClock } from '@/lib/attendance/summariseAttendance';
+import { dayStatusLabels, formatWorkedTime, indiaClock } from '@/lib/attendance/summariseAttendance';
 import { formatDate, todayInIndia } from '@/lib/formatDate';
 import { requirePagePermission } from '@/server/services/accessService';
 import { getTodayAttendance, listAttendanceRecords } from '@/server/services/hrService';
@@ -17,6 +17,10 @@ import { getTodayAttendance, listAttendanceRecords } from '@/server/services/hrS
 export const metadata: Metadata = { title: 'Attendance' };
 
 const sourceLabels: Record<string, string> = { web: 'Checked in here', manual: 'Corrected by HR', import: 'Imported' };
+
+function minutesBetween(start: string, end: string) {
+  return Math.max(0, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000));
+}
 
 export default async function AttendancePage() {
   const access = await requirePagePermission(permissionKeys.attendanceView);
@@ -34,7 +38,7 @@ export default async function AttendancePage() {
     <>
       <PageHeader
         title="Attendance"
-        description="Times are in Indian time."
+        description="Times are in Indian time. Hours worked leave out breaks."
         actions={seesOthers && <ButtonLink href="/attendance/report">Team report</ButtonLink>}
       />
       <div className={layout.columns}>
@@ -49,29 +53,38 @@ export default async function AttendancePage() {
                     <th scope="col">Date</th>
                     <th scope="col">In</th>
                     <th scope="col">Out</th>
+                    <th scope="col">Breaks</th>
                     <th scope="col">Worked</th>
-                    <th scope="col">Source</th>
+                    <th scope="col">Where and how</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map((record) => (
-                    <tr key={record.id}>
-                      <td>{formatDate(record.work_date)}</td>
-                      <td>{record.check_in_at ? indiaClock(record.check_in_at) : '—'}</td>
-                      <td>{record.check_out_at ? indiaClock(record.check_out_at) : '—'}</td>
-                      <td>
-                        {record.check_in_at && record.check_out_at
-                          ? formatWorkedTime(
-                              Math.round((new Date(record.check_out_at).getTime() - new Date(record.check_in_at).getTime()) / 60000),
-                            )
-                          : '—'}
-                      </td>
-                      <td>
-                        <StatusBadge>{sourceLabels[record.source] ?? record.source}</StatusBadge>
-                        {record.note && <p className={tableStyles.secondaryText}>{record.note}</p>}
-                      </td>
-                    </tr>
-                  ))}
+                  {records.map((record) => {
+                    const breakMinutes = record.breaks
+                      .filter((entry) => entry.ended_at)
+                      .reduce((total, entry) => total + minutesBetween(entry.started_at, entry.ended_at!), 0);
+                    return (
+                      <tr key={record.id}>
+                        <td>{formatDate(record.work_date)}</td>
+                        <td>{record.check_in_at ? indiaClock(record.check_in_at) : '—'}</td>
+                        <td>{record.check_out_at ? indiaClock(record.check_out_at) : '—'}</td>
+                        <td>{breakMinutes > 0 ? formatWorkedTime(breakMinutes) : '—'}</td>
+                        <td>
+                          {record.check_in_at && record.check_out_at
+                            ? formatWorkedTime(Math.max(0, minutesBetween(record.check_in_at, record.check_out_at) - breakMinutes))
+                            : '—'}
+                        </td>
+                        <td>
+                          <div className={layout.badges}>
+                            {record.work_mode === 'wfh' && <StatusBadge tone="warning">From home</StatusBadge>}
+                            {record.status_override && <StatusBadge>{dayStatusLabels[record.status_override]}</StatusBadge>}
+                            <StatusBadge>{sourceLabels[record.source] ?? record.source}</StatusBadge>
+                          </div>
+                          {record.note && <p className={tableStyles.secondaryText}>{record.note}</p>}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

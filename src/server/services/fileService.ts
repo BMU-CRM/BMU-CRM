@@ -78,6 +78,8 @@ export async function listFiles(access: CurrentAccess, { section, search, page }
     .from('files')
     .select(fileFields, { count: 'exact' })
     .eq('status', 'ready')
+    // Employee documents live on the employee's record, not in Files.
+    .is('employee_id', null)
     .eq('is_archived', section === 'archived')
     .order('created_at', { ascending: false })
     .range(from, from + filesPerPage - 1);
@@ -112,6 +114,7 @@ export async function listLinkedFiles(link: FileLinks) {
   if (link.clientId) query = query.eq('client_id', link.clientId);
   if (link.meetingId) query = query.eq('meeting_id', link.meetingId);
   if (link.ticketId) query = query.eq('ticket_id', link.ticketId);
+  query = link.employeeId ? query.eq('employee_id', link.employeeId) : query.is('employee_id', null);
 
   const { data, error } = await query;
   if (error) throw error;

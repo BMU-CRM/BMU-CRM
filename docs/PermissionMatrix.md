@@ -109,7 +109,7 @@ Edited and deleted messages keep their original text in the audit log, as the br
 | Permission | Founder | Co-Founder | Client Manager | Branch Manager | Finance Head | D&D Head | Marketing Head | Employee |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `leave.request` | Own | Own | Own | Own | Own | Own | Own | Own |
-| `leave.approve` | Org | Org | Team | Dept | Dept | Dept | Dept | |
+| `leave.approve` | Org | Org | | | | | | |
 | `attendance.view` | Org | Org | Team | Dept | Dept | Dept | Dept | Own |
 | `attendance.manage` | Org | Org | | Dept | | | | |
 | `hr.manage` | Org | Org | | | | | | |
@@ -179,6 +179,44 @@ To reach another team, assign to its head, who passes the work on.
 - A reviewer must have **Manage tasks** (today: the Founder, Co-Founder, Client Managers and department heads) or be whoever assigned the task. Team members cannot be chosen. Giving a role Manage tasks in Settings > Roles makes its people reviewers.
 - A manager cannot change the details of work assigned to them by someone else.
 - Anyone can postpone or bring forward the deadline of their own open work, from the calendar or otherwise. They cannot remove it. Whoever assigned the task and its reviewer are notified, and the audit log records the change.
+
+## HR and Finance
+
+The **Human Resource** role runs HR and the **Finance Head** role runs Finance. There are no separate admin tiers.
+
+| Permission | Founder | Human Resource | Finance Head | Everyone else |
+| --- | --- | --- | --- | --- |
+| `hr.dashboard` (HR dashboard, `/hr`) | Org | Org | | |
+| `finance.dashboard` (Finance dashboard, `/finance`) | Org | | Org | |
+| `leave.approve` | Org | Org | | Co-Founder: Org |
+| `employees.private_view` (ID and bank details, employee documents) | Org | Org | | |
+
+Human Resource also has the HR work that already existed, across the organisation: Employees (view, add, edit, activate), attendance (view, correct), HR settings, and leave approval.
+
+**Leave is approved by HR only.** Reporting managers and department heads no longer approve leave; new requests notify everyone who can approve leave across the organisation.
+
+**One person, two roles.** Someone who does two jobs (for example HR and Finance) is given a second role under **Additional roles** on their employee record, by whoever can assign roles (the Founder). They keep one login and switch from the menu under their avatar ("Working as"). Their sidebar, dashboards and access follow the role they are working in, worked out in the database by `current_role_id()`. Every switch is recorded in the audit log.
+
+### The employee record
+
+| Part of the record | The person | Their managers (`employees.update`) | HR and Founder (`employees.private_view`) | Colleagues |
+| --- | --- | --- | --- | --- |
+| Work details (employment type, probation, confirmation) | See | See and change | See and change | See (directory) |
+| Personal details (date of birth, gender, personal email, address, emergency contact) | See; change contact details only | See and change | See and change | No |
+| ID and bank (Aadhaar, PAN, bank account) | See masked; can show their own full number | No | See masked, show full numbers, change | No |
+| Documents | See and add their own | No | See and add for anyone | No |
+| Employment history | See | See | See | No |
+
+- Aadhaar and account numbers are encrypted by the app (AES-256-GCM, key in `FIELD_ENCRYPTION_KEY`) before they are stored. Every "Show" of a full number is recorded in the audit log, as is every change, by field name only.
+- Employee documents never appear in Files and cannot be shared, whatever other file access someone has.
+- The directory CSV export (`/people/employees/export`) has work details only.
+- People without Directory access (the Employee role) see their own record on **My profile**.
+
+### Attendance and leave
+
+- **Leave requests** (`/hr/leave`) needs `leave.approve` at organisation scope. **Leave report** (`/hr/leave/utilisation`), **Holidays** (`/hr/holidays`) and the year-end carry forward need `hr.manage`.
+- Breaks and working from home are recorded only through Check in, Start a break and End break. HR sets a day's status (half day, absent and so on) through **Correct a record**, which is audited.
+- Unused leave carries forward automatically at 06:00 on 1 January (India time), up to each leave type's limit; HR can run it again from the Leave report.
 
 ## Overseeing work
 

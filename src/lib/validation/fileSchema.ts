@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { employeeDocumentTypes, type EmployeeDocumentType } from '@/lib/employees/employeeRecordLabels';
 
 const optionalId = z
   .string()
@@ -19,28 +20,45 @@ export const fileLinksSchema = z.object({
   taskId: optionalId,
   meetingId: optionalId,
   ticketId: optionalId,
+  employeeId: optionalId,
+  documentType: z
+    .string()
+    .trim()
+    .transform((value) => (value === '' ? null : value))
+    .pipe(z.enum(employeeDocumentTypes, { error: 'Choose a document type.' }).nullable()),
 });
 
-// The records a file can be attached to.
+// An employee document always has a type, and only employee documents have one.
+const documentTypeMatches = (links: { employeeId: string | null; documentType: string | null }) =>
+  (links.employeeId === null) === (links.documentType === null);
+const documentTypeProblem = { message: 'Choose a document type.', path: ['documentType'] };
+
+// The records a file can be attached to. An employee document also has a type.
 export type FileLinks = {
   clientId?: string;
   projectId?: string;
   taskId?: string;
   meetingId?: string;
   ticketId?: string;
+  employeeId?: string;
+  documentType?: EmployeeDocumentType;
 };
 
-export const startUploadSchema = fileLinksSchema.extend({
-  name: z.string().trim().min(1).max(255),
-  description: optionalText(2000),
-});
+export const startUploadSchema = fileLinksSchema
+  .extend({
+    name: z.string().trim().min(1).max(255),
+    description: optionalText(2000),
+  })
+  .refine(documentTypeMatches, documentTypeProblem);
 
 // Only web addresses are stored, because these values are later rendered as links.
-export const driveLinkSchema = fileLinksSchema.extend({
-  name: z.string().trim().min(1, 'Enter a name.').max(255, 'Use 255 characters or fewer.'),
-  url: z.url({ protocol: /^https$/, error: 'Enter a full https:// address.' }),
-  description: optionalText(2000),
-});
+export const driveLinkSchema = fileLinksSchema
+  .extend({
+    name: z.string().trim().min(1, 'Enter a name.').max(255, 'Use 255 characters or fewer.'),
+    url: z.url({ protocol: /^https$/, error: 'Enter a full https:// address.' }),
+    description: optionalText(2000),
+  })
+  .refine(documentTypeMatches, documentTypeProblem);
 
 export const fileDetailsSchema = z.object({
   name: z.string().trim().min(1, 'Enter a name.').max(255, 'Use 255 characters or fewer.'),

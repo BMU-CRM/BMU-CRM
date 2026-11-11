@@ -39,6 +39,7 @@ describe('leave, attendance, meetings and tickets', () => {
     await people.addPerson('developer', 'Employee', 'Design & Development', 'designHead');
     await people.addPerson('marketingHead', 'Digital Marketing Head', 'Digital Marketing', 'founder');
     await people.addPerson('marketer', 'Employee', 'Digital Marketing', 'marketingHead');
+    await people.addPerson('hr', 'Human Resource', 'Management', 'founder');
 
     designDepartment = await people.departmentId('Design & Development');
     await admin.from('departments').update({ head_employee_id: ids.designHead! }).eq('id', designDepartment);
@@ -125,18 +126,22 @@ describe('leave, attendance, meetings and tickets', () => {
       expect(data).toEqual([]);
     });
 
-    it('lets the manager approve and tells the employee, but not someone outside the team', async () => {
+    it('lets only HR approve, tells HR about the request and the employee about the decision', async () => {
       const { data: request } = await requestLeave(as.designer!, { start_date: '2027-05-03', end_date: '2027-05-03' });
 
       const outsider = await as.marketingHead!.from('leave_requests').update({ status: 'approved' }).eq('id', request!.id).select('id');
       const self = await as.designer!.from('leave_requests').update({ status: 'approved' }).eq('id', request!.id);
-      const manager = await as.designHead!.from('leave_requests').update({ status: 'approved', decision_note: 'Enjoy' }).eq('id', request!.id);
+      const manager = await as.designHead!.from('leave_requests').update({ status: 'approved' }).eq('id', request!.id).select('id');
+      const hr = await as.hr!.from('leave_requests').update({ status: 'approved', decision_note: 'Enjoy' }).eq('id', request!.id).select('id');
 
       expect(outsider.data ?? []).toEqual([]);
       expect(self.error?.message).toContain('cannot change this leave');
-      expect(manager.error).toBeNull();
+      expect(manager.data ?? []).toEqual([]);
+      expect(hr.error).toBeNull();
+      expect(hr.data).toHaveLength(1);
       expect((await notificationKinds('designer')).some((n) => n.kind === 'leave_decided')).toBe(true);
-      expect((await notificationKinds('designHead')).some((n) => n.kind === 'leave_requested')).toBe(true);
+      expect((await notificationKinds('hr')).some((n) => n.kind === 'leave_requested')).toBe(true);
+      expect((await notificationKinds('designHead')).some((n) => n.kind === 'leave_requested')).toBe(false);
     });
 
     it('stops a request being edited after it is made', async () => {
