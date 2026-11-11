@@ -10,10 +10,23 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { PaginationBar } from '@/components/ui/PaginationBar';
 import { Panel } from '@/components/ui/Panel';
 import { permissionKeys } from '@/lib/access/permissionKeys';
-import { parsePage } from '@/lib/parseListParams';
-import { priorityLabels, taskStatusLabels, type TaskStatus, type WorkPriority } from '@/lib/tasks/taskWorkflow';
+import { parseId, parsePage } from '@/lib/parseListParams';
+import {
+  isTaskStage,
+  priorityLabels,
+  taskStatusLabels,
+  type TaskStatus,
+  type WorkPriority,
+} from '@/lib/tasks/taskWorkflow';
 import { requirePagePermission } from '@/server/services/accessService';
-import { getTaskStats, listTasks, taskViews, tasksPerPage, type TaskView } from '@/server/services/taskService';
+import {
+  getTaskStats,
+  listTaskOversightOptions,
+  listTasks,
+  taskViews,
+  tasksPerPage,
+  type TaskView,
+} from '@/server/services/taskService';
 
 export const metadata: Metadata = { title: 'Tasks' };
 
@@ -29,8 +42,11 @@ type TasksPageProps = {
     view?: string;
     search?: string;
     status?: string;
+    stage?: string;
     priority?: string;
     overdue?: string;
+    assignee?: string;
+    department?: string;
     page?: string;
   }>;
 };
@@ -41,24 +57,33 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
 
   const view = taskViews.find((option) => option === params.view) ?? 'mine';
   const status = params.status && params.status in taskStatusLabels ? (params.status as TaskStatus) : undefined;
+  const stage = isTaskStage(params.stage) ? params.stage : undefined;
   const priority = params.priority && params.priority in priorityLabels ? (params.priority as WorkPriority) : undefined;
   const overdue = params.overdue === '1';
   const page = parsePage(params.page);
 
+  // Looking at someone else's or a department's work only makes sense across all tasks.
+  const oversight = view === 'all' || view === 'assigned' ? await listTaskOversightOptions(access) : null;
+  const assigneeId = oversight ? (parseId(params.assignee) ?? undefined) : undefined;
+  const departmentId = oversight ? (parseId(params.department) ?? undefined) : undefined;
+
   const [{ tasks, total }, stats] = await Promise.all([
-    listTasks(access, { view, search: params.search, status, priority, overdue, page }),
+    listTasks(access, { view, search: params.search, status, stage, priority, overdue, assigneeId, departmentId, page }),
     getTaskStats(access),
   ]);
 
   const canCreate = access.permissions[permissionKeys.tasksCreate] !== undefined;
-  const isFiltered = Boolean(params.search || status || priority || overdue);
+  const isFiltered = Boolean(params.search || status || stage || priority || overdue || assigneeId || departmentId);
 
   function hrefForPage(target: number) {
     const query = new URLSearchParams({ view, page: String(target) });
     if (params.search) query.set('search', params.search);
     if (status) query.set('status', status);
+    if (stage) query.set('stage', stage);
     if (priority) query.set('priority', priority);
     if (overdue) query.set('overdue', '1');
+    if (assigneeId) query.set('assignee', assigneeId);
+    if (departmentId) query.set('department', departmentId);
     return `/tasks?${query.toString()}`;
   }
 
@@ -78,7 +103,11 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
         }
       />
       <TaskViewTabs current={view} reviewCount={stats.toReview} />
-      <TaskFilters view={view} values={{ search: params.search, status, priority, overdue }} />
+      <TaskFilters
+        view={view}
+        values={{ search: params.search, status, stage, priority, overdue, assigneeId, departmentId }}
+        oversight={oversight}
+      />
       <Panel flush>
         {tasks.length === 0 ? (
           <EmptyState

@@ -1,4 +1,4 @@
-import { isTaskOpen, isTaskOverdue, type TaskStatus, type WorkPriority } from './taskWorkflow';
+import { isTaskOpen, isTaskOverdue, stageOf, type TaskStage, type TaskStatus, type WorkPriority } from './taskWorkflow';
 
 export const weeklyCapacityHours = 40;
 
@@ -36,6 +36,8 @@ export type EmployeeWorkload = {
   departmentName: string | null;
   designationTitle: string | null;
   activeTasks: number;
+  // Open work by where it stands. Done is the last 90 days.
+  stageCounts: Record<TaskStage, number>;
   overdueTasks: number;
   remainingHours: number;
   utilisation: number;
@@ -85,6 +87,12 @@ export function calculateWorkload(rows: WorkloadRow[], today: string): EmployeeW
       if (overdue) overdueTasks += 1;
     }
 
+    const stageCounts: Record<TaskStage, number> = { todo: 0, doing: 0, review: 0, done: 0 };
+    for (const task of tasks) {
+      const stage = stageOf(task.status as TaskStatus);
+      if (stage) stageCounts[stage] += 1;
+    }
+
     const withDueDate = completed.filter((task) => task.due_date !== null && task.completed_at !== null);
     const onTime = withDueDate.filter((task) => (task.completed_at as string).slice(0, 10) <= (task.due_date as string));
     const estimated = completed.reduce((sum, task) => sum + (task.estimated_hours ?? 0), 0);
@@ -97,6 +105,7 @@ export function calculateWorkload(rows: WorkloadRow[], today: string): EmployeeW
       departmentName: first.department_name,
       designationTitle: first.designation_title,
       activeTasks: open.length,
+      stageCounts,
       overdueTasks,
       remainingHours,
       utilisation,
@@ -125,6 +134,12 @@ export function summariseByDepartment(workloads: EmployeeWorkload[]) {
       department,
       people: members.length,
       activeTasks: members.reduce((sum, member) => sum + member.activeTasks, 0),
+      stageCounts: {
+        todo: members.reduce((sum, member) => sum + member.stageCounts.todo, 0),
+        doing: members.reduce((sum, member) => sum + member.stageCounts.doing, 0),
+        review: members.reduce((sum, member) => sum + member.stageCounts.review, 0),
+        done: members.reduce((sum, member) => sum + member.stageCounts.done, 0),
+      },
       overdueTasks: members.reduce((sum, member) => sum + member.overdueTasks, 0),
       utilisation: members.reduce((sum, member) => sum + member.utilisation, 0) / members.length,
     }))

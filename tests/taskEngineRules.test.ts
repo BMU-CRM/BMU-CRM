@@ -342,12 +342,55 @@ describe('clients, projects and the task engine', () => {
       expect(error?.message).toContain('cannot move this task');
     });
 
-    it('stops a head moving the deadline on work assigned to them', async () => {
-      const { data } = await newTask(as.founder!, { assignee_id: ids.designHead! });
+    it('lets the assignee move the deadline of their open work, and tells whoever assigned it', async () => {
+      const { data } = await newTask(as.founder!, { assignee_id: ids.designHead!, title: 'Deadline to move' });
 
-      const { error } = await as.designHead!.from('tasks').update({ due_date: '2030-01-01' }).eq('id', data!.id);
+      const moved = await as.designHead!.from('tasks').update({ due_date: '2030-01-01' }).eq('id', data!.id).select('due_date');
 
-      expect(error?.message).toContain('do not have permission to change these task details');
+      expect(moved.error).toBeNull();
+      expect(moved.data?.[0]?.due_date).toBe('2030-01-01');
+
+      const notices = await as.founder!
+        .from('notifications')
+        .select('kind, body')
+        .eq('kind', 'task_rescheduled')
+        .eq('link', `/tasks/${data!.id}`);
+      expect(notices.data?.[0]?.body).toContain('01 Jan 2030');
+    });
+
+    it('moves the start date along when a deadline is brought forward before it', async () => {
+      const { data } = await newTask(as.founder!, {
+        assignee_id: ids.designHead!,
+        start_date: '2030-02-01',
+        due_date: '2030-02-10',
+      });
+
+      const moved = await as.designHead!
+        .from('tasks')
+        .update({ due_date: '2030-01-15' })
+        .eq('id', data!.id)
+        .select('start_date, due_date');
+
+      expect(moved.error).toBeNull();
+      expect(moved.data?.[0]).toEqual({ start_date: '2030-01-15', due_date: '2030-01-15' });
+    });
+
+    it('still stops the assignee changing the other terms of the work', async () => {
+      const { data } = await newTask(as.founder!, { assignee_id: ids.designHead!, due_date: '2030-03-01' });
+
+      const renamed = await as.designHead!.from('tasks').update({ title: 'Renamed by assignee' }).eq('id', data!.id);
+      const cleared = await as.designHead!.from('tasks').update({ due_date: null }).eq('id', data!.id);
+
+      expect(renamed.error?.message).toContain('do not have permission to change these task details');
+      expect(cleared.error?.message).toContain('do not have permission to change these task details');
+    });
+
+    it('stops anyone else moving a deadline they do not manage', async () => {
+      const { data } = await newTask(as.designHead!, { assignee_id: ids.designer! });
+
+      const { data: rows } = await as.developer!.from('tasks').update({ due_date: '2030-01-01' }).eq('id', data!.id).select('id');
+
+      expect(rows ?? []).toHaveLength(0);
     });
 
     it('stops skipping steps', async () => {

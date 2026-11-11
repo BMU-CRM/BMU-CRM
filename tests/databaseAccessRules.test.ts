@@ -70,7 +70,6 @@ describe('database access rules', () => {
     expect(data?.map((row) => row.permission_key).sort()).toEqual([
       'attendance.view',
       'dashboard.view',
-      'employees.view',
       'files.upload',
       'files.view',
       'leave.request',

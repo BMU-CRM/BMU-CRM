@@ -11,7 +11,7 @@ These are the starting permissions, which the Founder can change in **Settings >
 | Permission | Founder | Co-Founder | Client Manager | Branch Manager | Finance Head | D&D Head | Marketing Head | Employee |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `dashboard.view` | Own | Own | Own | Own | Own | Own | Own | Own |
-| `employees.view` | Org | Org | Team | Team | Team | Team | Team | Own |
+| `employees.view` | Org | Org | Team | Team | Team | Team | Team | |
 | `employees.create` | Org | Org | Team | Team | Team | Team | Team | |
 | `employees.update` | Org | Org | Team | Team | Team | Team | Team | |
 | `employees.assign_role` | Org | Org | | | | | | |
@@ -34,6 +34,8 @@ Every employee can update their own phone number and skills, without needing a p
 | Org | Everyone |
 | Team | You and everyone who reports to you, at any depth |
 | Own | You, your manager, and the colleagues who share that manager |
+
+The Employees section is for the Founder, Co-Founder, Client Managers and department heads. Team members (the Employee role) do not have it; their own details are under **Profile**.
 
 This limits the Employees page and profiles only. Everyone's name still shows wherever people pick or see colleagues: tasks, chats, meetings and files.
 
@@ -77,7 +79,7 @@ The Finance Head has no Clients section, but sees client names and billing detai
 | `tasks.assign_heads` | Org | Org | Org | Org | Org | Org | Org | |
 | `tasks.assign_project_team` | Own | | | | | | | |
 | `tasks.manage` | Org | Org | Team | Dept | Dept | Dept | Dept | |
-| `workload.view` | Org | Org | Team | Dept | Dept | Dept | Dept | |
+| `workload.view` | Org | Org | Org | Dept | Dept | Dept | Dept | |
 
 ## Files and messages
 
@@ -174,7 +176,16 @@ To reach another team, assign to its head, who passes the work on.
 
 - People involved in a task can always see it: the assignee, creator, reviewer, collaborators and anyone it was escalated to.
 - Nobody can sign off work assigned to them, even with manager access. The exception is a task someone set for themselves.
-- A manager cannot change the deadline or details of work assigned to them by someone else.
+- A manager cannot change the details of work assigned to them by someone else.
+- Anyone can postpone or bring forward the deadline of their own open work, from the calendar or otherwise. They cannot remove it. Whoever assigned the task and its reviewer are notified, and the audit log records the change.
+
+## Overseeing work
+
+The Founder, Co-Founder, Client Managers and department heads oversee others' tasks:
+
+- **Workload** shows each person's and each department's work as yet to start, being worked on, waiting for review and done (last 90 days). Every count opens those tasks.
+- **Tasks > All tasks** filters by person, department and progress.
+- Reach follows `tasks.view` and `workload.view`: Founder, Co-Founder and Client Managers see the whole organisation; department heads see their own department.
 - A task cannot be escalated sideways, only up the reporting line or back to whoever assigned it.
 - Only tasks that have not started can be deleted.
 
@@ -188,7 +199,7 @@ To reach another team, assign to its head, who passes the work on.
 | D&D and Marketing Heads | Tasks, Projects, Workload, Calendar, Support, Leave, Attendance, Approvals, Employees (their team) | Department, project and task figures, attendance, leave to approve, workload, meetings, tickets, team, profile |
 | Finance Head | The heads' pages, plus Quotations, Invoices, Reports and Finance settings | The heads' dashboard, plus revenue figures, overdue invoices and quotations awaiting an answer |
 | Branch Manager | Tasks, Projects, Workload, Calendar, Support, Leave, Attendance, Approvals, Employees (their team) | Department, project and task figures, attendance, leave to approve, workload, meetings, tickets, team, profile |
-| Employee | Tasks, Projects, Calendar, Support, Leave, Attendance, Employees (their manager and colleagues) | Their project and task figures, their tasks, attendance, leave balance, meetings, profile |
+| Employee | Tasks, Projects, Calendar, Support, Leave, Attendance | Their project and task figures, their tasks, attendance, leave balance, meetings, profile |
 
 Everyone who has tasks also sees **My workload**: their own open work against a 40-hour week. Managers see their team's workload as well.
 

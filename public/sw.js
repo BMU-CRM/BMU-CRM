@@ -15,6 +15,8 @@ self.addEventListener('push', (event) => {
       icon: '/icon.svg',
       badge: '/icon.svg',
       tag: data.tag,
+      // Urgent ones stay on screen until dismissed, so they are not missed.
+      requireInteraction: data.priority === 'high',
       data: { url: data.url || '/notifications' },
     }),
   );

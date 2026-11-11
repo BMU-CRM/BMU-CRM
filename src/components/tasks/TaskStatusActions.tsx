@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/Button';
 import dialogStyles from '@/components/ui/ConfirmActionButton.module.css';
-import { SelectField, TextAreaField } from '@/components/ui/FormFields';
+import { SelectField, TextAreaField, TextField } from '@/components/ui/FormFields';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
 import type { ActionResult } from '@/lib/actionResult';
@@ -23,11 +23,11 @@ function TaskActionButton({ taskId, action }: { taskId: string; action: TaskActi
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [result, setResult] = useState<ActionResult>({ status: 'idle' });
   const [isPending, startTransition] = useTransition();
-  const needsDialog = action.needsNote || action.needsRating;
+  const needsDialog = action.needsNote || action.needsRating || action.acceptsWorkLink;
 
-  function run(note: string | null, rating: number | null) {
+  function run(note: string | null, rating: number | null, workLink: string | null = null) {
     startTransition(async () => {
-      const outcome = await changeTaskStatusAction(taskId, action.status, note, rating);
+      const outcome = await changeTaskStatusAction(taskId, action.status, note, rating, workLink);
       setResult(outcome);
       if (outcome.status === 'success') dialogRef.current?.close();
     });
@@ -40,7 +40,8 @@ function TaskActionButton({ taskId, action }: { taskId: string; action: TaskActi
       return;
     }
     const rating = Number(formData.get('rating'));
-    run(note || null, rating || null);
+    const workLink = String(formData.get('workLink') ?? '').trim();
+    run(note || null, rating || null, workLink || null);
   }
 
   return (
@@ -61,6 +62,16 @@ function TaskActionButton({ taskId, action }: { taskId: string; action: TaskActi
             <FormMessage result={result.status === 'error' ? result : { status: 'idle' }} />
             {action.needsRating && (
               <SelectField label="Quality of the work" name="rating" id={`rating-${action.status}`} options={ratingOptions} defaultValue="4" />
+            )}
+            {action.acceptsWorkLink && (
+              <TextField
+                label="Link to your work (optional)"
+                name="workLink"
+                id={`work-link-${action.status}`}
+                type="url"
+                placeholder="https://drive.google.com/…"
+                hint="A Google Drive file or folder, or any other https:// link. Files can also be uploaded under Attachments."
+              />
             )}
             <TextAreaField
               label={action.needsNote ? 'Note' : 'Note (optional)'}

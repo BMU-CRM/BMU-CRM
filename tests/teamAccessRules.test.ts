@@ -61,17 +61,18 @@ describe('team access', () => {
       expect(seen.has(ids.founder!)).toBe(false);
     });
 
-    it('shows an employee their manager and the colleagues who share that manager', async () => {
+    it('keeps the Employees section from team members', async () => {
       const seen = await directory('designer');
 
-      expect([...seen].sort()).toEqual([ids.designer, ids.developer, ids.lead].sort());
+      expect(seen.size).toBe(0);
+      expect((await permissionKeys('designer'))['employees.view']).toBeUndefined();
     });
 
-    it('opens a profile only inside that reach', async () => {
-      const own = await as.designer!.rpc('can_view_employee_profile', { p_target: ids.developer! });
+    it('opens no colleague profiles to a team member', async () => {
+      const colleague = await as.designer!.rpc('can_view_employee_profile', { p_target: ids.developer! });
       const other = await as.designer!.rpc('can_view_employee_profile', { p_target: ids.outsider! });
 
-      expect(own.data).toBe(true);
+      expect(colleague.data).toBe(false);
       expect(other.data).toBe(false);
     });
 
@@ -88,6 +89,26 @@ describe('team access', () => {
       expect((await permissionKeys('designHead'))['organisation.view']).toBeUndefined();
       expect((await permissionKeys('designer'))['organisation.view']).toBeUndefined();
       expect((await permissionKeys('founder'))['organisation.view']).toBe('organisation');
+    });
+  });
+
+  describe('overseeing work', () => {
+    it('lets the Founder, Client Managers and department heads see others\' work, and team members only their own', async () => {
+      expect((await permissionKeys('founder'))['workload.view']).toBe('organisation');
+      expect((await permissionKeys('manager'))['workload.view']).toBe('organisation');
+      expect((await permissionKeys('manager'))['tasks.view']).toBe('organisation');
+      expect((await permissionKeys('designHead'))['workload.view']).toBe('department');
+      expect((await permissionKeys('designHead'))['tasks.view']).toBe('department');
+      expect((await permissionKeys('designer'))['workload.view']).toBeUndefined();
+      expect((await permissionKeys('designer'))['tasks.view']).toBe('own');
+    });
+
+    it('shows a department head everyone in their department on the workload page', async () => {
+      const { data } = await as.designHead!.rpc('get_workload_rows');
+      const seen = new Set((data ?? []).map((row) => row.employee_id));
+
+      expect(['lead', 'designer', 'developer', 'outsider'].every((key) => seen.has(ids[key]!))).toBe(true);
+      expect(seen.has(ids.marketingHead!)).toBe(false);
     });
   });
 

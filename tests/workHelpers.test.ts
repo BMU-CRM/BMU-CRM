@@ -4,7 +4,7 @@ import { cleanSearchTerm } from '@/lib/cleanSearchTerm';
 import { getProjectHealth, progressPercentage } from '@/lib/projects/projectHealth';
 import { safeExternalUrl } from '@/lib/safeExternalUrl';
 import { calculateWorkload, summariseByDepartment, type WorkloadRow } from '@/lib/tasks/calculateWorkload';
-import { getTaskActions, isTaskOverdue, type TaskActor } from '@/lib/tasks/taskWorkflow';
+import { getTaskActions, isTaskOverdue, isTaskStage, stageOf, type TaskActor } from '@/lib/tasks/taskWorkflow';
 import { clientSchema } from '@/lib/validation/clientSchema';
 import { taskSchema } from '@/lib/validation/workSchema';
 
@@ -159,6 +159,43 @@ describe('calculateWorkload', () => {
     );
 
     expect(summariseByDepartment(people)[0]).toMatchObject({ department: 'Design', people: 2, utilisation: 0.5 });
+  });
+});
+
+describe('task progress stages', () => {
+  it('groups every status except rejected into yet to start, doing, review or done', () => {
+    expect(stageOf('assigned')).toBe('todo');
+    expect(stageOf('accepted')).toBe('todo');
+    expect(stageOf('in_progress')).toBe('doing');
+    expect(stageOf('changes_requested')).toBe('doing');
+    expect(stageOf('on_hold')).toBe('doing');
+    expect(stageOf('under_review')).toBe('review');
+    expect(stageOf('completed')).toBe('done');
+    expect(stageOf('rejected')).toBeNull();
+    expect(isTaskStage('doing')).toBe(true);
+    expect(isTaskStage('toString')).toBe(false);
+  });
+
+  it('counts each person\'s work by stage, and each department\'s', () => {
+    const people = calculateWorkload(
+      [
+        row({ task_id: '1', status: 'assigned' }),
+        row({ task_id: '2', status: 'in_progress' }),
+        row({ task_id: '3', status: 'under_review' }),
+        row({ task_id: '4', status: 'completed', completed_at: '2026-11-01T10:00:00Z' }),
+        row({ task_id: '5', status: 'rejected' }),
+        row({ employee_id: 'b', full_name: 'Person B', task_id: '6', status: 'accepted' }),
+      ],
+      today,
+    );
+
+    expect(people.find((person) => person.employeeId === 'a')?.stageCounts).toEqual({ todo: 1, doing: 1, review: 1, done: 1 });
+    expect(summariseByDepartment(people)[0]?.stageCounts).toEqual({ todo: 2, doing: 1, review: 1, done: 1 });
+  });
+
+  it('offers a link field when work is submitted', () => {
+    const submit = getTaskActions('in_progress', assignee).find((action) => action.status === 'under_review');
+    expect(submit?.acceptsWorkLink).toBe(true);
   });
 });
 

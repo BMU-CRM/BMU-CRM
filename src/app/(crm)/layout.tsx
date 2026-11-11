@@ -1,12 +1,14 @@
 import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
+import { PushPrompt } from '@/components/notifications/PushPrompt';
 import { requireAccess } from '@/server/services/accessService';
 import { getNotificationSummary } from '@/server/services/notificationService';
 
 export default async function CrmLayout({ children }: { children: ReactNode }) {
   const [access, cookieStore] = await Promise.all([requireAccess(), cookies()]);
   const notifications = await getNotificationSummary();
+  const pushPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
   return (
     <AppShell
@@ -20,6 +22,7 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
         roleName: access.employee.role?.name ?? '',
       }}
     >
+      {pushPublicKey && <PushPrompt publicKey={pushPublicKey} />}
       {children}
     </AppShell>
   );

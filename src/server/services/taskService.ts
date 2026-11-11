@@ -3,7 +3,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { cleanSearchTerm } from '@/lib/cleanSearchTerm';
 import { todayInIndia } from '@/lib/formatDate';
 import { createDatabaseClient } from '@/server/database/databaseClient';
-import type { TaskActor, TaskStatus, WorkPriority } from '@/lib/tasks/taskWorkflow';
+import { taskStages, type TaskActor, type TaskStage, type TaskStatus, type WorkPriority } from '@/lib/tasks/taskWorkflow';
 import type { CurrentAccess } from './accessService';
 
 export const tasksPerPage = 25;
@@ -37,15 +37,50 @@ type TaskFilters = {
   view: TaskView;
   search?: string;
   status?: TaskStatus;
+  stage?: TaskStage;
   priority?: WorkPriority;
   overdue?: boolean;
   projectId?: string;
   clientId?: string;
+  assigneeId?: string;
+  departmentId?: string;
   page: number;
 };
 
+// Overseeing others' work needs task access beyond one's own. Department heads choose
+// from their department, team scope from the people who report to them, and wider
+// scopes from everyone. The database still decides which tasks actually show.
+export async function listTaskOversightOptions(access: CurrentAccess) {
+  const scope = access.permissions[permissionKeys.tasksView];
+  if (scope === undefined || scope === 'own') return null;
+
+  const database = await createDatabaseClient();
+  const [people, departments, team] = await Promise.all([
+    database.from('employees').select('id, full_name, department_id').eq('is_active', true).order('full_name'),
+    database.from('departments').select('id, name').order('name'),
+    scope === 'team' ? database.rpc('get_my_team_ids') : Promise.resolve({ data: [] as string[], error: null }),
+  ]);
+  for (const result of [people, departments, team]) {
+    if (result.error) throw result.error;
+  }
+
+  const myDepartment = access.employee.department_id;
+  const teamIds = new Set([access.employee.id, ...(team.data ?? [])]);
+  const inReach = (person: { id: string; department_id: string | null }) =>
+    scope === 'organisation' ||
+    (scope === 'department' && person.department_id !== null && person.department_id === myDepartment) ||
+    (scope === 'team' && teamIds.has(person.id));
+
+  return {
+    people: (people.data ?? []).filter(inReach).map((person) => ({ value: person.id, label: person.full_name })),
+    departments: (departments.data ?? [])
+      .filter((department) => scope === 'organisation' || department.id === myDepartment)
+      .map((department) => ({ value: department.id, label: department.name })),
+  };
+}
+
 export async function listTasks(access: CurrentAccess, filters: TaskFilters) {
-  const { view, search, status, priority, overdue, projectId, clientId, page } = filters;
+  const { view, search, status, stage, priority, overdue, projectId, clientId, assigneeId, departmentId, page } = filters;
   const database = await createDatabaseClient();
   const from = (page - 1) * tasksPerPage;
   const me = access.employee.id;
@@ -69,13 +104,29 @@ export async function listTasks(access: CurrentAccess, filters: TaskFilters) {
   const term = search ? cleanSearchTerm(search) : '';
   if (term) query = query.or(`title.ilike.%${term}%,task_code.ilike.%${term}%`);
   if (status) query = query.eq('status', status);
+  if (stage) query = query.in('status', [...taskStages[stage].statuses]);
   if (priority) query = query.eq('priority', priority);
   if (projectId) query = query.eq('project_id', projectId);
   if (clientId) query = query.eq('client_id', clientId);
+  if (assigneeId) query = query.eq('assignee_id', assigneeId);
+  if (departmentId) {
+    // A department's work: tasks filed under it, and tasks held by its people.
+    const { data: members, error: membersError } = await database
+      .from('employees')
+      .select('id')
+      .eq('department_id', departmentId);
+    if (membersError) throw membersError;
+    const memberIds = members.map((member) => member.id);
+    query = query.or(
+      memberIds.length > 0
+        ? `department_id.eq.${departmentId},assignee_id.in.(${memberIds.join(',')})`
+        : `department_id.eq.${departmentId}`,
+    );
+  }
   if (overdue) query = query.lt('due_date', todayInIndia()).not('status', 'in', closedStatuses);
 
   // Unless asked for, finished work drops out of the personal lists.
-  if (!status && !overdue && (view === 'mine' || view === 'assigned')) {
+  if (!status && !stage && !overdue && (view === 'mine' || view === 'assigned')) {
     query = query.not('status', 'in', closedStatuses);
   }
 

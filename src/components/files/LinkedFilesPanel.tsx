@@ -4,8 +4,10 @@ import { formatFileSize } from '@/lib/files/fileTypes';
 import { formatDateTime } from '@/lib/formatDate';
 import type { FileLinks } from '@/lib/validation/fileSchema';
 import type { listLinkedFiles } from '@/server/services/fileService';
+import { DriveLinkForm } from './FileForms';
 import { FileNameCell } from './FileTables';
 import { FileUploader } from './FileUploader';
+import styles from './LinkedFilesPanel.module.css';
 
 type LinkedFilesPanelProps = {
   title: string;
@@ -38,6 +40,10 @@ export function LinkedFilesPanel({ title, files, links, canUpload }: LinkedFiles
       {canUpload && (
         <div className={layout.sectionForm}>
           <FileUploader links={links} compact />
+          <details className={styles.linkForm}>
+            <summary>Add a Google Drive or other link instead</summary>
+            <DriveLinkForm links={links} />
+          </details>
         </div>
       )}
     </Panel>

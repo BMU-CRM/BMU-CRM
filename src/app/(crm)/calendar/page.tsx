@@ -32,7 +32,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     <>
       <PageHeader
         title="Calendar"
-        description="Your meetings and deadlines, with team leave and holidays."
+        description="Your meetings and task deadlines, with team leave and holidays. Finished work is struck through."
         actions={
           <ButtonLink href={`/meetings/new?date=${view === 'month' ? today : focus}`} variant="primary">
             <Plus size={16} aria-hidden="true" />

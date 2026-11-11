@@ -146,7 +146,7 @@ Something happens ──> database trigger creates a notification
                                                            web-push delivers it to each of the person's devices
 ```
 
-The service worker in `public/sw.js` shows the notification and opens the app when it is clicked. If `NOTIFICATION_DISPATCH_URL` and `NOTIFICATION_DISPATCH_SECRET` are set, push requests go to that address instead, for a database hosted elsewhere.
+The service worker in `public/sw.js` shows the notification and opens the app when it is clicked. High-priority notifications stay on screen until dismissed. Until push is on in a browser, a prompt at the top of every page (`PushPrompt.tsx`) offers to turn it on in one click; "Not now" hides it for a week. People choose which kinds they want under **Profile > Notification settings**. If `NOTIFICATION_DISPATCH_URL` and `NOTIFICATION_DISPATCH_SECRET` are set, push requests go to that address instead, for a database hosted elsewhere.
 
 ## Scheduled jobs
 

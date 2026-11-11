@@ -41,6 +41,10 @@ export type CalendarItem = {
   time: string | null;
   href: string | null;
   isCancelled?: boolean;
+  // An approved or completed task, or a meeting that has ended. Shown struck through.
+  isDone?: boolean;
+  // An open task of the person's own, which they can move to another day.
+  canMove?: boolean;
 };
 
 const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
@@ -50,11 +54,12 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
 
   const [meetings, tasks, leave, holidays] = await Promise.all([
     listMyMeetings(access, from, to),
+    // Finished work stays on the calendar, struck through. Rejected work does not.
     database
       .from('tasks')
-      .select('id, title, due_date')
+      .select('id, title, due_date, status')
       .eq('assignee_id', access.employee.id)
-      .not('status', 'in', '("completed","rejected")')
+      .neq('status', 'rejected')
       .gte('due_date', from)
       .lte('due_date', to),
     getTeamLeave(from, to),
@@ -62,6 +67,7 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
   ]);
   if (tasks.error) throw tasks.error;
   if (holidays.error) throw holidays.error;
+  const now = Date.now();
 
   const items: CalendarItem[] = [
     ...holidays.data.map((holiday) => ({
@@ -80,14 +86,17 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
       time: `${clock.format(new Date(meeting.starts_at))} to ${clock.format(new Date(meeting.ends_at))}`,
       href: `/meetings/${meeting.id}`,
       isCancelled: meeting.status === 'cancelled',
+      isDone: meeting.status === 'completed' || (meeting.status === 'scheduled' && new Date(meeting.ends_at).getTime() < now),
     })),
     ...tasks.data.map((task) => ({
       id: task.id,
       kind: 'task' as const,
       date: task.due_date as string,
-      title: `Due: ${task.title}`,
+      title: task.status === 'completed' ? `Done: ${task.title}` : `Due: ${task.title}`,
       time: null,
       href: `/tasks/${task.id}`,
+      isDone: task.status === 'completed',
+      canMove: task.status !== 'completed',
     })),
   ];
 

@@ -22,6 +22,27 @@ export const priorityLabels: Record<WorkPriority, string> = {
   urgent: 'Urgent',
 };
 
+// Where work stands, in plain terms, for people overseeing others' tasks.
+export const taskStages = {
+  todo: { label: 'Yet to start', statuses: ['not_started', 'assigned', 'accepted'] },
+  doing: { label: 'Being worked on', statuses: ['in_progress', 'changes_requested', 'on_hold'] },
+  review: { label: 'Waiting for review', statuses: ['under_review'] },
+  done: { label: 'Done', statuses: ['completed'] },
+} as const satisfies Record<string, { label: string; statuses: TaskStatus[] }>;
+
+export type TaskStage = keyof typeof taskStages;
+
+export function isTaskStage(value: string | undefined): value is TaskStage {
+  return value !== undefined && Object.hasOwn(taskStages, value);
+}
+
+export function stageOf(status: TaskStatus): TaskStage | null {
+  for (const [stage, { statuses }] of Object.entries(taskStages)) {
+    if ((statuses as readonly TaskStatus[]).includes(status)) return stage as TaskStage;
+  }
+  return null;
+}
+
 const closedStatuses: TaskStatus[] = ['completed', 'rejected'];
 
 export function isTaskOpen(status: TaskStatus) {
@@ -49,6 +70,8 @@ export type TaskAction = {
   needsNote?: boolean;
   // Asks the reviewer to rate the work.
   needsRating?: boolean;
+  // Offers a field for a link to the finished work, such as a Google Drive folder.
+  acceptsWorkLink?: boolean;
 };
 
 // Mirrors guard_task_update, so the page offers only what the database will accept.
@@ -63,9 +86,9 @@ export function getTaskActions(status: TaskStatus, actor: TaskActor): TaskAction
     if (status === 'accepted') actions.push({ status: 'in_progress', label: 'Start work', tone: 'primary' });
     if (status === 'in_progress') {
       if (actor.isSelfTask && !actor.hasReviewer) {
-        actions.push({ status: 'completed', label: 'Mark complete', tone: 'primary' });
+        actions.push({ status: 'completed', label: 'Mark complete', tone: 'primary', acceptsWorkLink: true });
       } else {
-        actions.push({ status: 'under_review', label: 'Submit for review', tone: 'primary' });
+        actions.push({ status: 'under_review', label: 'Submit for review', tone: 'primary', acceptsWorkLink: true });
       }
     }
     if (status === 'on_hold' || status === 'changes_requested') {

@@ -3340,7 +3340,7 @@ export type Database = {
       "meeting_kind": "internal" | "department" | "management" | "client" | "project" | "one_to_one"
       "meeting_response": "pending" | "accepted" | "declined"
       "meeting_status": "scheduled" | "completed" | "cancelled"
-      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue"
+      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled"
       "notification_priority": "normal" | "high"
       "payment_method": "bank_transfer" | "upi" | "cheque" | "cash" | "card" | "tds" | "other"
       "permission_scope": "own" | "team" | "department" | "organisation"
@@ -3438,7 +3438,7 @@ export const Constants = {
       "meeting_kind": ["internal", "department", "management", "client", "project", "one_to_one"],
       "meeting_response": ["pending", "accepted", "declined"],
       "meeting_status": ["scheduled", "completed", "cancelled"],
-      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue"],
+      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled"],
       "notification_priority": ["normal", "high"],
       "payment_method": ["bank_transfer", "upi", "cheque", "cash", "card", "tds", "other"],
       "permission_scope": ["own", "team", "department", "organisation"],

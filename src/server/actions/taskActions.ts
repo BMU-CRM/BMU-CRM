@@ -100,13 +100,21 @@ export async function saveTaskAction(
   redirect(`/tasks/${parentTaskId ?? savedId}`);
 }
 
+const workLinkSchema = z.url({ protocol: /^https$/, error: 'Enter a full https:// address for the link.' }).max(2000);
+
+// workLink is an optional link to the finished work, such as a Google Drive folder. It
+// is attached to the task like an uploaded file, so it shows with the deliverables.
 export async function changeTaskStatusAction(
   taskId: string,
   status: TaskStatus,
   note: string | null,
   rating: number | null,
+  workLink: string | null = null,
 ): Promise<ActionResult> {
   if (!(await getActionAccess())) return failure(noPermission);
+
+  const link = workLink?.trim() ? workLinkSchema.safeParse(workLink.trim()) : null;
+  if (link && !link.success) return failure(link.error.issues[0]?.message ?? 'Enter a valid link.');
 
   const database = await createDatabaseClient();
   const { data, error } = await database
@@ -122,8 +130,43 @@ export async function changeTaskStatusAction(
     await database.from('task_comments').insert({ task_id: taskId, body: note.trim() });
   }
 
+  if (link?.success) {
+    const host = new URL(link.data).hostname.replace(/^www\./, '');
+    const { error: linkError } = await database
+      .from('files')
+      .insert({ kind: 'link', name: `Submitted work (${host})`, external_url: link.data, task_id: taskId })
+      .select('id');
+    refreshTask(taskId);
+    if (linkError) {
+      console.error('Could not attach the work link', linkError);
+      return failure('The task was updated, but the link could not be attached. Please add it under Attachments.');
+    }
+    return success('Task updated.');
+  }
+
   refreshTask(taskId);
   return success('Task updated.');
+}
+
+const rescheduleSchema = z.iso.date();
+
+// Postpones or brings forward a task's deadline, from the calendar. The database lets
+// the assignee move their own open work, and anyone who manages the task.
+export async function rescheduleTaskAction(taskId: string, dueDate: string): Promise<ActionResult> {
+  if (!(await getActionAccess())) return failure(noPermission);
+
+  const parsed = rescheduleSchema.safeParse(dueDate);
+  if (!parsed.success) return failure('Choose a valid date.');
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database.from('tasks').update({ due_date: parsed.data }).eq('id', taskId).select('id');
+
+  if (error) return databaseFailure(error);
+  if (data.length === 0) return failure(noPermission);
+
+  refreshTask(taskId);
+  revalidatePath('/calendar');
+  return success('Task moved.');
 }
 
 export async function updateTaskProgressAction(

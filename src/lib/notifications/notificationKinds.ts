@@ -12,6 +12,7 @@ export const notificationKindLabels: Record<NotificationKind, string> = {
   task_rejected: 'A task I assigned is rejected',
   task_escalated: 'A task is escalated to me',
   task_comment: 'Someone comments on my task',
+  task_rescheduled: 'A task deadline is moved',
   file_received: 'I receive a file',
   message_received: 'I receive a direct or group message',
   mention: 'Someone mentions me',

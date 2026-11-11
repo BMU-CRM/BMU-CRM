@@ -1,0 +1,14 @@
+.linkForm {
+  margin-top: var(--space-3);
+}
+
+.linkForm summary {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-small);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.linkForm summary:hover {
+  text-decoration: underline;
+}

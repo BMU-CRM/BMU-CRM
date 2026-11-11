@@ -58,6 +58,7 @@ export async function dispatchNotification(notificationId: string) {
     url: `/notifications/${notification.id}/open`,
     fallbackUrl: safeNotificationLink(notification.link),
     tag: notification.id,
+    priority: notification.priority,
   });
 
   let sent = 0;
