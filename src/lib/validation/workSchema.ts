@@ -106,7 +106,6 @@ export const taskProgressSchema = z.object({
     .int('Enter a whole number.')
     .min(0, 'Enter 0 to 100.')
     .max(100, 'Enter 0 to 100.'),
-  actualHours: z.coerce.number({ error: 'Enter a number of hours.' }).min(0, 'Enter zero or more.').max(9999, 'Enter a smaller number.'),
 });
 
 export const taskCommentSchema = z.object({

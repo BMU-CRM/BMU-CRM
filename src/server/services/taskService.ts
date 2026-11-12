@@ -174,6 +174,7 @@ export async function getTask(taskId: string) {
        reviewer:employees!tasks_reviewer_id_fkey(id, full_name),
        verifier:employees!tasks_verified_by_fkey(id, full_name),
        escalatedTo:employees!tasks_escalated_to_fkey(id, full_name),
+       resumeRequestedBy:employees!tasks_resume_requested_by_fkey(id, full_name),
        department:departments(name),
        project:projects(id, name),
        parent:parent_task_id(id, title)`,
@@ -185,7 +186,10 @@ export async function getTask(taskId: string) {
   if (!data) return null;
 
   const [task] = await addClientNames([data]);
-  return task ?? null;
+  if (!task) return null;
+  // Hours counted so far, including the stretch running now.
+  const running = task.work_started_at ? Math.max(0, Date.now() - Date.parse(task.work_started_at)) / 1000 : 0;
+  return { ...task, workedSeconds: Math.round(Number(task.actual_hours) * 3600 + running) };
 }
 
 export type TaskDetails = NonNullable<Awaited<ReturnType<typeof getTask>>>;

@@ -88,7 +88,7 @@ const fieldLabels: Record<string, string> = {
   due_date: 'due date',
   start_date: 'start date',
   estimated_hours: 'estimated hours',
-  actual_hours: 'actual hours',
+  actual_hours: 'hours worked',
   completion_percentage: 'progress',
   quality_rating: 'quality rating',
   escalated_to: 'escalation',
@@ -132,7 +132,19 @@ const fieldLabels: Record<string, string> = {
 const derivedFinanceFields = ['is_inter_state', 'cgst_total', 'sgst_total', 'igst_total', 'total', 'issued_at', 'paid_at', 'sent_at', 'decided_at', 'cancelled_at'];
 
 // Recorded automatically alongside another change, so they add nothing for a reader.
-const hiddenFields = new Set(['completed_at', 'verified_by', 'escalated_at', 'escalation_reason', ...derivedFinanceFields]);
+// Bookkeeping that follows from another change already shown: the task clock follows the
+// status, and the resume request shows as a comment on the task.
+const hiddenFields = new Set([
+  'completed_at',
+  'verified_by',
+  'escalated_at',
+  'escalation_reason',
+  'work_started_at',
+  'resume_requested_at',
+  'resume_requested_by',
+  'resume_request_note',
+  ...derivedFinanceFields,
+]);
 
 type AuditEntry = {
   action: string;

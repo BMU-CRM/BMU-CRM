@@ -151,6 +151,18 @@ export async function changeTaskStatusAction(
   return success('Task updated.');
 }
 
+// A manager asks the assignee to pick an on-hold task back up. It stays on hold, and the
+// clock starts when the assignee presses Resume work.
+export async function requestTaskResumeAction(taskId: string, note: string | null): Promise<ActionResult> {
+  if (!(await getActionAccess())) return failure(noPermission);
+  const database = await createDatabaseClient();
+  const { error } = await database.rpc('request_task_resume', { p_task: taskId, p_note: note?.trim() ?? '' });
+  if (error) return databaseFailure(error);
+  if (note?.trim()) await database.from('task_comments').insert({ task_id: taskId, body: `Asked to resume: ${note.trim()}` });
+  refreshTask(taskId);
+  return success('They have been asked to resume. Their hours start counting when they do.');
+}
+
 // A task for yourself, planned on the calendar. Nobody else is involved, so it starts
 // as accepted and you mark it complete yourself.
 export async function createMyTaskAction(values: {
@@ -214,17 +226,14 @@ export async function updateTaskProgressAction(
 
   const parsed = taskProgressSchema.safeParse({
     completionPercentage: formData.get('completionPercentage'),
-    actualHours: formData.get('actualHours'),
   });
   if (!parsed.success) return validationFailure(parsed.error);
 
+  // Hours worked are counted by the database from Start work, so only progress is saved.
   const database = await createDatabaseClient();
   const { data, error } = await database
     .from('tasks')
-    .update({
-      completion_percentage: parsed.data.completionPercentage,
-      actual_hours: parsed.data.actualHours,
-    })
+    .update({ completion_percentage: parsed.data.completionPercentage })
     .eq('id', taskId)
     .select('id');
 

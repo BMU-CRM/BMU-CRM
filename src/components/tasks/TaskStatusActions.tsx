@@ -8,7 +8,7 @@ import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
 import type { ActionResult } from '@/lib/actionResult';
 import type { TaskAction } from '@/lib/tasks/taskWorkflow';
-import { changeTaskStatusAction } from '@/server/actions/taskActions';
+import { changeTaskStatusAction, requestTaskResumeAction } from '@/server/actions/taskActions';
 import styles from './TaskStatusActions.module.css';
 
 const ratingOptions = [
@@ -23,11 +23,13 @@ function TaskActionButton({ taskId, action }: { taskId: string; action: TaskActi
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [result, setResult] = useState<ActionResult>({ status: 'idle' });
   const [isPending, startTransition] = useTransition();
-  const needsDialog = action.needsNote || action.needsRating || action.acceptsWorkLink;
+  const needsDialog = action.needsNote || action.needsRating || action.acceptsWorkLink || action.requestsResume;
 
   function run(note: string | null, rating: number | null, workLink: string | null = null) {
     startTransition(async () => {
-      const outcome = await changeTaskStatusAction(taskId, action.status, note, rating, workLink);
+      const outcome = action.requestsResume
+        ? await requestTaskResumeAction(taskId, note)
+        : await changeTaskStatusAction(taskId, action.status, note, rating, workLink);
       setResult(outcome);
       if (outcome.status === 'success') dialogRef.current?.close();
     });
@@ -58,6 +60,11 @@ function TaskActionButton({ taskId, action }: { taskId: string; action: TaskActi
       {needsDialog && (
         <dialog ref={dialogRef} className={dialogStyles.dialog} aria-label={action.label}>
           <h2 className={dialogStyles.title}>{action.label}</h2>
+          {action.requestsResume && (
+            <p className={dialogStyles.description}>
+              They are notified to resume. The task stays on hold until they press Resume work, and their hours start counting then.
+            </p>
+          )}
           <KeepValuesForm action={submitDialog} className={styles.form}>
             <FormMessage result={result.status === 'error' ? result : { status: 'idle' }} />
             {action.needsRating && (
@@ -77,7 +84,7 @@ function TaskActionButton({ taskId, action }: { taskId: string; action: TaskActi
               label={action.needsNote ? 'Note' : 'Note (optional)'}
               name="note"
               id={`note-${action.status}`}
-              hint="Saved as a comment on the task."
+              hint={action.requestsResume ? 'Sent with the request, and saved as a comment.' : 'Saved as a comment on the task.'}
             />
             <div className={dialogStyles.actions}>
               <Button variant="ghost" onClick={() => dialogRef.current?.close()} disabled={isPending}>

@@ -18,6 +18,7 @@ import {
   TaskSubtasksPanel,
 } from '@/components/tasks/TaskPanels';
 import { TaskStatusActions } from '@/components/tasks/TaskStatusActions';
+import { TaskWorkTimer } from '@/components/tasks/TaskWorkTimer';
 import { ButtonLink } from '@/components/ui/Button';
 import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -127,6 +128,17 @@ export default async function TaskPage({ params }: TaskPageProps) {
               <ProgressBar value={task.completion_percentage} label="Task progress" />
             </div>
             {task.description && <p className={`${layout.text} ${layout.spaced}`}>{task.description}</p>}
+            {task.status === 'on_hold' && task.resume_requested_at && (
+              <p className={`${layout.text} ${layout.spaced}`}>
+                <strong>
+                  {task.resumeRequestedBy?.full_name ?? 'A manager'} asked {actor.isAssignee ? 'you' : (task.assignee?.full_name ?? 'the assignee')} to resume this
+                  work
+                </strong>{' '}
+                on {formatDateTime(task.resume_requested_at)}
+                {task.resume_request_note ? `: “${task.resume_request_note}”.` : '.'}
+                {actor.isAssignee ? ' Press Resume work to start; your hours count from then.' : ' Their hours count from when they resume.'}
+              </p>
+            )}
             {task.escalation_reason && (
               <p className={`${layout.muted} ${layout.spaced}`}>Escalation reason: {task.escalation_reason}</p>
             )}
@@ -143,7 +155,7 @@ export default async function TaskPage({ params }: TaskPageProps) {
             )}
             {canUpdateProgress && (
               <div className={layout.spaced}>
-                <TaskProgressForm taskId={task.id} percentage={task.completion_percentage} actualHours={task.actual_hours} />
+                <TaskProgressForm taskId={task.id} percentage={task.completion_percentage} />
               </div>
             )}
           </Panel>
@@ -224,9 +236,11 @@ export default async function TaskPage({ params }: TaskPageProps) {
                 <dd>{formatDateRange(task.start_date, task.due_date)}</dd>
               </div>
               <div>
-                <dt>Hours</dt>
+                <dt>Hours worked</dt>
                 <dd>
-                  {task.actual_hours} worked of {task.estimated_hours ?? 'no'} estimated
+                  <TaskWorkTimer workedSeconds={task.workedSeconds} running={task.status === 'in_progress' && task.work_started_at !== null} />
+                  {task.estimated_hours !== null ? ` of ${task.estimated_hours} h estimated` : ''}
+                  <p className={layout.muted}>Counted from Start work to Submit for review; time on hold is not counted.</p>
                 </dd>
               </div>
               <div>

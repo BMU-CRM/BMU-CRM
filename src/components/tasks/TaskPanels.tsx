@@ -175,13 +175,15 @@ export function TaskCommentsPanel({ taskId, comments }: CommentsProps) {
 type HistoryProps = { history: Panels['history'] };
 
 export function TaskHistoryPanel({ history }: HistoryProps) {
+  // Entries that only touched bookkeeping, such as the work clock, have nothing to show.
+  const entries = history.map((entry) => ({ entry, lines: describeTaskChanges(entry.details) })).filter(({ lines }) => lines.length > 0);
   return (
     <Panel title="History" flush>
       <ul className={layout.list}>
-        {history.map((entry) => (
+        {entries.map(({ entry, lines }) => (
           <li key={entry.id} className={layout.row}>
             <div className={layout.rowMain}>
-              {describeTaskChanges(entry.details).map((line) => (
+              {lines.map((line) => (
                 <p key={line}>{line}</p>
               ))}
               <p className={layout.muted}>
@@ -195,13 +197,13 @@ export function TaskHistoryPanel({ history }: HistoryProps) {
   );
 }
 
-type ProgressProps = { taskId: string; percentage: number; actualHours: number };
+type ProgressProps = { taskId: string; percentage: number };
 
-export function TaskProgressForm({ taskId, percentage, actualHours }: ProgressProps) {
+// Only progress is entered here. Hours worked are counted from Start work.
+export function TaskProgressForm({ taskId, percentage }: ProgressProps) {
   return (
     <InlineActionForm action={updateTaskProgressAction.bind(null, taskId)} submitLabel="Save progress">
       <TextField label="Progress %" name="completionPercentage" type="number" min={0} max={100} defaultValue={percentage} required />
-      <TextField label="Hours worked" name="actualHours" type="number" min={0} step="0.25" defaultValue={actualHours} required />
     </InlineActionForm>
   );
 }

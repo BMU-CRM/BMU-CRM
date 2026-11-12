@@ -79,8 +79,16 @@ describe('getTaskActions', () => {
     expect(actions.find((action) => action.label === 'Request changes')?.needsNote).toBe(true);
   });
 
-  it('lets a manager reopen finished work', () => {
+  it('lets a manager reopen finished work, back to the assignee as changes requested', () => {
     expect(labels('completed', reviewer)).toEqual(['Reopen']);
+    expect(getTaskActions('completed', reviewer)[0]?.status).toBe('changes_requested');
+  });
+
+  it('lets a manager ask to resume work on hold, while the assignee resumes it', () => {
+    const ask = getTaskActions('on_hold', reviewer).find((action) => action.label === 'Ask to resume');
+    expect(ask?.requestsResume).toBe(true);
+    expect(labels('on_hold', reviewer)).not.toContain('Resume work');
+    expect(labels('on_hold', assignee)).toContain('Resume work');
   });
 });
 

@@ -5175,6 +5175,9 @@ export type Database = {
           "quality_rating": number | null
           "recurrence": Database["public"]["Enums"]["task_recurrence"]
           "reference_links": (string)[]
+          "resume_request_note": string | null
+          "resume_requested_at": string | null
+          "resume_requested_by": string | null
           "reviewer_id": string | null
           "start_date": string | null
           "status": Database["public"]["Enums"]["task_status"]
@@ -5182,6 +5185,7 @@ export type Database = {
           "title": string
           "updated_at": string
           "verified_by": string | null
+          "work_started_at": string | null
         }
         ComputedFields: never
         Insert: {
@@ -5209,6 +5213,9 @@ export type Database = {
           "quality_rating"?: number | null
           "recurrence"?: Database["public"]["Enums"]["task_recurrence"]
           "reference_links"?: (string)[]
+          "resume_request_note"?: string | null
+          "resume_requested_at"?: string | null
+          "resume_requested_by"?: string | null
           "reviewer_id"?: string | null
           "start_date"?: string | null
           "status"?: Database["public"]["Enums"]["task_status"]
@@ -5216,6 +5223,7 @@ export type Database = {
           "title": string
           "updated_at"?: string
           "verified_by"?: string | null
+          "work_started_at"?: string | null
         }
         Update: {
           "actual_hours"?: number
@@ -5242,6 +5250,9 @@ export type Database = {
           "quality_rating"?: number | null
           "recurrence"?: Database["public"]["Enums"]["task_recurrence"]
           "reference_links"?: (string)[]
+          "resume_request_note"?: string | null
+          "resume_requested_at"?: string | null
+          "resume_requested_by"?: string | null
           "reviewer_id"?: string | null
           "start_date"?: string | null
           "status"?: Database["public"]["Enums"]["task_status"]
@@ -5249,6 +5260,7 @@ export type Database = {
           "title"?: string
           "updated_at"?: string
           "verified_by"?: string | null
+          "work_started_at"?: string | null
         }
         Relationships: [
           {
@@ -5305,6 +5317,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_resume_requested_by_fkey"
+            columns: ["resume_requested_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
@@ -6811,6 +6830,11 @@ export type Database = {
             "p_payment": string
             "p_reason": string
           }; Returns: undefined }
+      "request_task_resume":
+        | { Args: {
+            "p_task": string
+            "p_note": string
+          }; Returns: undefined }
       "require_payroll_permission":
         | { Args: {
             "p_permission": string
@@ -6971,7 +6995,7 @@ export type Database = {
       "meeting_kind": "internal" | "department" | "management" | "client" | "project" | "one_to_one" | "content"
       "meeting_response": "pending" | "accepted" | "declined"
       "meeting_status": "scheduled" | "completed" | "cancelled"
-      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided" | "invoice_due_soon" | "follow_up_due" | "vendor_bill_due" | "reimbursement_submitted" | "reimbursement_decided" | "reimbursement_paid" | "budget_alert" | "employee_added" | "attendance_irregularity"
+      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided" | "invoice_due_soon" | "follow_up_due" | "vendor_bill_due" | "reimbursement_submitted" | "reimbursement_decided" | "reimbursement_paid" | "budget_alert" | "employee_added" | "attendance_irregularity" | "task_resume_requested"
       "notification_priority": "normal" | "high"
       "payment_method": "bank_transfer" | "upi" | "cheque" | "cash" | "card" | "tds" | "other"
       "payroll_rule_kind": "pf" | "esi" | "pt" | "tds"
@@ -7083,7 +7107,7 @@ export const Constants = {
       "meeting_kind": ["internal", "department", "management", "client", "project", "one_to_one", "content"],
       "meeting_response": ["pending", "accepted", "declined"],
       "meeting_status": ["scheduled", "completed", "cancelled"],
-      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided", "invoice_due_soon", "follow_up_due", "vendor_bill_due", "reimbursement_submitted", "reimbursement_decided", "reimbursement_paid", "budget_alert", "employee_added", "attendance_irregularity"],
+      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided", "invoice_due_soon", "follow_up_due", "vendor_bill_due", "reimbursement_submitted", "reimbursement_decided", "reimbursement_paid", "budget_alert", "employee_added", "attendance_irregularity", "task_resume_requested"],
       "notification_priority": ["normal", "high"],
       "payment_method": ["bank_transfer", "upi", "cheque", "cash", "card", "tds", "other"],
       "payroll_rule_kind": ["pf", "esi", "pt", "tds"],

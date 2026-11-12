@@ -437,11 +437,81 @@ describe('clients, projects and the task engine', () => {
     it('lets the assignee update progress but not task details', async () => {
       const { data } = await newTask(as.designHead!, { assignee_id: ids.designer! });
 
-      const progress = await as.designer!.from('tasks').update({ completion_percentage: 40, actual_hours: 3 }).eq('id', data!.id);
+      const progress = await as.designer!.from('tasks').update({ completion_percentage: 40 }).eq('id', data!.id);
       const details = await as.designer!.from('tasks').update({ priority: 'urgent' }).eq('id', data!.id);
 
       expect(progress.error).toBeNull();
       expect(details.error?.message).toContain('do not have permission');
+    });
+
+    describe('hours worked', () => {
+      // Makes the running stretch look as if it began some hours ago.
+      async function backdate(taskId: string, hours: number) {
+        await admin.from('tasks').update({ work_started_at: new Date(Date.now() - hours * 3600_000).toISOString() }).eq('id', taskId);
+      }
+
+      it('cannot be typed in', async () => {
+        const { data } = await newTask(as.designHead!, { assignee_id: ids.designer! });
+        const { error } = await as.designer!.from('tasks').update({ actual_hours: 3 }).eq('id', data!.id);
+        expect(error?.message).toContain('counted automatically');
+        expect((await as.designHead!.from('tasks').update({ actual_hours: 3 }).eq('id', data!.id)).error).not.toBeNull();
+      });
+
+      it('counts from Start work, pauses on hold, and carries on after resuming until submitted', async () => {
+        const { data } = await newTask(as.designHead!, { assignee_id: ids.designer! });
+        await setStatus(as.designer!, data!.id, 'accepted');
+        await setStatus(as.designer!, data!.id, 'in_progress');
+        expect((await taskRow(data!.id)).work_started_at).not.toBeNull();
+
+        await backdate(data!.id, 4);
+        await setStatus(as.designer!, data!.id, 'on_hold');
+        const held = await taskRow(data!.id);
+        expect(Number(held.actual_hours)).toBeCloseTo(4, 1);
+        expect(held.work_started_at).toBeNull();
+
+        await setStatus(as.designer!, data!.id, 'in_progress');
+        await backdate(data!.id, 2);
+        await setStatus(as.designer!, data!.id, 'under_review');
+        const submitted = await taskRow(data!.id);
+        expect(Number(submitted.actual_hours)).toBeCloseTo(6, 1);
+        expect(submitted.work_started_at).toBeNull();
+      });
+
+      it('lets a manager only ask to resume, and starts the clock when the assignee does', async () => {
+        const { data } = await newTask(as.designHead!, { assignee_id: ids.designer! });
+        await setStatus(as.designer!, data!.id, 'accepted');
+        await setStatus(as.designer!, data!.id, 'in_progress');
+        await setStatus(as.designHead!, data!.id, 'on_hold');
+
+        const forced = await as.designHead!.from('tasks').update({ status: 'in_progress' }).eq('id', data!.id);
+        expect(forced.error?.message).toContain('Ask them to resume');
+        expect((await as.designer!.from('tasks').update({ resume_requested_at: new Date().toISOString() }).eq('id', data!.id)).error).not.toBeNull();
+
+        expect((await as.designer!.rpc('request_task_resume', { p_task: data!.id, p_note: '' })).error).not.toBeNull();
+        expect((await as.designHead!.rpc('request_task_resume', { p_task: data!.id, p_note: 'Client approved, carry on' })).error).toBeNull();
+        const asked = await taskRow(data!.id);
+        expect(asked.status).toBe('on_hold');
+        expect(asked.resume_requested_by).toBe(ids.designHead!);
+        expect(asked.work_started_at).toBeNull();
+        const { data: notes } = await admin.from('notifications').select('body').eq('recipient_id', ids.designer!).eq('kind', 'task_resume_requested');
+        expect(notes?.some((note) => note.body?.includes('Client approved, carry on'))).toBe(true);
+
+        await setStatus(as.designer!, data!.id, 'in_progress');
+        const resumed = await taskRow(data!.id);
+        expect(resumed.work_started_at).not.toBeNull();
+        expect(resumed.resume_requested_at).toBeNull();
+      });
+
+      it('reopens finished work as changes requested, for the assignee to resume', async () => {
+        const { data } = await newTask(as.designHead!, { assignee_id: ids.designer! });
+        await setStatus(as.designer!, data!.id, 'accepted');
+        await setStatus(as.designer!, data!.id, 'in_progress');
+        await setStatus(as.designer!, data!.id, 'under_review');
+        await setStatus(as.designHead!, data!.id, 'completed');
+        expect((await as.designHead!.from('tasks').update({ status: 'in_progress' }).eq('id', data!.id)).error).not.toBeNull();
+        await setStatus(as.designHead!, data!.id, 'changes_requested');
+        expect((await taskRow(data!.id)).work_started_at).toBeNull();
+      });
     });
 
     it('resets the workflow when reassigned', async () => {

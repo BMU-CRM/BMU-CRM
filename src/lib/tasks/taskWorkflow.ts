@@ -72,6 +72,9 @@ export type TaskAction = {
   needsRating?: boolean;
   // Offers a field for a link to the finished work, such as a Google Drive folder.
   acceptsWorkLink?: boolean;
+  // Not a change of status: asks the assignee to resume an on-hold task, with an
+  // optional note. The task stays on hold until they do.
+  requestsResume?: boolean;
 };
 
 // Mirrors guard_task_update, so the page offers only what the database will accept.
@@ -106,11 +109,13 @@ export function getTaskActions(status: TaskStatus, actor: TaskActor): TaskAction
   if (canPause && isTaskOpen(status) && status !== 'on_hold') {
     actions.push({ status: 'on_hold', label: 'Put on hold', tone: 'secondary', needsNote: true });
   }
+  // Only the person doing the work resumes it, which starts their hours. A manager asks
+  // them to, and reopened work goes back to them as changes requested.
   if (actor.canManage && !actor.isAssignee && status === 'on_hold') {
-    actions.push({ status: 'in_progress', label: 'Resume work', tone: 'primary' });
+    actions.push({ status: 'on_hold', label: 'Ask to resume', tone: 'primary', requestsResume: true });
   }
   if (actor.canManage && status === 'completed') {
-    actions.push({ status: 'in_progress', label: 'Reopen', tone: 'secondary', needsNote: true });
+    actions.push({ status: 'changes_requested', label: 'Reopen', tone: 'secondary', needsNote: true });
   }
 
   return actions;
