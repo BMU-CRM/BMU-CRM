@@ -109,6 +109,8 @@ export type SettlementSuggestion = {
   noticeDays: number | null;
   shortfallDays: number;
   noticeRecovery: number;
+  // Approved claims not yet paid. Paying the settlement marks them paid.
+  reimbursementsDue: number;
 };
 
 export async function getSettlementSuggestion(resignationId: string) {

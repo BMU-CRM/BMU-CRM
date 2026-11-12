@@ -58,6 +58,11 @@ export const permissionKeys = {
   resignationSubmit: 'resignation.submit',
   ledgerManage: 'ledger.manage',
   banksManage: 'banks.manage',
+  followupsManage: 'followups.manage',
+  purchasesManage: 'purchases.manage',
+  reimbursementsSubmit: 'reimbursements.submit',
+  reimbursementsApprove: 'reimbursements.approve',
+  reimbursementsPay: 'reimbursements.pay',
 } as const;
 
 export type PermissionKey = (typeof permissionKeys)[keyof typeof permissionKeys];

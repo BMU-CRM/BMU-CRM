@@ -2,6 +2,7 @@ import { Download, Printer, TriangleAlert, Users } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ApprovalHistoryPanel } from '@/components/approvals/ApprovalHistoryPanel';
 import { PayrollStatusBadge } from '@/components/payroll/PayrollTabs';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -214,6 +215,7 @@ export default async function PayrollRunPage({ params, searchParams }: PayrollRu
             </>
           )}
         </Panel>
+        <ApprovalHistoryPanel type="payroll_run" id={run.id} />
       </div>
     </>
   );

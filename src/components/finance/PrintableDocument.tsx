@@ -22,6 +22,8 @@ type PrintableDocumentProps = {
   terms: string | null;
   showBankDetails: boolean;
   isTaxInvoice: boolean;
+  // "Bill to" on sales documents; "Vendor" on a purchase order.
+  partyLabel?: string;
 };
 
 // A quotation or invoice laid out for paper. It carries what a GST invoice must show:
@@ -41,6 +43,7 @@ export function PrintableDocument({
   terms,
   showBankDetails,
   isTaxInvoice,
+  partyLabel = 'Bill to',
 }: PrintableDocumentProps) {
   const companyName = settings?.legal_name ?? 'Your company name';
   const code = stateCode(placeOfSupply);
@@ -91,7 +94,7 @@ export function PrintableDocument({
 
         <section className={styles.parties}>
           <div>
-            <p className={styles.label}>Bill to</p>
+            <p className={styles.label}>{partyLabel}</p>
             <p>
               <strong>{billTo.name}</strong>
             </p>

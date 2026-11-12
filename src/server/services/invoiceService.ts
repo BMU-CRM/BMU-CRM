@@ -117,7 +117,7 @@ export async function listInvoicePayments(invoiceId: string) {
   const database = await createDatabaseClient();
   const { data, error } = await database
     .from('payments')
-    .select('id, amount, payment_date, method, reference, notes, created_at, recorder:employees!payments_recorded_by_fkey(full_name)')
+    .select('id, amount, payment_date, method, reference, notes, receipt_number, created_at, recorder:employees!payments_recorded_by_fkey(full_name)')
     .eq('invoice_id', invoiceId)
     .order('payment_date')
     .order('created_at');

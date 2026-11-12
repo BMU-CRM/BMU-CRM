@@ -77,6 +77,7 @@ describe('database access rules', () => {
       'messages.use',
       'payslips.view',
       'projects.view',
+      'reimbursements.submit',
       'resignation.submit',
       'tasks.create',
       'tasks.view',

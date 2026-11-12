@@ -15,7 +15,11 @@ import {
   Clock,
   FileText,
   FolderOpen,
+  HandCoins,
   Landmark,
+  PhoneCall,
+  Receipt,
+  ShoppingCart,
   Layers,
   ReceiptIndianRupee,
   Plane,
@@ -54,6 +58,8 @@ export type NavigationItem = {
   minimumScope?: PermissionScope;
   // Shown only alongside this permission too, such as HR's own copy of Employees.
   alsoRequires?: PermissionKey;
+  // Shown with any one of these instead, for pages that gather several kinds of work.
+  anyOf?: PermissionKey[];
 };
 
 export type NavigationSection = {
@@ -113,6 +119,9 @@ const navigationSections: NavigationSection[] = [
       { label: 'Income & expenses', href: '/finance/ledger', icon: BookOpen, permission: permissionKeys.ledgerManage },
       { label: 'Transactions', href: '/finance/transactions', icon: ArrowLeftRight, permission: permissionKeys.ledgerManage },
       { label: 'Bank accounts', href: '/finance/banks', icon: Landmark, permission: permissionKeys.banksManage },
+      { label: 'Payment follow-ups', href: '/finance/follow-ups', icon: PhoneCall, permission: permissionKeys.followupsManage },
+      { label: 'Purchases', href: '/finance/purchases', icon: ShoppingCart, permission: permissionKeys.purchasesManage },
+      { label: 'Salaries & reimbursements', href: '/finance/salaries', icon: HandCoins, permission: permissionKeys.reimbursementsPay },
       { label: 'Payroll approvals', href: '/hr/payroll', icon: Banknote, permission: permissionKeys.payrollApprove },
       { label: 'Settlements', href: '/hr/exits', icon: DoorOpen, permission: permissionKeys.payrollApprove },
       { label: 'Finance reports', href: '/finance/reports', icon: ChartColumn, permission: permissionKeys.financeReports },
@@ -125,8 +134,15 @@ const navigationSections: NavigationSection[] = [
       { label: 'Leave', href: '/leave', icon: Plane, permission: permissionKeys.leaveRequest },
       { label: 'Attendance', href: '/attendance', icon: Clock, permission: permissionKeys.attendanceView },
       { label: 'My payslips', href: '/payslips', icon: FileSpreadsheet, permission: permissionKeys.payslipsView },
+      { label: 'Reimbursements', href: '/reimbursements', icon: Receipt, permission: permissionKeys.reimbursementsSubmit },
       { label: 'Resignation', href: '/resignation', icon: LogOut, permission: permissionKeys.resignationSubmit },
-      { label: 'Approvals', href: '/approvals', icon: Stamp, permission: permissionKeys.leaveApprove },
+      {
+        label: 'Approvals',
+        href: '/approvals',
+        icon: Stamp,
+        permission: permissionKeys.leaveApprove,
+        anyOf: [permissionKeys.reimbursementsApprove, permissionKeys.payrollApprove, permissionKeys.exitsManage],
+      },
       { label: 'Leave requests', href: '/hr/leave', icon: CalendarCheck, permission: permissionKeys.leaveApprove, minimumScope: 'organisation' },
     ],
   },
@@ -171,8 +187,9 @@ export function buildNavigation(permissions: PermissionMap): NavigationSection[]
       ...section,
       items: section.items.filter((item) => {
         const allowed =
-          hasReach(permissions[item.permission], item.minimumScope) &&
-          (!item.alsoRequires || permissions[item.alsoRequires] !== undefined);
+          (hasReach(permissions[item.permission], item.minimumScope) &&
+            (!item.alsoRequires || permissions[item.alsoRequires] !== undefined)) ||
+          (item.anyOf ?? []).some((key) => permissions[key] !== undefined);
         if (!allowed || shown.has(item.href)) return false;
         shown.add(item.href);
         return true;

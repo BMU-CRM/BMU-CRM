@@ -54,6 +54,24 @@ export function FinanceSettingsForm({ settings }: { settings: FinanceSettings })
               error={errors?.invoicePrefix}
             />
             <TextField
+              label="Receipt number prefix"
+              name="receiptPrefix"
+              defaultValue={settings.receipt_prefix}
+              maxLength={5}
+              required
+              hint="Each invoice payment gets a receipt, numbered PREFIX/26-27/0001."
+              error={errors?.receiptPrefix}
+            />
+            <TextField
+              label="Purchase order prefix"
+              name="poPrefix"
+              defaultValue={settings.po_prefix}
+              maxLength={5}
+              required
+              hint="Purchase orders are numbered PREFIX/26-27/0001 when issued."
+              error={errors?.poPrefix}
+            />
+            <TextField
               label="Usual GST rate (%)"
               name="defaultTaxRate"
               inputMode="decimal"

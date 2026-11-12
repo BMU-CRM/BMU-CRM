@@ -246,7 +246,26 @@ Human Resource also has the HR work that already existed, across the organisatio
 - Every money movement is recorded once: invoice money in payments, other income in income entries, and every expense in expense entries. Paid payroll and paid settlements create their expense automatically and can only be changed where they came from.
 - Money records are never deleted. Removing one keeps it, marked removed, with who removed it and why.
 - Bank account numbers are encrypted like employee bank details and shown masked.
-- Categories can be read by everyone (for reimbursement claims later); only Finance changes them.
+- Categories can be read by everyone (for reimbursement claims); only Finance changes them.
+
+### Payment follow-ups, purchases and reimbursements (Stages 8 to 10)
+
+| Permission | Founder | Finance Head | Human Resource | Everyone else |
+| --- | --- | --- | --- | --- |
+| `followups.manage`: follow-up board, record follow-ups, reminders | Organisation | Organisation | — | — |
+| `purchases.manage`: vendors, purchase orders, vendor bills and paying them | Organisation | Organisation | — | — |
+| `reimbursements.submit`: claim back money spent for work | Own | Own | Own | Own |
+| `reimbursements.approve`: approve or reject claims | Organisation | — | Organisation | — |
+| `reimbursements.pay`: pay approved claims, Salaries and reimbursements page | Organisation | Organisation | — | — |
+
+- Follow-up notes are seen by Finance and by whoever can see the invoice's money, such as its Client Manager. Follow-ups are never edited; each one is a new note.
+- Every invoice payment gets a receipt number (`RCPT/26-27/0001`), in a series per financial year. Anyone who can see the invoice can print its receipts.
+- A purchase order gets its number (`PO/26-27/0001`) when issued and is then locked; it can be marked received or cancelled with a reason.
+- Paying a vendor bill, in full or in parts, files one expense per payment under the bill's category. Removing a payment keeps it, marked removed, and removes its expense the same way. Only an unpaid bill can be removed.
+- A claim is decided by the claimant's **reporting manager**, whatever their role, or by anyone whose `reimbursements.approve` reaches the person. Nobody decides their own claim. Claims are seen only by the claimant, the people who can decide them, and Finance.
+- Paying a claim files the expense under the claim's category, once. A leaver's approved but unpaid claims are suggested in their full and final settlement; paying the settlement marks them paid, and they cannot be paid separately while the settlement includes them.
+- Every decision on leave, claims, payroll runs and resignations is kept in an approvals record, shown as **Approval history** on the claim, payroll run and exit pages. It is read only through a function that checks the reader may see the item.
+- **Approvals** shows a tab for each kind of decision a person can make: leave and work, reimbursements, payroll runs, resignations.
 
 ## Overseeing work
 

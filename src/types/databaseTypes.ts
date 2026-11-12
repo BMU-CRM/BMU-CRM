@@ -61,6 +61,48 @@ export type Database = {
           },
         ]
       }
+      "approval_history": {
+        Row: {
+          "comment": string | null
+          "created_at": string
+          "decided_by": string | null
+          "decided_by_name": string
+          "decision": string
+          "id": string
+          "item_id": string
+          "item_type": string
+        }
+        ComputedFields: never
+        Insert: {
+          "comment"?: string | null
+          "created_at"?: string
+          "decided_by"?: string | null
+          "decided_by_name"?: string
+          "decision": string
+          "id"?: string
+          "item_id": string
+          "item_type": string
+        }
+        Update: {
+          "comment"?: string | null
+          "created_at"?: string
+          "decided_by"?: string | null
+          "decided_by_name"?: string
+          "decision"?: string
+          "id"?: string
+          "item_id"?: string
+          "item_type"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_history_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "attendance_breaks": {
         Row: {
           "attendance_id": string
@@ -1934,8 +1976,10 @@ export type Database = {
           "pan": string | null
           "payment_terms_days": number
           "phone": string | null
+          "po_prefix": string
           "quotation_terms": string | null
           "quotation_validity_days": number
+          "receipt_prefix": string
           "state": string | null
           "updated_at": string
         }
@@ -1953,8 +1997,10 @@ export type Database = {
           "pan"?: string | null
           "payment_terms_days"?: number
           "phone"?: string | null
+          "po_prefix"?: string
           "quotation_terms"?: string | null
           "quotation_validity_days"?: number
+          "receipt_prefix"?: string
           "state"?: string | null
           "updated_at"?: string
         }
@@ -1971,8 +2017,10 @@ export type Database = {
           "pan"?: string | null
           "payment_terms_days"?: number
           "phone"?: string | null
+          "po_prefix"?: string
           "quotation_terms"?: string | null
           "quotation_validity_days"?: number
+          "receipt_prefix"?: string
           "state"?: string | null
           "updated_at"?: string
         }
@@ -2215,6 +2263,61 @@ export type Database = {
             columns: ["meeting_id"]
             isOneToOne: false
             referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "invoice_follow_ups": {
+        Row: {
+          "contacted_on": string
+          "created_at": string
+          "created_by": string | null
+          "id": string
+          "invoice_id": string
+          "next_follow_up_on": string | null
+          "note": string
+          "promised_amount": number | null
+          "promised_on": string | null
+          "status": Database["public"]["Enums"]["follow_up_status"]
+        }
+        ComputedFields: never
+        Insert: {
+          "contacted_on"?: string
+          "created_at"?: string
+          "created_by"?: string | null
+          "id"?: string
+          "invoice_id": string
+          "next_follow_up_on"?: string | null
+          "note": string
+          "promised_amount"?: number | null
+          "promised_on"?: string | null
+          "status": Database["public"]["Enums"]["follow_up_status"]
+        }
+        Update: {
+          "contacted_on"?: string
+          "created_at"?: string
+          "created_by"?: string | null
+          "id"?: string
+          "invoice_id"?: string
+          "next_follow_up_on"?: string | null
+          "note"?: string
+          "promised_amount"?: number | null
+          "promised_on"?: string | null
+          "status"?: Database["public"]["Enums"]["follow_up_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_follow_ups_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_follow_ups_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -3297,6 +3400,7 @@ export type Database = {
           "method": Database["public"]["Enums"]["payment_method"]
           "notes": string | null
           "payment_date": string
+          "receipt_number": string | null
           "recorded_by": string | null
           "reference": string | null
         }
@@ -3311,6 +3415,7 @@ export type Database = {
           "method": Database["public"]["Enums"]["payment_method"]
           "notes"?: string | null
           "payment_date"?: string
+          "receipt_number"?: string | null
           "recorded_by"?: string | null
           "reference"?: string | null
         }
@@ -3324,6 +3429,7 @@ export type Database = {
           "method"?: Database["public"]["Enums"]["payment_method"]
           "notes"?: string | null
           "payment_date"?: string
+          "receipt_number"?: string | null
           "recorded_by"?: string | null
           "reference"?: string | null
         }
@@ -3661,6 +3767,22 @@ export type Database = {
         }
         Relationships: []
       }
+      "po_number_counters": {
+        Row: {
+          "financial_year": string
+          "last_number": number
+        }
+        ComputedFields: never
+        Insert: {
+          "financial_year": string
+          "last_number": number
+        }
+        Update: {
+          "financial_year"?: string
+          "last_number"?: number
+        }
+        Relationships: []
+      }
       "project_members": {
         Row: {
           "created_at": string
@@ -3814,6 +3936,151 @@ export type Database = {
             columns: ["project_manager_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "purchase_order_items": {
+        Row: {
+          "description": string
+          "hsn_sac": string | null
+          "id": string
+          "position": number
+          "purchase_order_id": string
+          "quantity": number
+          "tax_amount": number
+          "tax_rate": number
+          "taxable_amount": number
+          "unit_price": number
+        }
+        ComputedFields: never
+        Insert: {
+          "description": string
+          "hsn_sac"?: string | null
+          "id"?: string
+          "position": number
+          "purchase_order_id": string
+          "quantity": number
+          "tax_amount": number
+          "tax_rate": number
+          "taxable_amount": number
+          "unit_price": number
+        }
+        Update: {
+          "description"?: string
+          "hsn_sac"?: string | null
+          "id"?: string
+          "position"?: number
+          "purchase_order_id"?: string
+          "quantity"?: number
+          "tax_amount"?: number
+          "tax_rate"?: number
+          "taxable_amount"?: number
+          "unit_price"?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "purchase_orders": {
+        Row: {
+          "cancel_reason": string | null
+          "cancelled_at": string | null
+          "cgst_total": number
+          "created_at": string
+          "created_by": string | null
+          "delivery_address": string | null
+          "expected_date": string | null
+          "id": string
+          "igst_total": number
+          "is_inter_state": boolean
+          "issued_at": string | null
+          "notes": string | null
+          "order_date": string
+          "place_of_supply": string | null
+          "po_number": string | null
+          "sgst_total": number
+          "status": Database["public"]["Enums"]["purchase_order_status"]
+          "subtotal": number
+          "tax_total": number
+          "terms": string | null
+          "title": string
+          "total": number
+          "updated_at": string
+          "vendor_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "cancel_reason"?: string | null
+          "cancelled_at"?: string | null
+          "cgst_total"?: number
+          "created_at"?: string
+          "created_by"?: string | null
+          "delivery_address"?: string | null
+          "expected_date"?: string | null
+          "id"?: string
+          "igst_total"?: number
+          "is_inter_state"?: boolean
+          "issued_at"?: string | null
+          "notes"?: string | null
+          "order_date"?: string
+          "place_of_supply"?: string | null
+          "po_number"?: string | null
+          "sgst_total"?: number
+          "status"?: Database["public"]["Enums"]["purchase_order_status"]
+          "subtotal"?: number
+          "tax_total"?: number
+          "terms"?: string | null
+          "title": string
+          "total"?: number
+          "updated_at"?: string
+          "vendor_id": string
+        }
+        Update: {
+          "cancel_reason"?: string | null
+          "cancelled_at"?: string | null
+          "cgst_total"?: number
+          "created_at"?: string
+          "created_by"?: string | null
+          "delivery_address"?: string | null
+          "expected_date"?: string | null
+          "id"?: string
+          "igst_total"?: number
+          "is_inter_state"?: boolean
+          "issued_at"?: string | null
+          "notes"?: string | null
+          "order_date"?: string
+          "place_of_supply"?: string | null
+          "po_number"?: string | null
+          "sgst_total"?: number
+          "status"?: Database["public"]["Enums"]["purchase_order_status"]
+          "subtotal"?: number
+          "tax_total"?: number
+          "terms"?: string | null
+          "title"?: string
+          "total"?: number
+          "updated_at"?: string
+          "vendor_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -4024,6 +4291,139 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "receipt_number_counters": {
+        Row: {
+          "financial_year": string
+          "last_number": number
+        }
+        ComputedFields: never
+        Insert: {
+          "financial_year": string
+          "last_number": number
+        }
+        Update: {
+          "financial_year"?: string
+          "last_number"?: number
+        }
+        Relationships: []
+      }
+      "reimbursements": {
+        Row: {
+          "amount": number
+          "bank_account_id": string | null
+          "category_id": string
+          "created_at": string
+          "decided_at": string | null
+          "decided_by": string | null
+          "decision_note": string | null
+          "description": string
+          "employee_id": string
+          "expense_date": string
+          "id": string
+          "paid_by": string | null
+          "paid_on": string | null
+          "payment_method": Database["public"]["Enums"]["payment_method"] | null
+          "payment_reference": string | null
+          "receipt_file_id": string | null
+          "settled_in_resignation_id": string | null
+          "status": Database["public"]["Enums"]["reimbursement_status"]
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "amount": number
+          "bank_account_id"?: string | null
+          "category_id": string
+          "created_at"?: string
+          "decided_at"?: string | null
+          "decided_by"?: string | null
+          "decision_note"?: string | null
+          "description": string
+          "employee_id": string
+          "expense_date": string
+          "id"?: string
+          "paid_by"?: string | null
+          "paid_on"?: string | null
+          "payment_method"?: Database["public"]["Enums"]["payment_method"] | null
+          "payment_reference"?: string | null
+          "receipt_file_id"?: string | null
+          "settled_in_resignation_id"?: string | null
+          "status"?: Database["public"]["Enums"]["reimbursement_status"]
+          "updated_at"?: string
+        }
+        Update: {
+          "amount"?: number
+          "bank_account_id"?: string | null
+          "category_id"?: string
+          "created_at"?: string
+          "decided_at"?: string | null
+          "decided_by"?: string | null
+          "decision_note"?: string | null
+          "description"?: string
+          "employee_id"?: string
+          "expense_date"?: string
+          "id"?: string
+          "paid_by"?: string | null
+          "paid_on"?: string | null
+          "payment_method"?: Database["public"]["Enums"]["payment_method"] | null
+          "payment_reference"?: string | null
+          "receipt_file_id"?: string | null
+          "settled_in_resignation_id"?: string | null
+          "status"?: Database["public"]["Enums"]["reimbursement_status"]
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reimbursements_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_receipt_file_id_fkey"
+            columns: ["receipt_file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_settled_in_resignation_id_fkey"
+            columns: ["settled_in_resignation_id"]
+            isOneToOne: false
+            referencedRelation: "resignations"
             referencedColumns: ["id"]
           },
         ]
@@ -4927,6 +5327,258 @@ export type Database = {
           },
         ]
       }
+      "vendor_bill_payments": {
+        Row: {
+          "amount": number
+          "bank_account_id": string
+          "bill_id": string
+          "created_at": string
+          "created_by": string | null
+          "delete_reason": string | null
+          "deleted_at": string | null
+          "deleted_by": string | null
+          "id": string
+          "method": Database["public"]["Enums"]["payment_method"]
+          "paid_on": string
+          "reference": string | null
+        }
+        ComputedFields: never
+        Insert: {
+          "amount": number
+          "bank_account_id": string
+          "bill_id": string
+          "created_at"?: string
+          "created_by"?: string | null
+          "delete_reason"?: string | null
+          "deleted_at"?: string | null
+          "deleted_by"?: string | null
+          "id"?: string
+          "method": Database["public"]["Enums"]["payment_method"]
+          "paid_on": string
+          "reference"?: string | null
+        }
+        Update: {
+          "amount"?: number
+          "bank_account_id"?: string
+          "bill_id"?: string
+          "created_at"?: string
+          "created_by"?: string | null
+          "delete_reason"?: string | null
+          "deleted_at"?: string | null
+          "deleted_by"?: string | null
+          "id"?: string
+          "method"?: Database["public"]["Enums"]["payment_method"]
+          "paid_on"?: string
+          "reference"?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_bill_payments_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bill_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bill_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bill_payments_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "vendor_bills": {
+        Row: {
+          "amount": number
+          "amount_paid": number
+          "bill_date": string
+          "bill_number": string
+          "category_id": string
+          "created_at": string
+          "created_by": string | null
+          "delete_reason": string | null
+          "deleted_at": string | null
+          "deleted_by": string | null
+          "department_id": string | null
+          "description": string | null
+          "due_date": string
+          "file_id": string | null
+          "id": string
+          "purchase_order_id": string | null
+          "tax_amount": number
+          "updated_at": string
+          "vendor_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "amount": number
+          "amount_paid"?: number
+          "bill_date": string
+          "bill_number": string
+          "category_id": string
+          "created_at"?: string
+          "created_by"?: string | null
+          "delete_reason"?: string | null
+          "deleted_at"?: string | null
+          "deleted_by"?: string | null
+          "department_id"?: string | null
+          "description"?: string | null
+          "due_date": string
+          "file_id"?: string | null
+          "id"?: string
+          "purchase_order_id"?: string | null
+          "tax_amount"?: number
+          "updated_at"?: string
+          "vendor_id": string
+        }
+        Update: {
+          "amount"?: number
+          "amount_paid"?: number
+          "bill_date"?: string
+          "bill_number"?: string
+          "category_id"?: string
+          "created_at"?: string
+          "created_by"?: string | null
+          "delete_reason"?: string | null
+          "deleted_at"?: string | null
+          "deleted_by"?: string | null
+          "department_id"?: string | null
+          "description"?: string | null
+          "due_date"?: string
+          "file_id"?: string | null
+          "id"?: string
+          "purchase_order_id"?: string | null
+          "tax_amount"?: number
+          "updated_at"?: string
+          "vendor_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_bills_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bills_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bills_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bills_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bills_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bills_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bills_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "vendors": {
+        Row: {
+          "address": string | null
+          "contact_person": string | null
+          "created_at": string
+          "created_by": string | null
+          "email": string | null
+          "gstin": string | null
+          "id": string
+          "is_active": boolean
+          "name": string
+          "notes": string | null
+          "payment_terms_days": number
+          "phone": string | null
+          "state": string | null
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "address"?: string | null
+          "contact_person"?: string | null
+          "created_at"?: string
+          "created_by"?: string | null
+          "email"?: string | null
+          "gstin"?: string | null
+          "id"?: string
+          "is_active"?: boolean
+          "name": string
+          "notes"?: string | null
+          "payment_terms_days"?: number
+          "phone"?: string | null
+          "state"?: string | null
+          "updated_at"?: string
+        }
+        Update: {
+          "address"?: string | null
+          "contact_person"?: string | null
+          "created_at"?: string
+          "created_by"?: string | null
+          "email"?: string | null
+          "gstin"?: string | null
+          "id"?: string
+          "is_active"?: boolean
+          "name"?: string
+          "notes"?: string | null
+          "payment_terms_days"?: number
+          "phone"?: string | null
+          "state"?: string | null
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendors_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       "money_movements": {
@@ -5044,6 +5696,10 @@ export type Database = {
         | { Args: {
             "v_request": Omit<Database["public"]["Tables"]["leave_requests"]["Row"], Database["public"]["Tables"]["leave_requests"]["ComputedFields"]>
           }; Returns: boolean }
+      "can_decide_reimbursement":
+        | { Args: {
+            "p_employee": string
+          }; Returns: boolean }
       "can_handle_exits":
         | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_manage_invoice_row":
@@ -5056,6 +5712,8 @@ export type Database = {
         | { Args: {
             "p_project": string
           }; Returns: boolean }
+      "can_manage_purchases":
+        | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_manage_quotation_row":
         | { Args: {
             "v_quotation": Omit<Database["public"]["Tables"]["quotations"]["Row"], Database["public"]["Tables"]["quotations"]["ComputedFields"]>
@@ -5170,6 +5828,10 @@ export type Database = {
         | { Args: {
             "v_quotation": Omit<Database["public"]["Tables"]["quotations"]["Row"], Database["public"]["Tables"]["quotations"]["ComputedFields"]>
           }; Returns: boolean }
+      "can_view_reimbursement":
+        | { Args: {
+            "p_employee": string
+          }; Returns: boolean }
       "can_view_resignation":
         | { Args: {
             "p_employee": string
@@ -5245,6 +5907,12 @@ export type Database = {
             "p_approve": boolean
             "p_note": string
           }; Returns: undefined }
+      "decide_reimbursement":
+        | { Args: {
+            "p_claim": string
+            "p_approve": boolean
+            "p_note": string
+          }; Returns: undefined }
       "decide_resignation":
         | { Args: {
             "p_resignation": string
@@ -5287,6 +5955,10 @@ export type Database = {
             "p_client": string
             "p_created_by": string
           }; Returns: boolean }
+      "financial_year_label":
+        | { Args: {
+            "p_date": string
+          }; Returns: string }
       "format_rupees":
         | { Args: {
             "p_amount": number
@@ -5302,6 +5974,16 @@ export type Database = {
             "money_in": number
             "money_out": number
             "balance": number
+          }[] }
+      "get_approval_history":
+        | { Args: {
+            "p_type": string
+            "p_id": string
+          }; Returns: {
+            "decision": string
+            "comment": string
+            "decided_by_name": string
+            "created_at": string
           }[] }
       "get_assignable_employee_ids":
         | { Args: {
@@ -5364,6 +6046,30 @@ export type Database = {
             "field": string
             "old_value": string
             "new_value": string
+          }[] }
+      "get_follow_up_board":
+        | { Args: {
+            "p_status"?: Database["public"]["Enums"]["follow_up_status"]
+            "p_search"?: string
+            "p_include_paid"?: boolean
+          }; Returns: {
+            "invoice_id": string
+            "invoice_number": string
+            "title": string
+            "client_id": string
+            "client_name": string
+            "client_manager": string
+            "total": number
+            "amount_paid": number
+            "balance": number
+            "due_date": string
+            "days_overdue": number
+            "status": Database["public"]["Enums"]["follow_up_status"]
+            "last_contacted_on": string
+            "next_follow_up_on": string
+            "last_note": string
+            "promised_on": string
+            "follow_up_count": number
           }[] }
       "get_hr_dashboard":
         | { Args: {
@@ -5707,6 +6413,10 @@ export type Database = {
         | { Args: {
             "v_message": Omit<Database["public"]["Tables"]["messages"]["Row"], Database["public"]["Tables"]["messages"]["ComputedFields"]>
           }; Returns: string }
+      "next_receipt_number":
+        | { Args: {
+            "p_date": string
+          }; Returns: string }
       "normalize_items":
         | { Args: {
             "p_items": Json
@@ -5726,6 +6436,23 @@ export type Database = {
         | { Args: {
             "p_file": string
           }; Returns: boolean }
+      "pay_reimbursement":
+        | { Args: {
+            "p_claim": string
+            "p_paid_on": string
+            "p_method": Database["public"]["Enums"]["payment_method"]
+            "p_reference": string
+            "p_account": string
+          }; Returns: undefined }
+      "pay_vendor_bill":
+        | { Args: {
+            "p_bill": string
+            "p_amount": number
+            "p_paid_on": string
+            "p_method": Database["public"]["Enums"]["payment_method"]
+            "p_reference": string
+            "p_account": string
+          }; Returns: string }
       "payroll_month_label":
         | { Args: {
             "p_month": string
@@ -5760,6 +6487,13 @@ export type Database = {
         | { Args: {
             "p_run": string
           }; Returns: undefined }
+      "record_approval":
+        | { Args: {
+            "p_type": string
+            "p_id": string
+            "p_decision": string
+            "p_comment": string
+          }; Returns: undefined }
       "record_file_access":
         | { Args: {
             "p_file": string
@@ -5782,6 +6516,21 @@ export type Database = {
             "p_employee": string
             "p_field": string
           }; Returns: undefined }
+      "record_source_expense":
+        | { Args: {
+            "p_source": string
+            "p_source_id": string
+            "p_category": string
+            "p_amount": number
+            "p_on": string
+            "p_method": Database["public"]["Enums"]["payment_method"]
+            "p_reference": string
+            "p_account": string
+            "p_notes": string
+            "p_vendor"?: string
+            "p_department"?: string
+            "p_file"?: string
+          }; Returns: undefined }
       "record_system_expense":
         | { Args: {
             "p_source": string
@@ -5802,6 +6551,16 @@ export type Database = {
         | { Args: {
             "p_kind": string
             "p_id": string
+            "p_reason": string
+          }; Returns: undefined }
+      "remove_vendor_bill":
+        | { Args: {
+            "p_bill": string
+            "p_reason": string
+          }; Returns: undefined }
+      "remove_vendor_bill_payment":
+        | { Args: {
+            "p_payment": string
             "p_reason": string
           }; Returns: undefined }
       "require_payroll_permission":
@@ -5833,6 +6592,12 @@ export type Database = {
             "p_lop_adjustment": number
             "p_notes": string
           }; Returns: undefined }
+      "save_purchase_order":
+        | { Args: {
+            "p_order": string
+            "p_values": Json
+            "p_items": Json
+          }; Returns: string }
       "save_push_subscription":
         | { Args: {
             "p_endpoint": string
@@ -5857,11 +6622,15 @@ export type Database = {
             "p_location": string
             "p_link": string
           }; Returns: string }
+      "send_follow_up_reminders":
+        | { Args: Record<PropertyKey, never>; Returns: undefined }
       "send_interview_reminders":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "send_invoice_overdue_reminders":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "send_meeting_reminders":
+        | { Args: Record<PropertyKey, never>; Returns: undefined }
+      "send_vendor_bill_reminders":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "set_client_services":
         | { Args: {
@@ -5917,6 +6686,11 @@ export type Database = {
         | { Args: {
             "p_line": string
           }; Returns: undefined }
+      "vendor_bill_status":
+        | { Args: {
+            "p_amount": number
+            "p_paid": number
+          }; Returns: string }
       "vote_in_poll":
         | { Args: {
             "p_message": string
@@ -5938,6 +6712,7 @@ export type Database = {
       "file_access_action": "view" | "download"
       "file_kind": "upload" | "link"
       "file_status": "uploading" | "ready"
+      "follow_up_status": "not_contacted" | "pending" | "contacted" | "promise_to_pay" | "payment_received"
       "interview_status": "scheduled" | "completed" | "cancelled"
       "invoice_status": "draft" | "issued" | "partially_paid" | "paid" | "cancelled"
       "job_opening_status": "open" | "on_hold" | "closed"
@@ -5946,14 +6721,16 @@ export type Database = {
       "meeting_kind": "internal" | "department" | "management" | "client" | "project" | "one_to_one"
       "meeting_response": "pending" | "accepted" | "declined"
       "meeting_status": "scheduled" | "completed" | "cancelled"
-      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided"
+      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided" | "invoice_due_soon" | "follow_up_due" | "vendor_bill_due" | "reimbursement_submitted" | "reimbursement_decided" | "reimbursement_paid"
       "notification_priority": "normal" | "high"
       "payment_method": "bank_transfer" | "upi" | "cheque" | "cash" | "card" | "tds" | "other"
       "payroll_rule_kind": "pf" | "esi" | "pt" | "tds"
       "payroll_run_status": "draft" | "in_review" | "approved" | "paid"
       "permission_scope": "own" | "team" | "department" | "organisation"
       "project_status": "planning" | "active" | "on_hold" | "completed" | "cancelled"
+      "purchase_order_status": "draft" | "issued" | "received" | "cancelled"
       "quotation_status": "draft" | "sent" | "accepted" | "declined"
+      "reimbursement_status": "submitted" | "approved" | "rejected" | "paid" | "cancelled"
       "resignation_status": "submitted" | "approved" | "rejected" | "withdrawn" | "completed"
       "task_recurrence": "none" | "daily" | "weekly" | "monthly"
       "task_status": "not_started" | "assigned" | "accepted" | "in_progress" | "under_review" | "changes_requested" | "on_hold" | "completed" | "rejected"
@@ -6047,6 +6824,7 @@ export const Constants = {
       "file_access_action": ["view", "download"],
       "file_kind": ["upload", "link"],
       "file_status": ["uploading", "ready"],
+      "follow_up_status": ["not_contacted", "pending", "contacted", "promise_to_pay", "payment_received"],
       "interview_status": ["scheduled", "completed", "cancelled"],
       "invoice_status": ["draft", "issued", "partially_paid", "paid", "cancelled"],
       "job_opening_status": ["open", "on_hold", "closed"],
@@ -6055,14 +6833,16 @@ export const Constants = {
       "meeting_kind": ["internal", "department", "management", "client", "project", "one_to_one"],
       "meeting_response": ["pending", "accepted", "declined"],
       "meeting_status": ["scheduled", "completed", "cancelled"],
-      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided"],
+      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided", "invoice_due_soon", "follow_up_due", "vendor_bill_due", "reimbursement_submitted", "reimbursement_decided", "reimbursement_paid"],
       "notification_priority": ["normal", "high"],
       "payment_method": ["bank_transfer", "upi", "cheque", "cash", "card", "tds", "other"],
       "payroll_rule_kind": ["pf", "esi", "pt", "tds"],
       "payroll_run_status": ["draft", "in_review", "approved", "paid"],
       "permission_scope": ["own", "team", "department", "organisation"],
       "project_status": ["planning", "active", "on_hold", "completed", "cancelled"],
+      "purchase_order_status": ["draft", "issued", "received", "cancelled"],
       "quotation_status": ["draft", "sent", "accepted", "declined"],
+      "reimbursement_status": ["submitted", "approved", "rejected", "paid", "cancelled"],
       "resignation_status": ["submitted", "approved", "rejected", "withdrawn", "completed"],
       "task_recurrence": ["none", "daily", "weekly", "monthly"],
       "task_status": ["not_started", "assigned", "accepted", "in_progress", "under_review", "changes_requested", "on_hold", "completed", "rejected"],

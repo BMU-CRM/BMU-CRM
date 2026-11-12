@@ -145,6 +145,11 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                             .join(' · ')}
                         </p>
                       </div>
+                      {payment.receipt_number && (
+                        <Link href={`/receipts/${payment.id}/print`} className={layout.link}>
+                          Receipt {payment.receipt_number}
+                        </Link>
+                      )}
                       {canRecord && (
                         <ConfirmActionButton
                           label="Remove"

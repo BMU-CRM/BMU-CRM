@@ -33,6 +33,7 @@ export default async function SettlementPage({ params }: { params: Promise<{ res
         leave_encashment_days: suggestion.encashableDays,
         leave_encashment_amount: suggestion.encashmentAmount,
         notice_recovery: suggestion.noticeRecovery,
+        reimbursements_due: suggestion.reimbursementsDue,
       }
     : settlement;
 
@@ -46,7 +47,10 @@ export default async function SettlementPage({ params }: { params: Promise<{ res
         {suggestion && (
           <Panel title="How the suggestion was worked out">
             {!suggestion.hasSalary ? (
-              <p className={layout.muted}>No salary structure, so nothing could be suggested.</p>
+              <ul className={layout.factsStacked}>
+                <li>No salary structure, so no salary figures could be suggested.</li>
+                <li>Reimbursements due: {formatRupees(suggestion.reimbursementsDue)} of approved claims not yet paid.</li>
+              </ul>
             ) : (
               <ul className={layout.factsStacked}>
                 <li>
@@ -62,7 +66,9 @@ export default async function SettlementPage({ params }: { params: Promise<{ res
                     ? 'Notice recovery: no notice period is set.'
                     : `Notice recovery: ${suggestion.shortfallDays} of ${suggestion.noticeDays} notice days not served, at gross pay over 30.`}
                 </li>
-                <li>Reimbursements due are added once reimbursements are built.</li>
+                <li>
+                  Reimbursements due: {formatRupees(suggestion.reimbursementsDue)} of approved claims not yet paid. When Finance pays the settlement, those claims are marked paid with it.
+                </li>
               </ul>
             )}
           </Panel>

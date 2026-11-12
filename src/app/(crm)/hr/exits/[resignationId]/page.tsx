@@ -2,6 +2,7 @@ import { FileText, Printer } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ApprovalHistoryPanel } from '@/components/approvals/ApprovalHistoryPanel';
 import { ExitInterviewForm } from '@/components/exits/ExitForms';
 import { ResignationStatusBadge } from '@/components/exits/ResignationStatusBadge';
 import { ActionButton } from '@/components/ui/ActionButton';
@@ -220,6 +221,7 @@ export default async function ExitPage({ params }: { params: Promise<{ resignati
               </ul>
             </Panel>
           )}
+          <ApprovalHistoryPanel type="resignation" id={resignation.id} />
         </div>
       </div>
     </>

@@ -201,6 +201,16 @@ async function EntriesView({ kind, params, today }: { kind: 'expenses' | 'income
                               Open payroll
                             </Link>
                           )}
+                          {row.source === 'reimbursement' && (
+                            <Link href={`/reimbursements/${row.sourceId}`} className={tableStyles.primaryLink}>
+                              Open claim
+                            </Link>
+                          )}
+                          {row.source === 'settlement' && (
+                            <Link href={`/hr/exits/${row.sourceId}`} className={tableStyles.primaryLink}>
+                              Open exit
+                            </Link>
+                          )}
                         </td>
                       </tr>
                     );

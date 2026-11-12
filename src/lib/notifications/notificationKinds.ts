@@ -34,6 +34,12 @@ export const notificationKindLabels: Record<NotificationKind, string> = {
   interview_reminder: 'An interview I am on is coming up',
   resignation_submitted: 'Someone resigns',
   resignation_decided: 'My resignation is decided',
+  invoice_due_soon: 'An invoice I look after is due in 3 days',
+  follow_up_due: 'A payment follow-up is due',
+  vendor_bill_due: 'A vendor bill is due in 3 days',
+  reimbursement_submitted: 'Someone claims a reimbursement I can approve',
+  reimbursement_decided: 'A reimbursement is approved, rejected or ready to pay',
+  reimbursement_paid: 'My reimbursement is paid',
 };
 
 export const notificationKinds = Object.keys(notificationKindLabels) as NotificationKind[];

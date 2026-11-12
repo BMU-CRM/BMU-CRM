@@ -47,6 +47,12 @@ const entityLabels: Record<string, string> = {
   income_records: 'income entry',
   expense_records: 'expense',
   bank_statement_lines: 'statement line',
+  invoice_follow_ups: 'payment follow-up',
+  vendors: 'vendor',
+  purchase_orders: 'purchase order',
+  vendor_bills: 'vendor bill',
+  vendor_bill_payments: 'vendor payment',
+  reimbursements: 'reimbursement claim',
 };
 
 const revealedFields: Record<string, string> = { aadhaar: 'Aadhaar number', account_number: 'bank account number' };

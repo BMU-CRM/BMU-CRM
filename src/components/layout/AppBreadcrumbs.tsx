@@ -66,6 +66,15 @@ const segmentLabels: Record<string, string> = {
   expenses: 'Expenses',
   income: 'Income',
   remove: 'Remove',
+  'follow-ups': 'Payment follow-ups',
+  purchases: 'Purchases',
+  vendors: 'Vendors',
+  orders: 'Purchase orders',
+  bills: 'Bills',
+  payments: 'Payments',
+  cancel: 'Cancel',
+  salaries: 'Salaries and reimbursements',
+  reimbursements: 'Reimbursements',
   utilisation: 'Leave report',
   personal: 'Personal details',
   private: 'ID and bank',
@@ -81,7 +90,7 @@ const labelsUnder: Record<string, Record<string, string>> = {
 };
 
 // These segments only group pages, so they have no page of their own to link to.
-const groupSegments = new Set(['people', 'settings', 'personal', 'private', 'lines', 'rules', 'components', 'expenses', 'income']);
+const groupSegments = new Set(['people', 'settings', 'personal', 'private', 'lines', 'rules', 'components', 'expenses', 'income', 'vendors', 'orders', 'bills', 'payments']);
 
 export function AppBreadcrumbs() {
   const pathname = usePathname();
