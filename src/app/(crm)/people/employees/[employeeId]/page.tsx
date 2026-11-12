@@ -1,4 +1,5 @@
-import { Pencil, Printer } from 'lucide-react';
+import { FileText, Pencil, Printer } from 'lucide-react';
+import { listLetterTemplates } from '@/server/services/recruitmentService';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -91,6 +92,10 @@ export default async function EmployeeProfilePage({ params, searchParams }: Empl
       />
       {tabs.length > 1 && <EmployeeRecordTabs employeeId={employee.id} tabs={tabs} current={tab} />}
       {tab === 'overview' && <OverviewTab employee={employee} />}
+      {tab === 'overview' &&
+        (access.permissions[permissionKeys.recruitmentManage] !== undefined || access.permissions[permissionKeys.exitsManage] !== undefined) && (
+          <EmployeeLetters employeeId={employee.id} />
+        )}
       {tab === 'personal' && (
         <EmployeePersonalPanel employeeId={employee.id} details={await getPersonalDetails(employee.id)} canEdit={recordAccess.canEditPersonal} />
       )}
@@ -112,6 +117,27 @@ export default async function EmployeeProfilePage({ params, searchParams }: Empl
       )}
       {tab === 'history' && <EmploymentHistoryPanel entries={await getEmploymentHistory(employee.id)} />}
     </>
+  );
+}
+
+// Letters HR prints for someone still here, such as an internship completion letter.
+async function EmployeeLetters({ employeeId }: { employeeId: string }) {
+  const templates = (await listLetterTemplates()).filter((template) => template.is_active && template.kind !== 'offer');
+  if (templates.length === 0) return null;
+  return (
+    <div className={styles.letters}>
+      <Panel title="Letters">
+        <ul className={styles.letterList}>
+          {templates.map((template) => (
+            <li key={template.id}>
+              <Link href={`/letters/${template.id}/print?employee=${employeeId}`} className={styles.letterLink}>
+                <FileText size={16} aria-hidden="true" /> {template.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Panel>
+    </div>
   );
 }
 

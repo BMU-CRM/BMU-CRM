@@ -218,6 +218,36 @@ Human Resource also has the HR work that already existed, across the organisatio
 - Breaks and working from home are recorded only through Check in, Start a break and End break. HR sets a day's status (half day, absent and so on) through **Correct a record**, which is audited.
 - Unused leave carries forward automatically at 06:00 on 1 January (India time), up to each leave type's limit; HR can run it again from the Leave report.
 
+### Payroll, recruitment and exits
+
+| Permission | Founder | Human Resource | Finance Head | Everyone else |
+| --- | --- | --- | --- | --- |
+| `payroll.manage` (salary structures, rules, components, prepare runs, appraisals) | Org | Org | | |
+| `payroll.approve` (approve or send back runs, mark runs and settlements paid) | Org | | Org | |
+| `payslips.view` (own payslips, once paid) | Own | Own | Own | Own |
+| `recruitment.manage` (openings, candidates, interviews, letters, onboarding) | Org | Org | | |
+| `exits.manage` (decide resignations, exit checklist, prepare settlements) | Org | Org | | |
+| `resignation.submit` (resign) | Own | Own | Own | Own |
+
+- No statutory rate is built in. PF, ESI, professional tax and TDS come from rules HR enters in **HR settings > Payroll**, each from a date; anything missing is shown as "not set up" and left off payslips.
+- Payroll runs are worked out in the database from salary structures, attendance and leave. HR prepares and sends a run; Finance approves (or sends it back with a note) and marks it paid. One person in both roles can do both steps, each recorded.
+- Payslips are seen by the person only after the run is paid.
+- Interviewers who are not recruiters see only their own interviews and those candidates, at **/interviews**.
+- Candidate files are seen only by recruiters and the candidate's interviewers, and never appear in Files.
+- A resignation is seen by the person, HR, Finance and the person's reporting manager. The night after the last working day the person is marked exited and their sign-in is blocked, as with deactivating by hand.
+
+### Ledger and bank accounts
+
+| Permission | Founder | Finance Head | Everyone else |
+| --- | --- | --- | --- |
+| `ledger.manage` (income and expenses, Transactions, categories) | Org | Org | |
+| `banks.manage` (bank accounts, statement import, reconciliation) | Org | Org | |
+
+- Every money movement is recorded once: invoice money in payments, other income in income entries, and every expense in expense entries. Paid payroll and paid settlements create their expense automatically and can only be changed where they came from.
+- Money records are never deleted. Removing one keeps it, marked removed, with who removed it and why.
+- Bank account numbers are encrypted like employee bank details and shown masked.
+- Categories can be read by everyone (for reimbursement claims later); only Finance changes them.
+
 ## Overseeing work
 
 The Founder, Co-Founder, Client Managers and department heads oversee others' tasks:

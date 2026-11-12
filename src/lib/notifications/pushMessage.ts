@@ -28,6 +28,8 @@ const titleWithActor: Partial<Record<NotificationKind, (actor: string) => string
   meeting_changed: (actor) => `${actor} changed a meeting`,
   meeting_cancelled: (actor) => `${actor} cancelled a meeting`,
   leave_requested: (actor) => `${actor} asked for leave`,
+  payroll_review: (actor) => `${actor} sent payroll for your approval`,
+  resignation_submitted: (actor) => `${actor} resigned`,
 };
 
 const priorityWords: Record<string, string> = { high: 'High priority', urgent: 'Urgent' };

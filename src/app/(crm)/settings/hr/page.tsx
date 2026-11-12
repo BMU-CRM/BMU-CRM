@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { EmploymentTypeForm, LeaveTypeForm, WorkingHoursForm } from '@/components/hr/HrForms';
+import { HrSettingsTabs } from '@/components/hr/HrSettingsTabs';
 import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -13,7 +14,7 @@ import { getCompanySettings, listHolidaysBetween, listLeaveTypes } from '@/serve
 export const metadata: Metadata = { title: 'HR settings' };
 
 export default async function HrSettingsPage() {
-  await requirePagePermission(permissionKeys.hrManage);
+  const access = await requirePagePermission(permissionKeys.hrManage);
   const today = todayInIndia();
 
   const [settings, leaveTypes, employmentTypes, upcomingHolidays] = await Promise.all([
@@ -26,6 +27,7 @@ export default async function HrSettingsPage() {
   return (
     <>
       <PageHeader title="HR settings" description="Working hours, leave types, employment types and holidays for the whole company." />
+      <HrSettingsTabs current="general" permissions={access.permissions} />
       <div className={layout.stack}>
         <Panel title="Working hours" description="Used for late arrivals, early departures, half days, overtime and counting leave days.">
           <WorkingHoursForm settings={settings} />

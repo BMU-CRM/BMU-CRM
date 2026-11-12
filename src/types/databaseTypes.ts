@@ -6,6 +6,61 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      "appraisals": {
+        Row: {
+          "created_at": string
+          "employee_id": string
+          "id": string
+          "notes": string | null
+          "period_end": string
+          "period_label": string
+          "period_start": string
+          "rating": number
+          "reviewer_id": string | null
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "employee_id": string
+          "id"?: string
+          "notes"?: string | null
+          "period_end": string
+          "period_label": string
+          "period_start": string
+          "rating": number
+          "reviewer_id"?: string | null
+          "updated_at"?: string
+        }
+        Update: {
+          "created_at"?: string
+          "employee_id"?: string
+          "id"?: string
+          "notes"?: string | null
+          "period_end"?: string
+          "period_label"?: string
+          "period_start"?: string
+          "rating"?: number
+          "reviewer_id"?: string | null
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appraisals_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appraisals_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "attendance_breaks": {
         Row: {
           "attendance_id": string
@@ -146,6 +201,244 @@ export type Database = {
           "id"?: never
         }
         Relationships: []
+      }
+      "bank_accounts": {
+        Row: {
+          "account_holder": string | null
+          "account_last4": string | null
+          "account_number_encrypted": string | null
+          "account_type": Database["public"]["Enums"]["bank_account_type"]
+          "bank_name": string | null
+          "created_at": string
+          "id": string
+          "ifsc": string | null
+          "is_active": boolean
+          "is_primary": boolean
+          "name": string
+          "opening_balance": number
+          "opening_date": string
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "account_holder"?: string | null
+          "account_last4"?: string | null
+          "account_number_encrypted"?: string | null
+          "account_type"?: Database["public"]["Enums"]["bank_account_type"]
+          "bank_name"?: string | null
+          "created_at"?: string
+          "id"?: string
+          "ifsc"?: string | null
+          "is_active"?: boolean
+          "is_primary"?: boolean
+          "name": string
+          "opening_balance"?: number
+          "opening_date"?: string
+          "updated_at"?: string
+        }
+        Update: {
+          "account_holder"?: string | null
+          "account_last4"?: string | null
+          "account_number_encrypted"?: string | null
+          "account_type"?: Database["public"]["Enums"]["bank_account_type"]
+          "bank_name"?: string | null
+          "created_at"?: string
+          "id"?: string
+          "ifsc"?: string | null
+          "is_active"?: boolean
+          "is_primary"?: boolean
+          "name"?: string
+          "opening_balance"?: number
+          "opening_date"?: string
+          "updated_at"?: string
+        }
+        Relationships: []
+      }
+      "bank_statement_lines": {
+        Row: {
+          "amount": number
+          "balance": number | null
+          "bank_account_id": string
+          "description": string
+          "id": string
+          "imported_at": string
+          "imported_by": string | null
+          "line_date": string
+          "matched_at": string | null
+          "matched_by": string | null
+          "matched_id": string | null
+          "matched_kind": string | null
+          "reference": string | null
+        }
+        ComputedFields: never
+        Insert: {
+          "amount": number
+          "balance"?: number | null
+          "bank_account_id": string
+          "description"?: string
+          "id"?: string
+          "imported_at"?: string
+          "imported_by"?: string | null
+          "line_date": string
+          "matched_at"?: string | null
+          "matched_by"?: string | null
+          "matched_id"?: string | null
+          "matched_kind"?: string | null
+          "reference"?: string | null
+        }
+        Update: {
+          "amount"?: number
+          "balance"?: number | null
+          "bank_account_id"?: string
+          "description"?: string
+          "id"?: string
+          "imported_at"?: string
+          "imported_by"?: string | null
+          "line_date"?: string
+          "matched_at"?: string | null
+          "matched_by"?: string | null
+          "matched_id"?: string | null
+          "matched_kind"?: string | null
+          "reference"?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_statement_lines_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_statement_lines_imported_by_fkey"
+            columns: ["imported_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_statement_lines_matched_by_fkey"
+            columns: ["matched_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "candidates": {
+        Row: {
+          "created_at": string
+          "created_by": string | null
+          "current_salary": number | null
+          "department_id": string | null
+          "email": string | null
+          "employee_id": string | null
+          "expected_salary": number | null
+          "experience_years": number | null
+          "full_name": string
+          "id": string
+          "notes": string | null
+          "offered_designation_id": string | null
+          "offered_joining_date": string | null
+          "offered_salary": number | null
+          "opening_id": string | null
+          "phone": string | null
+          "portfolio_url": string | null
+          "position": string | null
+          "skills": (string)[]
+          "source": string | null
+          "stage": Database["public"]["Enums"]["candidate_stage"]
+          "stage_changed_at": string
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "created_by"?: string | null
+          "current_salary"?: number | null
+          "department_id"?: string | null
+          "email"?: string | null
+          "employee_id"?: string | null
+          "expected_salary"?: number | null
+          "experience_years"?: number | null
+          "full_name": string
+          "id"?: string
+          "notes"?: string | null
+          "offered_designation_id"?: string | null
+          "offered_joining_date"?: string | null
+          "offered_salary"?: number | null
+          "opening_id"?: string | null
+          "phone"?: string | null
+          "portfolio_url"?: string | null
+          "position"?: string | null
+          "skills"?: (string)[]
+          "source"?: string | null
+          "stage"?: Database["public"]["Enums"]["candidate_stage"]
+          "stage_changed_at"?: string
+          "updated_at"?: string
+        }
+        Update: {
+          "created_at"?: string
+          "created_by"?: string | null
+          "current_salary"?: number | null
+          "department_id"?: string | null
+          "email"?: string | null
+          "employee_id"?: string | null
+          "expected_salary"?: number | null
+          "experience_years"?: number | null
+          "full_name"?: string
+          "id"?: string
+          "notes"?: string | null
+          "offered_designation_id"?: string | null
+          "offered_joining_date"?: string | null
+          "offered_salary"?: number | null
+          "opening_id"?: string | null
+          "phone"?: string | null
+          "portfolio_url"?: string | null
+          "position"?: string | null
+          "skills"?: (string)[]
+          "source"?: string | null
+          "stage"?: Database["public"]["Enums"]["candidate_stage"]
+          "stage_changed_at"?: string
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidates_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidates_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidates_offered_designation_id_fkey"
+            columns: ["offered_designation_id"]
+            isOneToOne: false
+            referencedRelation: "designations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidates_opening_id_fkey"
+            columns: ["opening_id"]
+            isOneToOne: false
+            referencedRelation: "job_openings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       "client_records": {
         Row: {
@@ -372,10 +665,13 @@ export type Database = {
       "company_settings": {
         Row: {
           "default_probation_months": number | null
+          "default_pt_state": string | null
           "half_day_minutes": number | null
           "id": boolean
           "late_grace_minutes": number
+          "notice_period_days": number | null
           "overtime_after_minutes": number | null
+          "payroll_absence_lop": boolean
           "updated_at": string
           "work_end": string
           "work_start": string
@@ -384,10 +680,13 @@ export type Database = {
         ComputedFields: never
         Insert: {
           "default_probation_months"?: number | null
+          "default_pt_state"?: string | null
           "half_day_minutes"?: number | null
           "id"?: boolean
           "late_grace_minutes"?: number
+          "notice_period_days"?: number | null
           "overtime_after_minutes"?: number | null
+          "payroll_absence_lop"?: boolean
           "updated_at"?: string
           "work_end"?: string
           "work_start"?: string
@@ -395,10 +694,13 @@ export type Database = {
         }
         Update: {
           "default_probation_months"?: number | null
+          "default_pt_state"?: string | null
           "half_day_minutes"?: number | null
           "id"?: boolean
           "late_grace_minutes"?: number
+          "notice_period_days"?: number | null
           "overtime_after_minutes"?: number | null
+          "payroll_absence_lop"?: boolean
           "updated_at"?: string
           "work_end"?: string
           "work_start"?: string
@@ -952,6 +1254,193 @@ export type Database = {
         }
         Relationships: []
       }
+      "exit_checklist_items": {
+        Row: {
+          "category": string
+          "created_at": string
+          "id": string
+          "is_active": boolean
+          "name": string
+          "sort_order": number
+        }
+        ComputedFields: never
+        Insert: {
+          "category"?: string
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "name": string
+          "sort_order"?: number
+        }
+        Update: {
+          "category"?: string
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "name"?: string
+          "sort_order"?: number
+        }
+        Relationships: []
+      }
+      "exit_tasks": {
+        Row: {
+          "category": string
+          "done_at": string | null
+          "done_by": string | null
+          "id": string
+          "item_name": string
+          "note": string | null
+          "resignation_id": string
+          "sort_order": number
+        }
+        ComputedFields: never
+        Insert: {
+          "category"?: string
+          "done_at"?: string | null
+          "done_by"?: string | null
+          "id"?: string
+          "item_name": string
+          "note"?: string | null
+          "resignation_id": string
+          "sort_order"?: number
+        }
+        Update: {
+          "category"?: string
+          "done_at"?: string | null
+          "done_by"?: string | null
+          "id"?: string
+          "item_name"?: string
+          "note"?: string | null
+          "resignation_id"?: string
+          "sort_order"?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exit_tasks_done_by_fkey"
+            columns: ["done_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exit_tasks_resignation_id_fkey"
+            columns: ["resignation_id"]
+            isOneToOne: false
+            referencedRelation: "resignations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "expense_records": {
+        Row: {
+          "amount": number
+          "bank_account_id": string
+          "category_id": string
+          "created_at": string
+          "created_by": string | null
+          "delete_reason": string | null
+          "deleted_at": string | null
+          "deleted_by": string | null
+          "department_id": string | null
+          "id": string
+          "method": Database["public"]["Enums"]["payment_method"]
+          "notes": string | null
+          "receipt_file_id": string | null
+          "reference": string | null
+          "source": string
+          "source_id": string | null
+          "spent_on": string
+          "updated_at": string
+          "vendor_name": string | null
+        }
+        ComputedFields: never
+        Insert: {
+          "amount": number
+          "bank_account_id": string
+          "category_id": string
+          "created_at"?: string
+          "created_by"?: string | null
+          "delete_reason"?: string | null
+          "deleted_at"?: string | null
+          "deleted_by"?: string | null
+          "department_id"?: string | null
+          "id"?: string
+          "method": Database["public"]["Enums"]["payment_method"]
+          "notes"?: string | null
+          "receipt_file_id"?: string | null
+          "reference"?: string | null
+          "source"?: string
+          "source_id"?: string | null
+          "spent_on": string
+          "updated_at"?: string
+          "vendor_name"?: string | null
+        }
+        Update: {
+          "amount"?: number
+          "bank_account_id"?: string
+          "category_id"?: string
+          "created_at"?: string
+          "created_by"?: string | null
+          "delete_reason"?: string | null
+          "deleted_at"?: string | null
+          "deleted_by"?: string | null
+          "department_id"?: string | null
+          "id"?: string
+          "method"?: Database["public"]["Enums"]["payment_method"]
+          "notes"?: string | null
+          "receipt_file_id"?: string | null
+          "reference"?: string | null
+          "source"?: string
+          "source_id"?: string | null
+          "spent_on"?: string
+          "updated_at"?: string
+          "vendor_name"?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_records_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_records_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_records_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_records_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_records_receipt_file_id_fkey"
+            columns: ["receipt_file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "file_access_logs": {
         Row: {
           "action": Database["public"]["Enums"]["file_access_action"]
@@ -1163,6 +1652,7 @@ export type Database = {
       }
       "files": {
         Row: {
+          "candidate_id": string | null
           "client_id": string | null
           "created_at": string
           "current_version": number
@@ -1187,6 +1677,7 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          "candidate_id"?: string | null
           "client_id"?: string | null
           "created_at"?: string
           "current_version"?: number
@@ -1210,6 +1701,7 @@ export type Database = {
           "updated_at"?: string
         }
         Update: {
+          "candidate_id"?: string | null
           "client_id"?: string | null
           "created_at"?: string
           "current_version"?: number
@@ -1233,6 +1725,13 @@ export type Database = {
           "updated_at"?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "files_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "files_client_id_fkey"
             columns: ["client_id"]
@@ -1290,6 +1789,136 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      "final_settlements": {
+        Row: {
+          "created_at": string
+          "employee_id": string
+          "final_amount": number | null
+          "leave_encashment_amount": number
+          "leave_encashment_days": number
+          "notes": string | null
+          "notice_recovery": number
+          "other_deductions": number
+          "other_earnings": number
+          "paid_by": string | null
+          "paid_on": string | null
+          "payment_method": Database["public"]["Enums"]["payment_method"] | null
+          "payment_reference": string | null
+          "pending_salary": number
+          "prepared_by": string | null
+          "reimbursements_due": number
+          "resignation_id": string
+          "status": string
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "employee_id": string
+          "final_amount"?: never
+          "leave_encashment_amount"?: number
+          "leave_encashment_days"?: number
+          "notes"?: string | null
+          "notice_recovery"?: number
+          "other_deductions"?: number
+          "other_earnings"?: number
+          "paid_by"?: string | null
+          "paid_on"?: string | null
+          "payment_method"?: Database["public"]["Enums"]["payment_method"] | null
+          "payment_reference"?: string | null
+          "pending_salary"?: number
+          "prepared_by"?: string | null
+          "reimbursements_due"?: number
+          "resignation_id": string
+          "status"?: string
+          "updated_at"?: string
+        }
+        Update: {
+          "created_at"?: string
+          "employee_id"?: string
+          "final_amount"?: never
+          "leave_encashment_amount"?: number
+          "leave_encashment_days"?: number
+          "notes"?: string | null
+          "notice_recovery"?: number
+          "other_deductions"?: number
+          "other_earnings"?: number
+          "paid_by"?: string | null
+          "paid_on"?: string | null
+          "payment_method"?: Database["public"]["Enums"]["payment_method"] | null
+          "payment_reference"?: string | null
+          "pending_salary"?: number
+          "prepared_by"?: string | null
+          "reimbursements_due"?: number
+          "resignation_id"?: string
+          "status"?: string
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "final_settlements_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_settlements_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_settlements_prepared_by_fkey"
+            columns: ["prepared_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_settlements_resignation_id_fkey"
+            columns: ["resignation_id"]
+            isOneToOne: true
+            referencedRelation: "resignations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "finance_categories": {
+        Row: {
+          "created_at": string
+          "id": string
+          "is_active": boolean
+          "kind": string
+          "name": string
+          "sort_order": number
+          "system_key": string | null
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "kind": string
+          "name": string
+          "sort_order"?: number
+          "system_key"?: string | null
+          "updated_at"?: string
+        }
+        Update: {
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "kind"?: string
+          "name"?: string
+          "sort_order"?: number
+          "system_key"?: string | null
+          "updated_at"?: string
+        }
+        Relationships: []
       }
       "finance_settings": {
         Row: {
@@ -1377,6 +2006,107 @@ export type Database = {
         }
         Relationships: []
       }
+      "income_records": {
+        Row: {
+          "amount": number
+          "bank_account_id": string
+          "category_id": string
+          "client_id": string | null
+          "created_at": string
+          "created_by": string | null
+          "delete_reason": string | null
+          "deleted_at": string | null
+          "deleted_by": string | null
+          "file_id": string | null
+          "id": string
+          "method": Database["public"]["Enums"]["payment_method"]
+          "notes": string | null
+          "received_on": string
+          "reference": string | null
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "amount": number
+          "bank_account_id": string
+          "category_id": string
+          "client_id"?: string | null
+          "created_at"?: string
+          "created_by"?: string | null
+          "delete_reason"?: string | null
+          "deleted_at"?: string | null
+          "deleted_by"?: string | null
+          "file_id"?: string | null
+          "id"?: string
+          "method": Database["public"]["Enums"]["payment_method"]
+          "notes"?: string | null
+          "received_on": string
+          "reference"?: string | null
+          "updated_at"?: string
+        }
+        Update: {
+          "amount"?: number
+          "bank_account_id"?: string
+          "category_id"?: string
+          "client_id"?: string | null
+          "created_at"?: string
+          "created_by"?: string | null
+          "delete_reason"?: string | null
+          "deleted_at"?: string | null
+          "deleted_by"?: string | null
+          "file_id"?: string | null
+          "id"?: string
+          "method"?: Database["public"]["Enums"]["payment_method"]
+          "notes"?: string | null
+          "received_on"?: string
+          "reference"?: string | null
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_records_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_records_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_records_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_records_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "industries": {
         Row: {
           "created_at": string
@@ -1401,6 +2131,93 @@ export type Database = {
           "updated_at"?: string
         }
         Relationships: []
+      }
+      "interviews": {
+        Row: {
+          "candidate_id": string
+          "created_at": string
+          "created_by": string | null
+          "duration_minutes": number
+          "feedback": string | null
+          "id": string
+          "interviewer_id": string | null
+          "location": string | null
+          "meeting_id": string | null
+          "meeting_link": string | null
+          "mode": string
+          "rating": number | null
+          "round_name": string
+          "scheduled_at": string
+          "status": Database["public"]["Enums"]["interview_status"]
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "candidate_id": string
+          "created_at"?: string
+          "created_by"?: string | null
+          "duration_minutes"?: number
+          "feedback"?: string | null
+          "id"?: string
+          "interviewer_id"?: string | null
+          "location"?: string | null
+          "meeting_id"?: string | null
+          "meeting_link"?: string | null
+          "mode"?: string
+          "rating"?: number | null
+          "round_name"?: string
+          "scheduled_at": string
+          "status"?: Database["public"]["Enums"]["interview_status"]
+          "updated_at"?: string
+        }
+        Update: {
+          "candidate_id"?: string
+          "created_at"?: string
+          "created_by"?: string | null
+          "duration_minutes"?: number
+          "feedback"?: string | null
+          "id"?: string
+          "interviewer_id"?: string | null
+          "location"?: string | null
+          "meeting_id"?: string | null
+          "meeting_link"?: string | null
+          "mode"?: string
+          "rating"?: number | null
+          "round_name"?: string
+          "scheduled_at"?: string
+          "status"?: Database["public"]["Enums"]["interview_status"]
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interviews_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interviews_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interviews_interviewer_id_fkey"
+            columns: ["interviewer_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interviews_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       "invoice_items": {
         Row: {
@@ -1595,6 +2412,81 @@ export type Database = {
           },
         ]
       }
+      "job_openings": {
+        Row: {
+          "created_at": string
+          "created_by": string | null
+          "department_id": string | null
+          "description": string | null
+          "designation_id": string | null
+          "employment_type_id": string | null
+          "id": string
+          "location": string | null
+          "positions": number
+          "status": Database["public"]["Enums"]["job_opening_status"]
+          "title": string
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "created_by"?: string | null
+          "department_id"?: string | null
+          "description"?: string | null
+          "designation_id"?: string | null
+          "employment_type_id"?: string | null
+          "id"?: string
+          "location"?: string | null
+          "positions"?: number
+          "status"?: Database["public"]["Enums"]["job_opening_status"]
+          "title": string
+          "updated_at"?: string
+        }
+        Update: {
+          "created_at"?: string
+          "created_by"?: string | null
+          "department_id"?: string | null
+          "description"?: string | null
+          "designation_id"?: string | null
+          "employment_type_id"?: string | null
+          "id"?: string
+          "location"?: string | null
+          "positions"?: number
+          "status"?: Database["public"]["Enums"]["job_opening_status"]
+          "title"?: string
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_openings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_openings_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_openings_designation_id_fkey"
+            columns: ["designation_id"]
+            isOneToOne: false
+            referencedRelation: "designations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_openings_employment_type_id_fkey"
+            columns: ["employment_type_id"]
+            isOneToOne: false
+            referencedRelation: "employment_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "leave_carry_forwards": {
         Row: {
           "created_at": string
@@ -1778,6 +2670,40 @@ export type Database = {
           "sort_order"?: number
           "updated_at"?: string
           "yearly_allowance"?: number | null
+        }
+        Relationships: []
+      }
+      "letter_templates": {
+        Row: {
+          "body": string
+          "created_at": string
+          "id": string
+          "is_active": boolean
+          "kind": Database["public"]["Enums"]["letter_kind"]
+          "name": string
+          "subject": string
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "body": string
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "kind": Database["public"]["Enums"]["letter_kind"]
+          "name": string
+          "subject": string
+          "updated_at"?: string
+        }
+        Update: {
+          "body"?: string
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "kind"?: Database["public"]["Enums"]["letter_kind"]
+          "name"?: string
+          "subject"?: string
+          "updated_at"?: string
         }
         Relationships: []
       }
@@ -2289,9 +3215,81 @@ export type Database = {
           },
         ]
       }
+      "onboarding_items": {
+        Row: {
+          "created_at": string
+          "id": string
+          "is_active": boolean
+          "name": string
+          "sort_order": number
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "name": string
+          "sort_order"?: number
+        }
+        Update: {
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "name"?: string
+          "sort_order"?: number
+        }
+        Relationships: []
+      }
+      "onboarding_tasks": {
+        Row: {
+          "created_at": string
+          "done_at": string | null
+          "done_by": string | null
+          "employee_id": string
+          "id": string
+          "item_name": string
+          "sort_order": number
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "done_at"?: string | null
+          "done_by"?: string | null
+          "employee_id": string
+          "id"?: string
+          "item_name": string
+          "sort_order"?: number
+        }
+        Update: {
+          "created_at"?: string
+          "done_at"?: string | null
+          "done_by"?: string | null
+          "employee_id"?: string
+          "id"?: string
+          "item_name"?: string
+          "sort_order"?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_tasks_done_by_fkey"
+            columns: ["done_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_tasks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "payments": {
         Row: {
           "amount": number
+          "bank_account_id": string | null
           "client_id": string | null
           "created_at": string
           "id": string
@@ -2305,6 +3303,7 @@ export type Database = {
         ComputedFields: never
         Insert: {
           "amount": number
+          "bank_account_id"?: string | null
           "client_id"?: string | null
           "created_at"?: string
           "id"?: string
@@ -2317,6 +3316,7 @@ export type Database = {
         }
         Update: {
           "amount"?: number
+          "bank_account_id"?: string | null
           "client_id"?: string | null
           "created_at"?: string
           "id"?: string
@@ -2328,6 +3328,13 @@ export type Database = {
           "reference"?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_client_id_fkey"
             columns: ["client_id"]
@@ -2345,6 +3352,281 @@ export type Database = {
           {
             foreignKeyName: "payments_recorded_by_fkey"
             columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "payroll_lines": {
+        Row: {
+          "absent_days": number
+          "basic": number
+          "bonus": number
+          "component_deductions": number
+          "component_earnings": number
+          "components": Json
+          "created_at": string
+          "days_in_month": number
+          "employee_id": string
+          "esi_employee": number
+          "esi_employer": number
+          "gross_earnings": number
+          "hra": number
+          "id": string
+          "incentive": number
+          "lop_adjustment": number
+          "lop_days": number
+          "net_pay": number
+          "notes": string | null
+          "other_allowances": number
+          "other_deductions": number
+          "other_earnings": number
+          "overtime_amount": number
+          "overtime_hours": number
+          "paid_days": number
+          "payable_days": number
+          "pf_employee": number
+          "pf_employer": number
+          "professional_tax": number
+          "run_id": string
+          "special_allowance": number
+          "structure_id": string | null
+          "tds": number
+          "total_deductions": number
+          "unpaid_leave_days": number
+          "updated_at": string
+          "warnings": (string)[]
+        }
+        ComputedFields: never
+        Insert: {
+          "absent_days"?: number
+          "basic"?: number
+          "bonus"?: number
+          "component_deductions"?: number
+          "component_earnings"?: number
+          "components"?: Json
+          "created_at"?: string
+          "days_in_month"?: number
+          "employee_id": string
+          "esi_employee"?: number
+          "esi_employer"?: number
+          "gross_earnings"?: number
+          "hra"?: number
+          "id"?: string
+          "incentive"?: number
+          "lop_adjustment"?: number
+          "lop_days"?: number
+          "net_pay"?: number
+          "notes"?: string | null
+          "other_allowances"?: number
+          "other_deductions"?: number
+          "other_earnings"?: number
+          "overtime_amount"?: number
+          "overtime_hours"?: number
+          "paid_days"?: number
+          "payable_days"?: number
+          "pf_employee"?: number
+          "pf_employer"?: number
+          "professional_tax"?: number
+          "run_id": string
+          "special_allowance"?: number
+          "structure_id"?: string | null
+          "tds"?: number
+          "total_deductions"?: number
+          "unpaid_leave_days"?: number
+          "updated_at"?: string
+          "warnings"?: (string)[]
+        }
+        Update: {
+          "absent_days"?: number
+          "basic"?: number
+          "bonus"?: number
+          "component_deductions"?: number
+          "component_earnings"?: number
+          "components"?: Json
+          "created_at"?: string
+          "days_in_month"?: number
+          "employee_id"?: string
+          "esi_employee"?: number
+          "esi_employer"?: number
+          "gross_earnings"?: number
+          "hra"?: number
+          "id"?: string
+          "incentive"?: number
+          "lop_adjustment"?: number
+          "lop_days"?: number
+          "net_pay"?: number
+          "notes"?: string | null
+          "other_allowances"?: number
+          "other_deductions"?: number
+          "other_earnings"?: number
+          "overtime_amount"?: number
+          "overtime_hours"?: number
+          "paid_days"?: number
+          "payable_days"?: number
+          "pf_employee"?: number
+          "pf_employer"?: number
+          "professional_tax"?: number
+          "run_id"?: string
+          "special_allowance"?: number
+          "structure_id"?: string | null
+          "tds"?: number
+          "total_deductions"?: number
+          "unpaid_leave_days"?: number
+          "updated_at"?: string
+          "warnings"?: (string)[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_lines_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_lines_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_lines_structure_id_fkey"
+            columns: ["structure_id"]
+            isOneToOne: false
+            referencedRelation: "salary_structures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "payroll_rules": {
+        Row: {
+          "created_at": string
+          "effective_from": string
+          "employee_rate": number | null
+          "employer_rate": number | null
+          "id": string
+          "kind": Database["public"]["Enums"]["payroll_rule_kind"]
+          "notes": string | null
+          "slabs": Json | null
+          "state": string | null
+          "updated_at": string
+          "wage_limit": number | null
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "effective_from": string
+          "employee_rate"?: number | null
+          "employer_rate"?: number | null
+          "id"?: string
+          "kind": Database["public"]["Enums"]["payroll_rule_kind"]
+          "notes"?: string | null
+          "slabs"?: Json | null
+          "state"?: string | null
+          "updated_at"?: string
+          "wage_limit"?: number | null
+        }
+        Update: {
+          "created_at"?: string
+          "effective_from"?: string
+          "employee_rate"?: number | null
+          "employer_rate"?: number | null
+          "id"?: string
+          "kind"?: Database["public"]["Enums"]["payroll_rule_kind"]
+          "notes"?: string | null
+          "slabs"?: Json | null
+          "state"?: string | null
+          "updated_at"?: string
+          "wage_limit"?: number | null
+        }
+        Relationships: []
+      }
+      "payroll_runs": {
+        Row: {
+          "created_at": string
+          "decided_at": string | null
+          "decided_by": string | null
+          "employee_count": number
+          "id": string
+          "month": string
+          "paid_by": string | null
+          "paid_on": string | null
+          "payment_method": Database["public"]["Enums"]["payment_method"] | null
+          "payment_reference": string | null
+          "prepared_by": string | null
+          "review_note": string | null
+          "status": Database["public"]["Enums"]["payroll_run_status"]
+          "submitted_at": string | null
+          "total_deductions": number
+          "total_employer_cost": number
+          "total_gross": number
+          "total_net": number
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "decided_at"?: string | null
+          "decided_by"?: string | null
+          "employee_count"?: number
+          "id"?: string
+          "month": string
+          "paid_by"?: string | null
+          "paid_on"?: string | null
+          "payment_method"?: Database["public"]["Enums"]["payment_method"] | null
+          "payment_reference"?: string | null
+          "prepared_by"?: string | null
+          "review_note"?: string | null
+          "status"?: Database["public"]["Enums"]["payroll_run_status"]
+          "submitted_at"?: string | null
+          "total_deductions"?: number
+          "total_employer_cost"?: number
+          "total_gross"?: number
+          "total_net"?: number
+          "updated_at"?: string
+        }
+        Update: {
+          "created_at"?: string
+          "decided_at"?: string | null
+          "decided_by"?: string | null
+          "employee_count"?: number
+          "id"?: string
+          "month"?: string
+          "paid_by"?: string | null
+          "paid_on"?: string | null
+          "payment_method"?: Database["public"]["Enums"]["payment_method"] | null
+          "payment_reference"?: string | null
+          "prepared_by"?: string | null
+          "review_note"?: string | null
+          "status"?: Database["public"]["Enums"]["payroll_run_status"]
+          "submitted_at"?: string | null
+          "total_deductions"?: number
+          "total_employer_cost"?: number
+          "total_gross"?: number
+          "total_net"?: number
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_runs_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_runs_prepared_by_fkey"
+            columns: ["prepared_by"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
@@ -2746,6 +4028,79 @@ export type Database = {
           },
         ]
       }
+      "resignations": {
+        Row: {
+          "completed_at": string | null
+          "created_at": string
+          "decided_at": string | null
+          "decided_by": string | null
+          "decision_note": string | null
+          "employee_id": string
+          "exit_interview_at": string | null
+          "exit_interview_notes": string | null
+          "id": string
+          "last_working_day": string | null
+          "notice_days": number | null
+          "proposed_last_day": string | null
+          "reason": string
+          "status": Database["public"]["Enums"]["resignation_status"]
+          "submitted_on": string
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "completed_at"?: string | null
+          "created_at"?: string
+          "decided_at"?: string | null
+          "decided_by"?: string | null
+          "decision_note"?: string | null
+          "employee_id": string
+          "exit_interview_at"?: string | null
+          "exit_interview_notes"?: string | null
+          "id"?: string
+          "last_working_day"?: string | null
+          "notice_days"?: number | null
+          "proposed_last_day"?: string | null
+          "reason": string
+          "status"?: Database["public"]["Enums"]["resignation_status"]
+          "submitted_on"?: string
+          "updated_at"?: string
+        }
+        Update: {
+          "completed_at"?: string | null
+          "created_at"?: string
+          "decided_at"?: string | null
+          "decided_by"?: string | null
+          "decision_note"?: string | null
+          "employee_id"?: string
+          "exit_interview_at"?: string | null
+          "exit_interview_notes"?: string | null
+          "id"?: string
+          "last_working_day"?: string | null
+          "notice_days"?: number | null
+          "proposed_last_day"?: string | null
+          "reason"?: string
+          "status"?: Database["public"]["Enums"]["resignation_status"]
+          "submitted_on"?: string
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resignations_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resignations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "role_permissions": {
         Row: {
           "created_at": string
@@ -2816,6 +4171,190 @@ export type Database = {
           "updated_at"?: string
         }
         Relationships: []
+      }
+      "salary_components": {
+        Row: {
+          "amount": number | null
+          "calculation": string
+          "created_at": string
+          "id": string
+          "is_active": boolean
+          "is_taxable": boolean
+          "kind": string
+          "name": string
+          "percentage": number | null
+          "percentage_of": string | null
+          "sort_order": number
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "amount"?: number | null
+          "calculation": string
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "is_taxable"?: boolean
+          "kind": string
+          "name": string
+          "percentage"?: number | null
+          "percentage_of"?: string | null
+          "sort_order"?: number
+          "updated_at"?: string
+        }
+        Update: {
+          "amount"?: number | null
+          "calculation"?: string
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "is_taxable"?: boolean
+          "kind"?: string
+          "name"?: string
+          "percentage"?: number | null
+          "percentage_of"?: string | null
+          "sort_order"?: number
+          "updated_at"?: string
+        }
+        Relationships: []
+      }
+      "salary_revisions": {
+        Row: {
+          "change_percent": number | null
+          "created_at": string
+          "created_by": string | null
+          "effective_from": string
+          "employee_id": string
+          "id": string
+          "previous_gross": number
+          "reason": string | null
+          "revised_gross": number
+          "structure_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "change_percent"?: number | null
+          "created_at"?: string
+          "created_by"?: string | null
+          "effective_from": string
+          "employee_id": string
+          "id"?: string
+          "previous_gross": number
+          "reason"?: string | null
+          "revised_gross": number
+          "structure_id": string
+        }
+        Update: {
+          "change_percent"?: number | null
+          "created_at"?: string
+          "created_by"?: string | null
+          "effective_from"?: string
+          "employee_id"?: string
+          "id"?: string
+          "previous_gross"?: number
+          "reason"?: string | null
+          "revised_gross"?: number
+          "structure_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_revisions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salary_revisions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salary_revisions_structure_id_fkey"
+            columns: ["structure_id"]
+            isOneToOne: false
+            referencedRelation: "salary_structures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "salary_structures": {
+        Row: {
+          "basic": number
+          "bonus": number
+          "created_at": string
+          "created_by": string | null
+          "effective_from": string
+          "employee_id": string
+          "esi_applies": boolean
+          "gross": number | null
+          "hra": number
+          "id": string
+          "incentive": number
+          "other_allowances": number
+          "pf_applies": boolean
+          "pt_state": string | null
+          "revision_reason": string | null
+          "special_allowance": number
+          "tds_monthly": number | null
+        }
+        ComputedFields: never
+        Insert: {
+          "basic": number
+          "bonus"?: number
+          "created_at"?: string
+          "created_by"?: string | null
+          "effective_from": string
+          "employee_id": string
+          "esi_applies"?: boolean
+          "gross"?: never
+          "hra"?: number
+          "id"?: string
+          "incentive"?: number
+          "other_allowances"?: number
+          "pf_applies"?: boolean
+          "pt_state"?: string | null
+          "revision_reason"?: string | null
+          "special_allowance"?: number
+          "tds_monthly"?: number | null
+        }
+        Update: {
+          "basic"?: number
+          "bonus"?: number
+          "created_at"?: string
+          "created_by"?: string | null
+          "effective_from"?: string
+          "employee_id"?: string
+          "esi_applies"?: boolean
+          "gross"?: never
+          "hra"?: number
+          "id"?: string
+          "incentive"?: number
+          "other_allowances"?: number
+          "pf_applies"?: boolean
+          "pt_state"?: string | null
+          "revision_reason"?: string | null
+          "special_allowance"?: number
+          "tds_monthly"?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_structures_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salary_structures_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       "service_groups": {
         Row: {
@@ -3390,9 +4929,64 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      "money_movements": {
+        Row: {
+          "amount": number | null
+          "bank_account_id": string | null
+          "category_id": string | null
+          "client_id": string | null
+          "counterparty": string | null
+          "department_id": string | null
+          "description": string | null
+          "direction": string | null
+          "id": string | null
+          "kind": string | null
+          "linked_id": string | null
+          "method": Database["public"]["Enums"]["payment_method"] | null
+          "occurred_on": string | null
+          "reference": string | null
+        }
+        ComputedFields: never
+        Insert: {
+          "amount"?: number | null
+          "bank_account_id"?: string | null
+          "category_id"?: string | null
+          "client_id"?: string | null
+          "counterparty"?: string | null
+          "department_id"?: string | null
+          "description"?: string | null
+          "direction"?: string | null
+          "id"?: string | null
+          "kind"?: string | null
+          "linked_id"?: string | null
+          "method"?: Database["public"]["Enums"]["payment_method"] | null
+          "occurred_on"?: string | null
+          "reference"?: string | null
+        }
+        Update: {
+          "amount"?: number | null
+          "bank_account_id"?: string | null
+          "category_id"?: string | null
+          "client_id"?: string | null
+          "counterparty"?: string | null
+          "department_id"?: string | null
+          "description"?: string | null
+          "direction"?: string | null
+          "id"?: string | null
+          "kind"?: string | null
+          "linked_id"?: string | null
+          "method"?: Database["public"]["Enums"]["payment_method"] | null
+          "occurred_on"?: string | null
+          "reference"?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      "account_or_default":
+        | { Args: {
+            "p_account": string
+          }; Returns: string }
       "attendance_check_in":
         | { Args: {
             "p_work_mode"?: Database["public"]["Enums"]["attendance_work_mode"]
@@ -3403,6 +4997,30 @@ export type Database = {
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "attendance_start_break":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
+      "calculate_payroll_line":
+        | { Args: {
+            "p_line": string
+          }; Returns: undefined }
+      "calculate_statutory":
+        | { Args: {
+            "p_basic": number
+            "p_gross": number
+            "p_full_gross": number
+            "p_taxable": number
+            "p_pf_applies": boolean
+            "p_esi_applies": boolean
+            "p_pt_state": string
+            "p_tds_monthly": number
+            "p_on": string
+          }; Returns: {
+            "pf_employee": number
+            "pf_employer": number
+            "esi_employee": number
+            "esi_employer": number
+            "professional_tax": number
+            "tds": number
+            "warnings": (string)[]
+          } }
       "can_access_employee":
         | { Args: {
             "p_permission": string
@@ -3426,6 +5044,8 @@ export type Database = {
         | { Args: {
             "v_request": Omit<Database["public"]["Tables"]["leave_requests"]["Row"], Database["public"]["Tables"]["leave_requests"]["ComputedFields"]>
           }; Returns: boolean }
+      "can_handle_exits":
+        | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_manage_invoice_row":
         | { Args: {
             "v_invoice": Omit<Database["public"]["Tables"]["invoices"]["Row"], Database["public"]["Tables"]["invoices"]["ComputedFields"]>
@@ -3440,6 +5060,8 @@ export type Database = {
         | { Args: {
             "v_quotation": Omit<Database["public"]["Tables"]["quotations"]["Row"], Database["public"]["Tables"]["quotations"]["ComputedFields"]>
           }; Returns: boolean }
+      "can_manage_recruitment":
+        | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_manage_task":
         | { Args: {
             "p_task": string
@@ -3456,6 +5078,10 @@ export type Database = {
         | { Args: {
             "p_path": string
           }; Returns: boolean }
+      "can_see_ledger":
+        | { Args: Record<PropertyKey, never>; Returns: boolean }
+      "can_see_payroll":
+        | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_see_personal_details":
         | { Args: {
             "p_employee": string
@@ -3471,6 +5097,10 @@ export type Database = {
       "can_use_conversation_channel":
         | { Args: {
             "p_topic": string
+          }; Returns: boolean }
+      "can_view_candidate":
+        | { Args: {
+            "p_candidate": string
           }; Returns: boolean }
       "can_view_client":
         | { Args: {
@@ -3540,6 +5170,10 @@ export type Database = {
         | { Args: {
             "v_quotation": Omit<Database["public"]["Tables"]["quotations"]["Row"], Database["public"]["Tables"]["quotations"]["ComputedFields"]>
           }; Returns: boolean }
+      "can_view_resignation":
+        | { Args: {
+            "p_employee": string
+          }; Returns: boolean }
       "can_view_task":
         | { Args: {
             "p_task": string
@@ -3577,6 +5211,11 @@ export type Database = {
         | { Args: {
             "v_client": Omit<Database["public"]["Tables"]["clients"]["Row"], Database["public"]["Tables"]["clients"]["ComputedFields"]>
           }; Returns: boolean }
+      "complete_candidate_conversion":
+        | { Args: {
+            "p_candidate": string
+            "p_employee": string
+          }; Returns: undefined }
       "configure_notification_dispatch":
         | { Args: {
             "p_url": string
@@ -3600,6 +5239,23 @@ export type Database = {
         | { Args: Record<PropertyKey, never>; Returns: string }
       "current_role_id":
         | { Args: Record<PropertyKey, never>; Returns: string }
+      "decide_payroll_run":
+        | { Args: {
+            "p_run": string
+            "p_approve": boolean
+            "p_note": string
+          }; Returns: undefined }
+      "decide_resignation":
+        | { Args: {
+            "p_resignation": string
+            "p_approve": boolean
+            "p_last_day": string
+            "p_note": string
+          }; Returns: undefined }
+      "discard_payroll_run":
+        | { Args: {
+            "p_run": string
+          }; Returns: undefined }
       "employee_has_permission":
         | { Args: {
             "p_employee": string
@@ -3609,6 +5265,10 @@ export type Database = {
         | { Args: {
             "p_field": string
             "p_value": string
+          }; Returns: string }
+      "employee_last_day":
+        | { Args: {
+            "p_employee": string
           }; Returns: string }
       "employees_with_permission":
         | { Args: {
@@ -3631,6 +5291,18 @@ export type Database = {
         | { Args: {
             "p_amount": number
           }; Returns: string }
+      "get_account_balances":
+        | { Args: {
+            "p_on"?: string
+          }; Returns: {
+            "bank_account_id": string
+            "name": string
+            "account_type": Database["public"]["Enums"]["bank_account_type"]
+            "opening_balance": number
+            "money_in": number
+            "money_out": number
+            "balance": number
+          }[] }
       "get_assignable_employee_ids":
         | { Args: {
             "p_project"?: string
@@ -3660,6 +5332,14 @@ export type Database = {
             "entity_type": string
             "details": Json
             "created_at": string
+          }[] }
+      "get_company_profile":
+        | { Args: Record<PropertyKey, never>; Returns: {
+            "legal_name": string
+            "address": string
+            "state": string
+            "email": string
+            "phone": string
           }[] }
       "get_conversation_participant_ids":
         | { Args: {
@@ -3731,6 +5411,36 @@ export type Database = {
             "read_at": string
             "delivered": boolean
           }[] }
+      "get_money_movements":
+        | { Args: {
+            "p_from": string
+            "p_to": string
+            "p_account"?: string
+            "p_direction"?: string
+            "p_method"?: Database["public"]["Enums"]["payment_method"]
+            "p_kind"?: string
+            "p_search"?: string
+            "p_limit"?: number
+            "p_offset"?: number
+          }; Returns: {
+            "id": string
+            "kind": string
+            "direction": string
+            "occurred_on": string
+            "amount": number
+            "method": Database["public"]["Enums"]["payment_method"]
+            "reference": string
+            "bank_account_id": string
+            "account_name": string
+            "client_id": string
+            "category_name": string
+            "counterparty": string
+            "description": string
+            "linked_id": string
+            "total_count": number
+            "total_in": number
+            "total_out": number
+          }[] }
       "get_my_conversations":
         | { Args: Record<PropertyKey, never>; Returns: {
             "id": string
@@ -3800,6 +5510,34 @@ export type Database = {
           }[] }
       "get_reviewer_ids":
         | { Args: Record<PropertyKey, never>; Returns: string[] }
+      "get_salary_structure_costs":
+        | { Args: {
+            "p_employee": string
+          }; Returns: {
+            "structure_id": string
+            "effective_from": string
+            "gross": number
+            "employer_pf": number
+            "employer_esi": number
+            "monthly_ctc": number
+            "annual_ctc": number
+            "warnings": (string)[]
+          }[] }
+      "get_settlement_suggestion":
+        | { Args: {
+            "p_resignation": string
+          }; Returns: Json }
+      "get_statement_suggestions":
+        | { Args: {
+            "p_account": string
+          }; Returns: {
+            "line_id": string
+            "kind": string
+            "movement_id": string
+            "occurred_on": string
+            "description": string
+            "counterparty": string
+          }[] }
       "get_task_history":
         | { Args: {
             "p_task": string
@@ -3847,6 +5585,10 @@ export type Database = {
             "due_date": string
             "completed_at": string
           }[] }
+      "has_paid_payslip_in":
+        | { Args: {
+            "p_run": string
+          }; Returns: boolean }
       "has_permission":
         | { Args: {
             "p_permission": string
@@ -3855,8 +5597,17 @@ export type Database = {
         | { Args: {
             "p_rows": Json
           }; Returns: Json }
+      "import_statement_lines":
+        | { Args: {
+            "p_account": string
+            "p_rows": Json
+          }; Returns: Json }
       "india_today":
         | { Args: Record<PropertyKey, never>; Returns: string }
+      "interview_summary":
+        | { Args: {
+            "p_interview": Omit<Database["public"]["Tables"]["interviews"]["Row"], Database["public"]["Tables"]["interviews"]["ComputedFields"]>
+          }; Returns: string }
       "is_allowed_file_name":
         | { Args: {
             "p_name": string
@@ -3926,6 +5677,28 @@ export type Database = {
         | { Args: {
             "p_conversation": string
           }; Returns: undefined }
+      "mark_payroll_paid":
+        | { Args: {
+            "p_run": string
+            "p_paid_on": string
+            "p_method": Database["public"]["Enums"]["payment_method"]
+            "p_reference": string
+            "p_account"?: string
+          }; Returns: undefined }
+      "mark_settlement_paid":
+        | { Args: {
+            "p_resignation": string
+            "p_paid_on": string
+            "p_method": Database["public"]["Enums"]["payment_method"]
+            "p_reference": string
+            "p_account"?: string
+          }; Returns: undefined }
+      "match_statement_line":
+        | { Args: {
+            "p_line": string
+            "p_kind": string
+            "p_id": string
+          }; Returns: undefined }
       "meeting_summary":
         | { Args: {
             "v_meeting": Omit<Database["public"]["Tables"]["meetings"]["Row"], Database["public"]["Tables"]["meetings"]["ComputedFields"]>
@@ -3953,6 +5726,16 @@ export type Database = {
         | { Args: {
             "p_file": string
           }; Returns: boolean }
+      "payroll_month_label":
+        | { Args: {
+            "p_month": string
+          }; Returns: string }
+      "payroll_rule_on":
+        | { Args: {
+            "p_kind": Database["public"]["Enums"]["payroll_rule_kind"]
+            "p_on": string
+            "p_state"?: string
+          }; Returns: Database["public"]["Tables"]["payroll_rules"]["Row"] }
       "permission_scope_for":
         | { Args: {
             "p_permission": string
@@ -3969,13 +5752,26 @@ export type Database = {
         | { Args: {
             "v_presence": Omit<Database["public"]["Tables"]["employee_presence"]["Row"], Database["public"]["Tables"]["employee_presence"]["ComputedFields"]>
           }; Returns: string }
+      "process_exits":
+        | { Args: Record<PropertyKey, never>; Returns: number }
       "process_task_deadlines":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
+      "recalculate_payroll_run":
+        | { Args: {
+            "p_run": string
+          }; Returns: undefined }
       "record_file_access":
         | { Args: {
             "p_file": string
             "p_action": Database["public"]["Enums"]["file_access_action"]
             "p_version": number
+          }; Returns: undefined }
+      "record_interview_outcome":
+        | { Args: {
+            "p_interview": string
+            "p_status": Database["public"]["Enums"]["interview_status"]
+            "p_feedback": string
+            "p_rating": number
           }; Returns: undefined }
       "record_presence":
         | { Args: {
@@ -3985,6 +5781,32 @@ export type Database = {
         | { Args: {
             "p_employee": string
             "p_field": string
+          }; Returns: undefined }
+      "record_system_expense":
+        | { Args: {
+            "p_source": string
+            "p_source_id": string
+            "p_category": string
+            "p_amount": number
+            "p_on": string
+            "p_method": Database["public"]["Enums"]["payment_method"]
+            "p_reference": string
+            "p_account": string
+            "p_notes": string
+          }; Returns: undefined }
+      "refresh_payroll_run_totals":
+        | { Args: {
+            "p_run": string
+          }; Returns: undefined }
+      "remove_ledger_entry":
+        | { Args: {
+            "p_kind": string
+            "p_id": string
+            "p_reason": string
+          }; Returns: undefined }
+      "require_payroll_permission":
+        | { Args: {
+            "p_permission": string
           }; Returns: undefined }
       "role_is_assignable":
         | { Args: {
@@ -4000,6 +5822,17 @@ export type Database = {
             "p_values": Json
             "p_items": Json
           }; Returns: string }
+      "save_payroll_line":
+        | { Args: {
+            "p_line": string
+            "p_incentive": number
+            "p_bonus": number
+            "p_overtime_amount": number
+            "p_other_earnings": number
+            "p_other_deductions": number
+            "p_lop_adjustment": number
+            "p_notes": string
+          }; Returns: undefined }
       "save_push_subscription":
         | { Args: {
             "p_endpoint": string
@@ -4013,6 +5846,19 @@ export type Database = {
             "p_values": Json
             "p_items": Json
           }; Returns: string }
+      "schedule_interview":
+        | { Args: {
+            "p_candidate": string
+            "p_round": string
+            "p_at": string
+            "p_minutes": number
+            "p_interviewer": string
+            "p_mode": string
+            "p_location": string
+            "p_link": string
+          }; Returns: string }
+      "send_interview_reminders":
+        | { Args: Record<PropertyKey, never>; Returns: undefined }
       "send_invoice_overdue_reminders":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "send_meeting_reminders":
@@ -4027,18 +5873,49 @@ export type Database = {
             "p_employee": string
             "p_roles": (string)[]
           }; Returns: undefined }
+      "set_exit_task":
+        | { Args: {
+            "p_task": string
+            "p_done": boolean
+            "p_note": string
+          }; Returns: undefined }
       "set_my_status":
         | { Args: {
             "p_status": string
           }; Returns: string }
+      "set_onboarding_task":
+        | { Args: {
+            "p_task": string
+            "p_done": boolean
+          }; Returns: undefined }
       "set_role_permissions":
         | { Args: {
             "p_role": string
             "p_permissions": Json
           }; Returns: undefined }
+      "start_onboarding":
+        | { Args: {
+            "p_employee": string
+          }; Returns: number }
+      "start_payroll_run":
+        | { Args: {
+            "p_month": string
+          }; Returns: string }
+      "submit_payroll_run":
+        | { Args: {
+            "p_run": string
+          }; Returns: undefined }
       "switch_my_role":
         | { Args: {
             "p_role": string
+          }; Returns: undefined }
+      "system_category":
+        | { Args: {
+            "p_key": string
+          }; Returns: string }
+      "unmatch_statement_line":
+        | { Args: {
+            "p_line": string
           }; Returns: undefined }
       "vote_in_poll":
         | { Args: {
@@ -4050,6 +5927,8 @@ export type Database = {
       "attendance_day_status": "present" | "half_day" | "absent" | "leave" | "holiday" | "week_off"
       "attendance_source": "web" | "manual" | "import"
       "attendance_work_mode": "office" | "wfh"
+      "bank_account_type": "savings" | "current" | "cash" | "other"
+      "candidate_stage": "new" | "shortlisted" | "interview_scheduled" | "interview_done" | "selected" | "rejected" | "offer_released" | "offer_accepted" | "joined"
       "client_record_kind": "note" | "requirement" | "feedback" | "complaint" | "follow_up"
       "client_service_status": "active" | "paused" | "ended"
       "client_status": "lead" | "onboarding" | "active" | "on_hold" | "inactive"
@@ -4059,17 +5938,23 @@ export type Database = {
       "file_access_action": "view" | "download"
       "file_kind": "upload" | "link"
       "file_status": "uploading" | "ready"
+      "interview_status": "scheduled" | "completed" | "cancelled"
       "invoice_status": "draft" | "issued" | "partially_paid" | "paid" | "cancelled"
+      "job_opening_status": "open" | "on_hold" | "closed"
       "leave_status": "pending" | "approved" | "rejected" | "cancelled"
+      "letter_kind": "offer" | "internship_completion" | "experience" | "relieving"
       "meeting_kind": "internal" | "department" | "management" | "client" | "project" | "one_to_one"
       "meeting_response": "pending" | "accepted" | "declined"
       "meeting_status": "scheduled" | "completed" | "cancelled"
-      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled"
+      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided"
       "notification_priority": "normal" | "high"
       "payment_method": "bank_transfer" | "upi" | "cheque" | "cash" | "card" | "tds" | "other"
+      "payroll_rule_kind": "pf" | "esi" | "pt" | "tds"
+      "payroll_run_status": "draft" | "in_review" | "approved" | "paid"
       "permission_scope": "own" | "team" | "department" | "organisation"
       "project_status": "planning" | "active" | "on_hold" | "completed" | "cancelled"
       "quotation_status": "draft" | "sent" | "accepted" | "declined"
+      "resignation_status": "submitted" | "approved" | "rejected" | "withdrawn" | "completed"
       "task_recurrence": "none" | "daily" | "weekly" | "monthly"
       "task_status": "not_started" | "assigned" | "accepted" | "in_progress" | "under_review" | "changes_requested" | "on_hold" | "completed" | "rejected"
       "ticket_status": "open" | "assigned" | "in_progress" | "waiting_for_response" | "resolved" | "closed"
@@ -4151,6 +6036,8 @@ export const Constants = {
       "attendance_day_status": ["present", "half_day", "absent", "leave", "holiday", "week_off"],
       "attendance_source": ["web", "manual", "import"],
       "attendance_work_mode": ["office", "wfh"],
+      "bank_account_type": ["savings", "current", "cash", "other"],
+      "candidate_stage": ["new", "shortlisted", "interview_scheduled", "interview_done", "selected", "rejected", "offer_released", "offer_accepted", "joined"],
       "client_record_kind": ["note", "requirement", "feedback", "complaint", "follow_up"],
       "client_service_status": ["active", "paused", "ended"],
       "client_status": ["lead", "onboarding", "active", "on_hold", "inactive"],
@@ -4160,17 +6047,23 @@ export const Constants = {
       "file_access_action": ["view", "download"],
       "file_kind": ["upload", "link"],
       "file_status": ["uploading", "ready"],
+      "interview_status": ["scheduled", "completed", "cancelled"],
       "invoice_status": ["draft", "issued", "partially_paid", "paid", "cancelled"],
+      "job_opening_status": ["open", "on_hold", "closed"],
       "leave_status": ["pending", "approved", "rejected", "cancelled"],
+      "letter_kind": ["offer", "internship_completion", "experience", "relieving"],
       "meeting_kind": ["internal", "department", "management", "client", "project", "one_to_one"],
       "meeting_response": ["pending", "accepted", "declined"],
       "meeting_status": ["scheduled", "completed", "cancelled"],
-      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled"],
+      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided"],
       "notification_priority": ["normal", "high"],
       "payment_method": ["bank_transfer", "upi", "cheque", "cash", "card", "tds", "other"],
+      "payroll_rule_kind": ["pf", "esi", "pt", "tds"],
+      "payroll_run_status": ["draft", "in_review", "approved", "paid"],
       "permission_scope": ["own", "team", "department", "organisation"],
       "project_status": ["planning", "active", "on_hold", "completed", "cancelled"],
       "quotation_status": ["draft", "sent", "accepted", "declined"],
+      "resignation_status": ["submitted", "approved", "rejected", "withdrawn", "completed"],
       "task_recurrence": ["none", "daily", "weekly", "monthly"],
       "task_status": ["not_started", "assigned", "accepted", "in_progress", "under_review", "changes_requested", "on_hold", "completed", "rejected"],
       "ticket_status": ["open", "assigned", "in_progress", "waiting_for_response", "resolved", "closed"],

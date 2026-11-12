@@ -21,6 +21,7 @@ export const fileLinksSchema = z.object({
   meetingId: optionalId,
   ticketId: optionalId,
   employeeId: optionalId,
+  candidateId: optionalId,
   documentType: z
     .string()
     .trim()
@@ -41,6 +42,7 @@ export type FileLinks = {
   meetingId?: string;
   ticketId?: string;
   employeeId?: string;
+  candidateId?: string;
   documentType?: EmployeeDocumentType;
 };
 

@@ -42,6 +42,7 @@ function linkFields(links: FileLinks) {
     meetingId: links.meetingId ?? '',
     ticketId: links.ticketId ?? '',
     employeeId: links.employeeId ?? '',
+    candidateId: links.candidateId ?? '',
     documentType: links.documentType ?? '',
   };
 }
@@ -53,6 +54,7 @@ type ParsedLinks = {
   meetingId: string | null;
   ticketId: string | null;
   employeeId: string | null;
+  candidateId: string | null;
   documentType: EmployeeDocumentType | null;
 };
 
@@ -64,6 +66,7 @@ function linkColumns(links: ParsedLinks) {
     meeting_id: links.meetingId,
     ticket_id: links.ticketId,
     employee_id: links.employeeId,
+    candidate_id: links.candidateId,
     document_type: links.documentType,
   };
 }

@@ -50,6 +50,14 @@ export const permissionKeys = {
   hrDashboard: 'hr.dashboard',
   financeDashboard: 'finance.dashboard',
   employeesPrivateView: 'employees.private_view',
+  payrollManage: 'payroll.manage',
+  payrollApprove: 'payroll.approve',
+  payslipsView: 'payslips.view',
+  recruitmentManage: 'recruitment.manage',
+  exitsManage: 'exits.manage',
+  resignationSubmit: 'resignation.submit',
+  ledgerManage: 'ledger.manage',
+  banksManage: 'banks.manage',
 } as const;
 
 export type PermissionKey = (typeof permissionKeys)[keyof typeof permissionKeys];

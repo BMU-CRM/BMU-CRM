@@ -14,6 +14,12 @@ import { chooseRange, periodLabels } from '@/lib/finance/financialPeriods';
 import { formatDate, todayInIndia } from '@/lib/formatDate';
 import { requirePagePermission } from '@/server/services/accessService';
 import { getHrDashboard, getUpcomingBirthdays } from '@/server/services/hrService';
+import { getPayrollCostTrend } from '@/server/services/payrollService';
+import { getAttrition } from '@/server/services/exitService';
+import { getRecruitmentPipeline } from '@/server/services/recruitmentService';
+import { candidateStageLabels, candidateStages } from '@/lib/validation/recruitmentSchema';
+import { formatRupees } from '@/lib/finance/moneyFormat';
+import { formatPayrollMonth } from '@/lib/payroll/payrollMonth';
 import styles from './HrDashboard.module.css';
 
 export const metadata: Metadata = { title: 'HR dashboard' };
@@ -31,7 +37,18 @@ export default async function HrDashboardPage({ searchParams }: HrDashboardProps
   const access = await requirePagePermission(permissionKeys.hrDashboard);
   const params = await searchParams;
   const { range, period } = chooseRange(params, todayInIndia(), 'this-month');
-  const [hr, birthdays] = await Promise.all([getHrDashboard(range.from, range.to), getUpcomingBirthdays()]);
+  const seesPayroll =
+    access.permissions[permissionKeys.payrollManage] !== undefined || access.permissions[permissionKeys.payrollApprove] !== undefined;
+  const seesRecruitment = access.permissions[permissionKeys.recruitmentManage] !== undefined;
+  const seesExits = access.permissions[permissionKeys.exitsManage] !== undefined;
+  const year = Number(range.to.slice(0, 4));
+  const [hr, birthdays, payrollTrend, pipeline, attrition] = await Promise.all([
+    getHrDashboard(range.from, range.to),
+    getUpcomingBirthdays(),
+    seesPayroll ? getPayrollCostTrend() : Promise.resolve([]),
+    seesRecruitment ? getRecruitmentPipeline() : Promise.resolve(new Map<string, number>()),
+    seesExits ? getAttrition(year) : Promise.resolve([]),
+  ]);
   const canApprove = access.permissions[permissionKeys.leaveApprove] !== undefined;
   const leaveHref = access.permissions[permissionKeys.leaveApprove] === 'organisation' ? '/hr/leave' : '/approvals';
 
@@ -79,6 +96,48 @@ export default async function HrDashboardPage({ searchParams }: HrDashboardProps
             />
           </Panel>
         </div>
+
+        {seesPayroll && (
+          <Panel title="Monthly payroll cost" description="Gross pay plus employer PF and ESI, for the last twelve payroll runs.">
+            {payrollTrend.length === 0 ? (
+              <p className={layout.muted}>No payroll runs yet.</p>
+            ) : (
+              <BarChart
+                label="Payroll cost to the company each month"
+                orientation="vertical"
+                data={payrollTrend.map((run) => ({ label: formatPayrollMonth(run.month).replace(/ (\d{2})(\d{2})$/, ' ’$2'), value: run.total_employer_cost }))}
+                valueHeading="Cost"
+                formatValue={formatRupees}
+              />
+            )}
+          </Panel>
+        )}
+
+        {(seesRecruitment || seesExits) && (
+          <div className={layout.columns}>
+            {seesRecruitment && (
+              <Panel title="Recruitment pipeline" description="Candidates in each stage." action={<Link href="/hr/recruitment" className={layout.link}>Open</Link>}>
+                <BarChart
+                  label="Candidates by recruitment stage"
+                  data={candidateStages
+                    .filter((stage) => stage !== 'joined' && stage !== 'rejected')
+                    .map((stage) => ({ label: candidateStageLabels[stage], value: pipeline.get(stage) ?? 0 }))}
+                  valueHeading="Candidates"
+                />
+              </Panel>
+            )}
+            {seesExits && (
+              <Panel title={`Leavers in ${year}`} description="By last working day." action={<Link href="/hr/exits?view=attrition" className={layout.link}>Attrition</Link>}>
+                <BarChart
+                  label={`People who left each month of ${year}`}
+                  orientation="vertical"
+                  data={attrition.map((month) => ({ label: formatPayrollMonth(`${month.month}-01`).slice(0, 3), value: month.exits }))}
+                  valueHeading="Leavers"
+                />
+              </Panel>
+            )}
+          </div>
+        )}
 
         <div className={layout.columns}>
           <Panel title="Headcount by department" description="Active employees.">

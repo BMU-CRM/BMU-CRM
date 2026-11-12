@@ -1,0 +1,98 @@
+.screen {
+  min-height: 100vh;
+  padding: var(--space-5) var(--space-4);
+  background: var(--color-page);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  max-width: 820px;
+  margin: 0 auto var(--space-4);
+}
+
+.sheet {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 48px;
+  color: #111;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.top {
+  padding-bottom: 16px;
+  border-bottom: 2px solid #111;
+}
+
+.company {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.preserve {
+  white-space: pre-wrap;
+}
+
+.date {
+  margin-top: 24px;
+  text-align: right;
+}
+
+.to {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.subject {
+  margin: 20px 0 16px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.signature {
+  margin-top: 56px;
+}
+
+.signatureLine {
+  display: inline-block;
+  min-width: 240px;
+  padding-top: 40px;
+  border-top: 1px solid #111;
+  font-weight: 600;
+}
+
+@media print {
+  .screen {
+    padding: 0;
+    background: #fff;
+  }
+
+  .toolbar {
+    display: none;
+  }
+
+  .sheet {
+    max-width: none;
+    padding: 0;
+    border: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .sheet {
+    padding: 24px;
+  }
+}

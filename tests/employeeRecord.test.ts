@@ -187,7 +187,7 @@ describe('the employee record', () => {
       expect(shared.error?.message).toContain('cannot be shared');
 
       const moved = await as.hr!.from('files').update({ employee_id: ids.colleague! }).eq('id', documentId);
-      expect(moved.error?.message).toContain('stays with the employee');
+      expect(moved.error?.message).toContain('stays with the person');
     });
   });
 

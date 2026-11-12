@@ -1,0 +1,82 @@
+.board {
+  display: grid;
+  grid-auto-columns: minmax(220px, 1fr);
+  grid-auto-flow: column;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium, 8px);
+  background: var(--color-surface-muted);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.heading[data-stage='rejected'] {
+  color: var(--color-critical);
+}
+
+.heading[data-stage='joined'] {
+  color: var(--color-good);
+}
+
+.count {
+  padding: 0 6px;
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: var(--color-primary);
+}
+
+.name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.meta,
+.empty {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.empty {
+  padding: var(--space-2);
+}

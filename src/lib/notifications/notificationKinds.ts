@@ -27,6 +27,13 @@ export const notificationKindLabels: Record<NotificationKind, string> = {
   ticket_updated: 'A support ticket of mine is updated',
   payment_received: 'A client pays an invoice I look after',
   invoice_overdue: 'An invoice I look after is overdue',
+  payroll_review: 'Payroll is waiting for my approval',
+  payroll_decided: 'Payroll I prepared is approved or sent back',
+  salary_paid: 'My salary is paid and my payslip is ready',
+  candidate_added: 'A new candidate applies',
+  interview_reminder: 'An interview I am on is coming up',
+  resignation_submitted: 'Someone resigns',
+  resignation_decided: 'My resignation is decided',
 };
 
 export const notificationKinds = Object.keys(notificationKindLabels) as NotificationKind[];

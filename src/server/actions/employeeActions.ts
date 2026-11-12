@@ -21,7 +21,8 @@ import {
 } from '@/lib/validation/employeeSchema';
 import { formatAadhaar } from '@/lib/employees/employeeRecordLabels';
 import { sendInvitation, sendPasswordReset } from '@/server/auth/accountEmails';
-import { createAuthUser, deleteAuthUser, EmailTakenError, setAuthUserBlocked } from '@/server/auth/authAccounts';
+import { setAuthUserBlocked } from '@/server/auth/authAccounts';
+import { createEmployeeWithLogin } from '@/server/services/employeeCreation';
 import { getAppDatabase } from '@/server/database/appDatabase';
 import { decryptField, encryptField, isEncryptionReady } from '@/server/security/fieldEncryption';
 import { getActionAccess } from '@/server/services/accessService';
@@ -79,42 +80,8 @@ export async function createEmployeeAction(_previous: ActionResult, formData: Fo
     );
   }
 
-  const existing = await database.from('employees').select('id').eq('work_email', values.workEmail).maybeSingle();
-  if (existing.data) return failure('An employee with this work email already exists.');
-
-  const db = await getAppDatabase();
-  let authUserId: string;
-  try {
-    authUserId = await createAuthUser(db, { email: values.workEmail, fullName: values.fullName });
-  } catch (error) {
-    if (error instanceof EmailTakenError) return failure(error.message);
-    console.error('Could not create the login', error);
-    return failure('The login could not be created. Please try again.');
-  }
-
-  const { data: created, error } = await database
-    .from('employees')
-    .insert({
-      auth_user_id: authUserId,
-      full_name: values.fullName,
-      work_email: values.workEmail,
-      phone: values.phone,
-      role_id: roleId,
-      designation_id: values.designationId,
-      department_id: values.departmentId,
-      reporting_manager_id: values.reportingManagerId,
-      joining_date: values.joiningDate,
-    })
-    .select('id')
-    .single();
-
-  if (error) {
-    // Without an employee record the login is useless, so it is removed.
-    await deleteAuthUser(db, authUserId);
-    return databaseFailure(error, 'An employee with this work email already exists.');
-  }
-
-  await sendInvitation(db, { userId: authUserId, email: values.workEmail, name: values.fullName });
+  const created = await createEmployeeWithLogin({ ...values, roleId });
+  if (created.status === 'error') return failure(created.message);
 
   revalidatePath('/people/employees');
   redirect(`/people/employees/${created.id}`);

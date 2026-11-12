@@ -264,6 +264,7 @@ export async function listMyRecentFiles(access: CurrentAccess) {
     .select('id, name')
     .eq('owner_id', access.employee.id)
     .is('employee_id', null)
+    .is('candidate_id', null)
     .eq('status', 'ready')
     .eq('is_archived', false)
     .order('created_at', { ascending: false })

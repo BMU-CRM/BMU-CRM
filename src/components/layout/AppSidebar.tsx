@@ -27,6 +27,13 @@ export function AppSidebar({
   const sections = buildNavigation(permissions);
   const CollapseIcon = isCollapsed ? PanelLeftOpen : PanelLeftClose;
 
+  // Only the most specific match is current, so Finance reports does not also light up
+  // the Finance dashboard at /finance.
+  const currentHref = sections
+    .flatMap((section) => section.items.map((item) => item.href))
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
     <>
       {isMobileOpen && <div className={styles.backdrop} onClick={onCloseMobile} aria-hidden="true" />}
@@ -49,7 +56,7 @@ export function AppSidebar({
               <p className={styles.sectionTitle}>{section.title}</p>
               <ul>
                 {section.items.map((item) => {
-                  const isCurrent = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const isCurrent = item.href === currentHref;
                   const Icon = item.icon;
 
                   return (
