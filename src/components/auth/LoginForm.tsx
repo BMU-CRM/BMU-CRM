@@ -5,6 +5,7 @@ import { useActionState } from 'react';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
 import { TextField } from '@/components/ui/FormFields';
+import { PasswordField } from '@/components/ui/PasswordField';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { idleResult } from '@/lib/actionResult';
 import type { FirebaseConfig } from '@/lib/auth/firebaseConfig';
@@ -41,10 +42,9 @@ export function LoginForm({ next, notice, firebase }: LoginFormProps) {
           required
           error={result.fieldErrors?.email}
         />
-        <TextField
+        <PasswordField
           label="Password"
           name="password"
-          type="password"
           autoComplete="current-password"
           required
           error={result.fieldErrors?.password}

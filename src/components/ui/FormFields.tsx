@@ -10,7 +10,7 @@ type FieldShellProps = {
   children: ReactNode;
 };
 
-function FieldShell({ id, label, hint, error, children }: FieldShellProps) {
+export function FieldShell({ id, label, hint, error, children }: FieldShellProps) {
   return (
     <div className={styles.field}>
       <label htmlFor={id} className={styles.label}>
@@ -31,7 +31,7 @@ function FieldShell({ id, label, hint, error, children }: FieldShellProps) {
   );
 }
 
-function describedBy(id: string, hint?: string, error?: string) {
+export function describedBy(id: string, hint?: string, error?: string) {
   if (error) return `${id}-error`;
   return hint ? `${id}-hint` : undefined;
 }

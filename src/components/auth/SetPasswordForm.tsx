@@ -3,7 +3,7 @@
 import { useActionState } from 'react';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
-import { TextField } from '@/components/ui/FormFields';
+import { PasswordField } from '@/components/ui/PasswordField';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { idleResult } from '@/lib/actionResult';
 import { setPasswordAction } from '@/server/actions/authActions';
@@ -18,18 +18,16 @@ export function SetPasswordForm() {
       <p className={styles.description}>Use at least 10 characters, with a letter and a number.</p>
       <FormMessage result={result} />
       <KeepValuesForm action={formAction} className={styles.form}>
-        <TextField
+        <PasswordField
           label="New password"
           name="password"
-          type="password"
           autoComplete="new-password"
           required
           error={result.fieldErrors?.password}
         />
-        <TextField
+        <PasswordField
           label="Confirm password"
           name="confirmPassword"
-          type="password"
           autoComplete="new-password"
           required
           error={result.fieldErrors?.confirmPassword}
