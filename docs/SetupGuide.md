@@ -134,6 +134,9 @@ Anyone with a login (an invited employee, and clients once the portal exists) ca
 2. **Authentication > Settings > Authorized domains:** add the live address (`crm.bmumarketing.in`). `localhost` is there already.
 3. **Google Cloud console > Google Auth Platform > Audience:** with user type External, the publishing status must be **In production**, or only listed test users can sign in.
 4. **Project settings > General > Your apps > SDK setup and configuration (npm):** copy `apiKey`, `authDomain`, `projectId` and `appId` into `NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID` and `_APP_ID`, in `.env.local` and in Vercel. Restart `npm run dev` or redeploy.
+5. **For the Android app:** in Vercel only, set `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` to `crm.bmumarketing.in` (not the `….firebaseapp.com` value), and redeploy. In **Google Cloud console > APIs & Services > Credentials**, open the OAuth client named "Web client (auto created by Google Service)" and add `https://crm.bmumarketing.in/__/auth/handler` under **Authorized redirect URIs**. Keep `.env.local` on the `….firebaseapp.com` value.
+
+In a browser, Google opens in a small window. In the installed app it cannot, so the app goes to Google and comes back in the same window. Android only lets that finish when it all stays on one address, so the site passes `/__/auth/…` on to Firebase (`next.config.ts`).
 
 No Firebase service account key is needed: the server checks each sign-in against Google's public keys and the project ID. The first Google sign-in links that Google account to the login. To let someone use a different Google account later, the link in `app_auth.user_identities` has to be removed.
 

@@ -17,7 +17,38 @@ function friendlyError(code: string) {
   return 'Google sign-in did not complete. Please try again, or use your password.';
 }
 
-type GoogleSignIn = () => Promise<string>;
+type GoogleSignIn = {
+  // Opens Google. Returns the Google token, or null when the page is leaving for Google.
+  start: () => Promise<string | null>;
+  // The Google token after coming back from Google in the same window, if there is one.
+  returning: () => Promise<string | null>;
+};
+
+// Set just before leaving for Google, so only a real return asks Firebase for a result.
+const returnMarker = 'crm-google-sign-in';
+
+// In the installed app (Android, or a home-screen icon) a Google window opens as a
+// separate tab that cannot hand the result back, so the app goes to Google and comes
+// back in the same window instead. A normal browser keeps the Google window.
+function runningAsApp() {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: fullscreen)').matches ||
+    window.matchMedia('(display-mode: minimal-ui)').matches ||
+    document.referrer.startsWith('android-app://') ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
+function readMarker() {
+  try {
+    const marked = window.sessionStorage.getItem(returnMarker) === '1';
+    window.sessionStorage.removeItem(returnMarker);
+    return marked;
+  } catch {
+    return false;
+  }
+}
 
 // Firebase is loaded after the page appears, not with it, so the login page stays
 // light. It must be ready before the click: browsers block a Google window that does
@@ -33,13 +64,33 @@ async function loadGoogleSignIn(config: FirebaseConfig): Promise<GoogleSignIn> {
         popupRedirectResolver: auth.browserPopupRedirectResolver,
       });
 
-  return async () => {
-    const provider = new auth.GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    const { user } = await auth.signInWithPopup(firebaseAuth, provider);
+  async function tokenFor(user: { getIdToken: () => Promise<string> }) {
     const token = await user.getIdToken();
     await auth.signOut(firebaseAuth);
     return token;
+  }
+
+  return {
+    async start() {
+      const provider = new auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      if (runningAsApp()) {
+        try {
+          window.sessionStorage.setItem(returnMarker, '1');
+        } catch {
+          // Without the marker the return is still read, just on every visit.
+        }
+        await auth.signInWithRedirect(firebaseAuth, provider);
+        return null;
+      }
+      const { user } = await auth.signInWithPopup(firebaseAuth, provider);
+      return tokenFor(user);
+    },
+    async returning() {
+      if (!readMarker()) return null;
+      const result = await auth.getRedirectResult(firebaseAuth);
+      return result ? tokenFor(result.user) : null;
+    },
   };
 }
 
@@ -50,11 +101,35 @@ export function GoogleSignInButton({ config, next }: { config: FirebaseConfig; n
   const [signingIn, startSignIn] = useTransition();
   const busy = waitingForGoogle || signingIn;
 
+  function finish(token: string) {
+    startSignIn(async () => {
+      const outcome = await signInWithGoogleAction(token, next ?? null);
+      // A successful sign-in moves to the next page, so only a refusal comes back.
+      if (outcome) setResult(outcome);
+    });
+  }
+
+  function showError(error: unknown) {
+    const code = (error as { code?: string }).code ?? '';
+    if (!quietErrors.has(code)) setResult({ status: 'error', message: friendlyError(code) });
+  }
+
   useEffect(() => {
     let active = true;
     loadGoogleSignIn(config)
-      .then((ready) => {
-        if (active) setGoogleSignIn(() => ready);
+      .then(async (ready) => {
+        if (!active) return;
+        setGoogleSignIn(() => ready);
+        // Back from Google in the same window (the installed app): finish signing in.
+        setWaitingForGoogle(true);
+        try {
+          const token = await ready.returning();
+          if (active && token) finish(token);
+        } catch (error) {
+          if (active) showError(error);
+        } finally {
+          if (active) setWaitingForGoogle(false);
+        }
       })
       .catch((error) => {
         console.error('Google sign-in could not load', error);
@@ -63,28 +138,26 @@ export function GoogleSignInButton({ config, next }: { config: FirebaseConfig; n
     return () => {
       active = false;
     };
+    // finish and showError only use state setters and next, which come with the page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config]);
 
   async function signIn() {
     if (!googleSignIn) return;
     setResult(idleResult);
     setWaitingForGoogle(true);
-    let token: string;
+    let token: string | null;
     try {
-      token = await googleSignIn();
+      token = await googleSignIn.start();
     } catch (error) {
-      const code = (error as { code?: string }).code ?? '';
-      if (!quietErrors.has(code)) setResult({ status: 'error', message: friendlyError(code) });
-      return;
-    } finally {
+      showError(error);
       setWaitingForGoogle(false);
+      return;
     }
-
-    startSignIn(async () => {
-      const outcome = await signInWithGoogleAction(token, next ?? null);
-      // A successful sign-in moves to the next page, so only a refusal comes back.
-      if (outcome) setResult(outcome);
-    });
+    // null: the page is leaving for Google, so the button stays busy until it does.
+    if (!token) return;
+    setWaitingForGoogle(false);
+    finish(token);
   }
 
   return (
