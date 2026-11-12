@@ -109,7 +109,8 @@ In **Vercel > Project > Settings > Environment Variables**, for Production:
 | `SUPABASE_URL` | Same as in `.env.local` |
 | `SUPABASE_PUBLISHABLE_KEY` | Same as in `.env.local` |
 | `SUPABASE_SECRET_KEY` | Same as in `.env.local` |
-| `NEXT_PUBLIC_SITE_URL` | The live address, for example `https://bmu-crm.vercel.app` |
+| `NEXT_PUBLIC_SITE_URL` | The live address, `https://crm.bmumarketing.in` |
+| `FIELD_ENCRYPTION_KEY` | 32 random bytes in base64 (see `.env.example`). Keep a copy; never change it once numbers are saved. |
 
 `SUPABASE_DB_SESSION_URL` is only for `npm run db:supabase` and is not needed in Vercel. Never give the secret key or the database password a `NEXT_PUBLIC_` name: those are sent to browsers.
 
@@ -130,11 +131,27 @@ Push the code and let Vercel build it, or press **Redeploy** after changing sett
 Anyone with a login (an invited employee, and clients once the portal exists) can sign in with the Google account for the same email. Nobody else can, and password sign-in keeps working alongside it.
 
 1. **Firebase console > Authentication > Sign-in method:** enable **Google**.
-2. **Authentication > Settings > Authorized domains:** add the live address (`bmu-crm.vercel.app`). `localhost` is there already.
+2. **Authentication > Settings > Authorized domains:** add the live address (`crm.bmumarketing.in`). `localhost` is there already.
 3. **Google Cloud console > Google Auth Platform > Audience:** with user type External, the publishing status must be **In production**, or only listed test users can sign in.
 4. **Project settings > General > Your apps > SDK setup and configuration (npm):** copy `apiKey`, `authDomain`, `projectId` and `appId` into `NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID` and `_APP_ID`, in `.env.local` and in Vercel. Restart `npm run dev` or redeploy.
 
 No Firebase service account key is needed: the server checks each sign-in against Google's public keys and the project ID. The first Google sign-in links that Google account to the login. To let someone use a different Google account later, the link in `app_auth.user_identities` has to be removed.
+
+### Android app (APK)
+
+The Android app is the live site packaged by PWABuilder as a Trusted Web Activity: it opens `https://crm.bmumarketing.in` full-screen. Every change deployed to the site reaches the app the next time it is opened. A new APK is needed only to change the app's name, icon or address.
+
+1. Make sure `https://crm.bmumarketing.in` opens and signs in.
+2. Go to **pwabuilder.com**, enter `https://crm.bmumarketing.in` and press **Start**. It reads the app's details from `/manifest.webmanifest`.
+3. Press **Package for stores**, then **Android**, then **Generate Package**. In the options, keep the name **BMU Workspace**, set **Package ID** to `in.bmumarketing.crm.twa`, and keep **Signing key: Create new**. Download the zip.
+4. In the zip:
+   - The **.apk** is the file staff install. The **.aab** is only for the Google Play Store.
+   - **signing.keystore** and **signing-key-info.txt** are the app's signing key and its passwords. Keep them safe and private. Without them no update to the app can be installed over this one.
+   - **assetlinks.json** holds the package name and a `sha256_cert_fingerprints` value.
+5. In **Vercel > Settings > Environment Variables**, add `ANDROID_APP_PACKAGE` = `in.bmumarketing.crm.twa` and `ANDROID_APP_SHA256` = the fingerprint from `assetlinks.json` (`AB:CD:…`). Redeploy. `https://crm.bmumarketing.in/.well-known/assetlinks.json` should then show them. Without this the app still works, but with a browser bar at the top.
+6. Share the .apk with staff. On their phone they allow installing apps from that source once, then install it.
+
+If the app is later published on Google Play with Play App Signing, add Play's fingerprint (Play Console > App integrity) to `ANDROID_APP_SHA256` as well, separated by a comma.
 
 ### Before real company data goes in
 

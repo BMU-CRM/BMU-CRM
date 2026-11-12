@@ -6,5 +6,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|sw.js|manifest.webmanifest|images/).*)'],
+  // .well-known holds files Android and others read without signing in (assetlinks.json).
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|sw.js|manifest.webmanifest|images/|\\.well-known/).*)'],
 };
