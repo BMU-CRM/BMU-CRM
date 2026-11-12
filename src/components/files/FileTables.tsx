@@ -1,6 +1,8 @@
 import { ExternalLink, FileText, Link2 } from 'lucide-react';
 import Link from 'next/link';
+import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import styles from '@/components/ui/DataTable.module.css';
+import { deleteFileAction } from '@/server/actions/fileActions';
 import { fileTypeOf, formatFileSize } from '@/lib/files/fileTypes';
 import { formatDate, formatDateTime } from '@/lib/formatDate';
 import type { FileListItem, ShareListItem } from '@/server/services/fileService';
@@ -23,7 +25,10 @@ export function FileNameCell({ id, name, kind }: { id: string; name: string; kin
   );
 }
 
-export function FileTable({ files }: { files: FileListItem[] }) {
+// Owners can delete their own files; people who see every file can delete any. The
+// database checks again, and keeps receipts and bills on money records.
+export function FileTable({ files, myEmployeeId, canDeleteAny = false }: { files: FileListItem[]; myEmployeeId?: string; canDeleteAny?: boolean }) {
+  const showActions = canDeleteAny || files.some((file) => file.owner_id === myEmployeeId);
   return (
     <div className={styles.scroller}>
       <table className={styles.table}>
@@ -37,6 +42,7 @@ export function FileTable({ files }: { files: FileListItem[] }) {
               Size
             </th>
             <th scope="col">Added</th>
+            {showActions && <th scope="col" aria-label="Actions" />}
           </tr>
         </thead>
         <tbody>
@@ -53,6 +59,26 @@ export function FileTable({ files }: { files: FileListItem[] }) {
               <td>{typeLabel(file)}</td>
               <td className={styles.numeric}>{file.kind === 'link' ? '—' : formatFileSize(file.size_bytes)}</td>
               <td>{formatDate(file.created_at)}</td>
+              {showActions && (
+                <td>
+                  {(canDeleteAny || file.owner_id === myEmployeeId) && (
+                    <div className={styles.rowActions}>
+                      <ConfirmActionButton
+                        label="Delete"
+                        title={`Delete ${file.name}?`}
+                        description={
+                          file.kind === 'link'
+                            ? 'The link is removed for everyone it was sent to. This cannot be undone.'
+                            : 'The file and every version of it are removed for everyone it was sent to. This cannot be undone. Archive it instead to keep it out of the way.'
+                        }
+                        confirmLabel="Delete file"
+                        variant="danger"
+                        action={deleteFileAction.bind(null, file.id, undefined)}
+                      />
+                    </div>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

@@ -12,25 +12,31 @@ type TaskFiltersProps = {
     stage?: string;
     priority?: string;
     overdue?: boolean;
+    dueFrom?: string;
+    dueTo?: string;
     assigneeId?: string;
+    creatorId?: string;
     departmentId?: string;
   };
   // People and departments to look at, for those who oversee others' work.
   oversight?: { people: SelectOption[]; departments: SelectOption[] } | null;
+  // Who may have given the tasks, for the "Assigned by" filter. Left out on "Assigned by
+  // me", where it is always the person themselves.
+  creators?: SelectOption[];
 };
 
 const statusOptions = Object.entries(taskStatusLabels).map(([value, label]) => ({ value, label }));
 const stageOptions = Object.entries(taskStages).map(([value, stage]) => ({ value, label: stage.label }));
 const priorityOptions = Object.entries(priorityLabels).map(([value, label]) => ({ value, label }));
 
-export function TaskFilters({ view, values, oversight }: TaskFiltersProps) {
+export function TaskFilters({ view, values, oversight, creators }: TaskFiltersProps) {
   return (
     <form method="get" className={styles.filters}>
       <input type="hidden" name="view" value={view} />
       <TextField label="Search" name="search" type="search" placeholder="Title or ID" defaultValue={values.search} />
       {oversight && (
         <>
-          <SelectField label="Person" name="assignee" options={oversight.people} placeholder="Everyone" defaultValue={values.assigneeId} />
+          <SelectField label="Assigned to" name="assignee" options={oversight.people} placeholder="Everyone" defaultValue={values.assigneeId} />
           {oversight.departments.length > 0 && (
             <SelectField
               label="Department"
@@ -42,6 +48,7 @@ export function TaskFilters({ view, values, oversight }: TaskFiltersProps) {
           )}
         </>
       )}
+      {creators && <SelectField label="Assigned by" name="creator" options={creators} placeholder="Anyone" defaultValue={values.creatorId} />}
       <SelectField label="Progress" name="stage" options={stageOptions} placeholder="Any" defaultValue={values.stage} />
       <SelectField
         label="Status"
@@ -58,6 +65,8 @@ placeholder={view === 'mine' || view === 'assigned' ? 'Open tasks' : 'Any status
         defaultValue={values.overdue ? '1' : ''}
         options={[{ value: '1', label: 'Overdue only' }]}
       />
+      <TextField label="Due from" name="dueFrom" type="date" defaultValue={values.dueFrom} />
+      <TextField label="Due to" name="dueTo" type="date" defaultValue={values.dueTo} />
       <div className={styles.actions}>
         <Button type="submit">Apply</Button>
         <ButtonLink href={`/tasks?view=${view}`} variant="ghost">

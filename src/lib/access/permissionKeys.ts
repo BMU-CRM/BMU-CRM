@@ -63,6 +63,8 @@ export const permissionKeys = {
   reimbursementsSubmit: 'reimbursements.submit',
   reimbursementsApprove: 'reimbursements.approve',
   reimbursementsPay: 'reimbursements.pay',
+  budgetsManage: 'budgets.manage',
+  contentCalendarManage: 'content_calendar.manage',
 } as const;
 
 export type PermissionKey = (typeof permissionKeys)[keyof typeof permissionKeys];

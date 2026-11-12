@@ -18,14 +18,18 @@ import styles from './ChatDialogs.module.css';
 
 export type ForwardTarget = { value: string; label: string };
 
-const infoTime = new Intl.DateTimeFormat('en-IN', {
-  day: 'numeric',
-  month: 'short',
-  hour: 'numeric',
-  minute: '2-digit',
-  hour12: true,
-  timeZone: 'Asia/Kolkata',
-});
+const clockTime = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
+const calendarDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' });
+const longDay = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+
+// "Today at 8:43 pm", "Yesterday at 11:41 am" or "10 Nov 2026 at 9:05 am", in India time.
+function infoTime(value: string, now: Date) {
+  const at = new Date(value);
+  const day = calendarDay.format(at);
+  const yesterday = new Date(now.getTime() - 86_400_000);
+  const label = day === calendarDay.format(now) ? 'Today' : day === calendarDay.format(yesterday) ? 'Yesterday' : longDay.format(at);
+  return `${label} at ${clockTime.format(at).toLowerCase()}`;
+}
 
 // A modal window that opens while `open` is true.
 export function ChatDialog({ title, open, onClose, children }: { title: string; open: boolean; onClose: () => void; children: ReactNode }) {
@@ -129,19 +133,51 @@ export function DeleteForm({
 }
 
 // Who your message reached and who has read it, as in WhatsApp's message info.
-export function MessageInfo({ messageId }: { messageId: string }) {
-  const [rows, setRows] = useState<MessageInfoRow[] | null>(null);
+export function MessageInfo({ messageId, body, sentAt }: { messageId: string; body: string; sentAt: string }) {
+  const [info, setInfo] = useState<{ rows: MessageInfoRow[]; now: Date } | null>(null);
   useEffect(() => {
     let active = true;
-    getMessageInfoAction(messageId).then((info) => {
-      if (active) setRows(info);
+    getMessageInfoAction(messageId).then((rows) => {
+      if (active) setInfo({ rows, now: new Date() });
     });
     return () => {
       active = false;
     };
   }, [messageId]);
 
-  if (!rows) return <p className={styles.text}>Loading…</p>;
+  const preview = (
+    <div className={styles.infoMessage}>
+      {body.trim() ? <p className={styles.infoBody}>{body}</p> : <p className={styles.muted}>Attachment</p>}
+    </div>
+  );
+  if (!info) {
+    return (
+      <div className={styles.info}>
+        {preview}
+        <p className={styles.text}>Loading…</p>
+      </div>
+    );
+  }
+
+  const { rows, now } = info;
+  const when = (value: string | null) => (value ? infoTime(value, now) : null);
+
+  // One other person: WhatsApp's two lines, each with its time.
+  if (rows.length === 1) {
+    const person = rows[0]!;
+    return (
+      <div className={styles.info}>
+        {preview}
+        <p className={styles.muted}>Sent {infoTime(sentAt, now)}</p>
+        <InfoLine icon={<CheckCheck size={18} className={styles.read} aria-hidden="true" />} label="Read" time={when(person.readAt) ?? '—'} />
+        <InfoLine
+          icon={<CheckCheck size={18} className={styles.delivered} aria-hidden="true" />}
+          label="Delivered"
+          time={when(person.deliveredAt) ?? (person.delivered ? 'Delivered' : '—')}
+        />
+      </div>
+    );
+  }
 
   const read = rows.filter((row) => row.readAt);
   const delivered = rows.filter((row) => !row.readAt && row.delivered);
@@ -149,55 +185,75 @@ export function MessageInfo({ messageId }: { messageId: string }) {
 
   return (
     <div className={styles.info}>
-      <section>
-        <h3 className={styles.infoHeading}>
-          <CheckCheck size={16} className={styles.read} aria-hidden="true" /> Read by
-        </h3>
-        {read.length === 0 ? (
-          <p className={styles.muted}>Nobody yet</p>
-        ) : (
-          <ul>
-            {read.map((row) => (
-              <li key={row.employeeId} className={styles.infoRow}>
-                <span>{row.name}</span>
-                <time className={styles.muted}>{infoTime.format(new Date(row.readAt as string))}</time>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <section>
-        <h3 className={styles.infoHeading}>
-          <CheckCheck size={16} className={styles.delivered} aria-hidden="true" /> Delivered to
-        </h3>
-        {delivered.length === 0 ? (
-          <p className={styles.muted}>{read.length > 0 && waiting.length === 0 ? 'Everyone has read it' : 'Nobody else yet'}</p>
-        ) : (
-          <ul>
-            {delivered.map((row) => (
-              <li key={row.employeeId} className={styles.infoRow}>
-                <span>{row.name}</span>
-                <span className={styles.muted}>Not read yet</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {preview}
+      <p className={styles.muted}>Sent {infoTime(sentAt, now)}</p>
+      <InfoGroup
+        icon={<CheckCheck size={18} className={styles.read} aria-hidden="true" />}
+        label="Read by"
+        empty="Nobody yet"
+        people={read.map((row) => ({ id: row.employeeId, name: row.name, time: when(row.readAt) }))}
+      />
+      <InfoGroup
+        icon={<CheckCheck size={18} className={styles.delivered} aria-hidden="true" />}
+        label="Delivered to"
+        empty={read.length > 0 && waiting.length === 0 ? 'Everyone has read it' : 'Nobody yet'}
+        people={delivered.map((row) => ({ id: row.employeeId, name: row.name, time: when(row.deliveredAt) }))}
+      />
       {waiting.length > 0 && (
-        <section>
-          <h3 className={styles.infoHeading}>
-            <Check size={16} className={styles.delivered} aria-hidden="true" /> Not delivered yet
-          </h3>
-          <ul>
-            {waiting.map((row) => (
-              <li key={row.employeeId} className={styles.infoRow}>
-                <span>{row.name}</span>
-                <span className={styles.muted}>Has not opened the CRM since</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <InfoGroup
+          icon={<Check size={18} className={styles.delivered} aria-hidden="true" />}
+          label="Not delivered yet"
+          empty=""
+          note="Delivered when they next open the CRM."
+          people={waiting.map((row) => ({ id: row.employeeId, name: row.name, time: null }))}
+        />
       )}
     </div>
+  );
+}
+
+function InfoLine({ icon, label, time }: { icon: ReactNode; label: string; time: string }) {
+  return (
+    <section className={styles.infoLine}>
+      <h3 className={styles.infoHeading}>
+        {icon} {label}
+      </h3>
+      <p className={styles.infoTime}>{time}</p>
+    </section>
+  );
+}
+
+function InfoGroup({
+  icon,
+  label,
+  empty,
+  note,
+  people,
+}: {
+  icon: ReactNode;
+  label: string;
+  empty: string;
+  note?: string;
+  people: { id: string; name: string; time: string | null }[];
+}) {
+  return (
+    <section className={styles.infoLine}>
+      <h3 className={styles.infoHeading}>
+        {icon} {label}
+      </h3>
+      {note && <p className={styles.infoTime}>{note}</p>}
+      {people.length === 0 ? (
+        <p className={styles.infoTime}>{empty}</p>
+      ) : (
+        <ul className={styles.infoPeople}>
+          {people.map((person) => (
+            <li key={person.id} className={styles.infoPerson}>
+              <span className={styles.infoName}>{person.name}</span>
+              {person.time && <span className={styles.infoTime}>{person.time}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

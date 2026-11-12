@@ -367,6 +367,95 @@ export type Database = {
           },
         ]
       }
+      "budget_alerts": {
+        Row: {
+          "budget_id": string
+          "sent_at": string
+          "threshold": number
+        }
+        ComputedFields: never
+        Insert: {
+          "budget_id": string
+          "sent_at"?: string
+          "threshold": number
+        }
+        Update: {
+          "budget_id"?: string
+          "sent_at"?: string
+          "threshold"?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_alerts_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "department_budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "calendar_categories": {
+        Row: {
+          "created_at": string
+          "description": string | null
+          "id": string
+          "is_active": boolean
+          "name": string
+          "sort_order": number
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "description"?: string | null
+          "id"?: string
+          "is_active"?: boolean
+          "name": string
+          "sort_order"?: number
+          "updated_at"?: string
+        }
+        Update: {
+          "created_at"?: string
+          "description"?: string | null
+          "id"?: string
+          "is_active"?: boolean
+          "name"?: string
+          "sort_order"?: number
+          "updated_at"?: string
+        }
+        Relationships: []
+      }
+      "calendar_category_members": {
+        Row: {
+          "category_id": string
+          "employee_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "category_id": string
+          "employee_id": string
+        }
+        Update: {
+          "category_id"?: string
+          "employee_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_category_members_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_category_members_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "candidates": {
         Row: {
           "created_at": string
@@ -886,6 +975,58 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: true
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "department_budgets": {
+        Row: {
+          "amount": number
+          "created_at": string
+          "created_by": string | null
+          "department_id": string
+          "id": string
+          "notes": string | null
+          "period_kind": string
+          "period_start": string
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "amount": number
+          "created_at"?: string
+          "created_by"?: string | null
+          "department_id": string
+          "id"?: string
+          "notes"?: string | null
+          "period_kind": string
+          "period_start": string
+          "updated_at"?: string
+        }
+        Update: {
+          "amount"?: number
+          "created_at"?: string
+          "created_by"?: string | null
+          "department_id"?: string
+          "id"?: string
+          "notes"?: string | null
+          "period_kind"?: string
+          "period_start"?: string
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_budgets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_budgets_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
             referencedColumns: ["id"]
           },
         ]
@@ -2850,6 +2991,7 @@ export type Database = {
       "meetings": {
         Row: {
           "agenda": string | null
+          "category_id": string | null
           "client_id": string | null
           "created_at": string
           "decisions": string | null
@@ -2869,6 +3011,7 @@ export type Database = {
         ComputedFields: never
         Insert: {
           "agenda"?: string | null
+          "category_id"?: string | null
           "client_id"?: string | null
           "created_at"?: string
           "decisions"?: string | null
@@ -2887,6 +3030,7 @@ export type Database = {
         }
         Update: {
           "agenda"?: string | null
+          "category_id"?: string | null
           "client_id"?: string | null
           "created_at"?: string
           "decisions"?: string | null
@@ -2904,6 +3048,13 @@ export type Database = {
           "updated_at"?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "meetings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "meetings_client_id_fkey"
             columns: ["client_id"]
@@ -2923,6 +3074,40 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "message_deliveries": {
+        Row: {
+          "delivered_at": string
+          "employee_id": string
+          "message_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "delivered_at": string
+          "employee_id": string
+          "message_id": string
+        }
+        Update: {
+          "delivered_at"?: string
+          "employee_id"?: string
+          "message_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_deliveries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_deliveries_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]
@@ -5649,6 +5834,17 @@ export type Database = {
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "attendance_start_break":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
+      "budget_period_end":
+        | { Args: {
+            "p_kind": string
+            "p_start": string
+          }; Returns: string }
+      "budget_spent":
+        | { Args: {
+            "p_department": string
+            "p_from": string
+            "p_to": string
+          }; Returns: number }
       "calculate_payroll_line":
         | { Args: {
             "p_line": string
@@ -5702,6 +5898,8 @@ export type Database = {
           }; Returns: boolean }
       "can_handle_exits":
         | { Args: Record<PropertyKey, never>; Returns: boolean }
+      "can_manage_budgets":
+        | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_manage_invoice_row":
         | { Args: {
             "v_invoice": Omit<Database["public"]["Tables"]["invoices"]["Row"], Database["public"]["Tables"]["invoices"]["ComputedFields"]>
@@ -5728,6 +5926,8 @@ export type Database = {
         | { Args: {
             "v_ticket": Omit<Database["public"]["Tables"]["tickets"]["Row"], Database["public"]["Tables"]["tickets"]["ComputedFields"]>
           }; Returns: boolean }
+      "can_plan_content":
+        | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_post_in_conversation":
         | { Args: {
             "p_conversation": string
@@ -5860,6 +6060,11 @@ export type Database = {
         | { Args: {
             "p_year": number
           }; Returns: number }
+      "check_budget_alerts":
+        | { Args: {
+            "p_department": string
+            "p_on": string
+          }; Returns: undefined }
       "check_finance_links":
         | { Args: {
             "p_client": string
@@ -5920,6 +6125,12 @@ export type Database = {
             "p_last_day": string
             "p_note": string
           }; Returns: undefined }
+      "delete_file":
+        | { Args: {
+            "p_file": string
+          }; Returns: {
+            "storage_path": string
+          }[] }
       "discard_payroll_run":
         | { Args: {
             "p_run": string
@@ -5996,6 +6207,23 @@ export type Database = {
             "p_from": string
             "p_to": string
           }; Returns: Json }
+      "get_budget_usage":
+        | { Args: {
+            "p_from": string
+            "p_to": string
+          }; Returns: {
+            "budget_id": string
+            "department_id": string
+            "department_name": string
+            "period_kind": string
+            "period_start": string
+            "period_end": string
+            "amount": number
+            "spent": number
+            "remaining": number
+            "utilisation": number
+            "notes": string
+          }[] }
       "get_client_labels":
         | { Args: {
             "p_clients": (string)[]
@@ -6116,6 +6344,7 @@ export type Database = {
             "full_name": string
             "read_at": string
             "delivered": boolean
+            "delivered_at": string
           }[] }
       "get_money_movements":
         | { Args: {
@@ -6204,6 +6433,17 @@ export type Database = {
             "employee_id": string
             "status": string
             "chosen_status": string
+          }[] }
+      "get_profit_loss":
+        | { Args: {
+            "p_from": string
+            "p_to": string
+          }; Returns: {
+            "month": string
+            "section": string
+            "label": string
+            "department_name": string
+            "amount": number
           }[] }
       "get_project_progress":
         | { Args: {
@@ -6432,6 +6672,14 @@ export type Database = {
             "p_group_key"?: string
             "p_dedupe_key"?: string
           }; Returns: undefined }
+      "notify_budget":
+        | { Args: {
+            "p_recipient": string
+            "p_title": string
+            "p_body": string
+            "p_link": string
+            "p_priority": Database["public"]["Enums"]["notification_priority"]
+          }; Returns: undefined }
       "owns_file":
         | { Args: {
             "p_file": string
@@ -6622,6 +6870,8 @@ export type Database = {
             "p_location": string
             "p_link": string
           }; Returns: string }
+      "send_attendance_irregularities":
+        | { Args: Record<PropertyKey, never>; Returns: number }
       "send_follow_up_reminders":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "send_interview_reminders":
@@ -6718,10 +6968,10 @@ export type Database = {
       "job_opening_status": "open" | "on_hold" | "closed"
       "leave_status": "pending" | "approved" | "rejected" | "cancelled"
       "letter_kind": "offer" | "internship_completion" | "experience" | "relieving"
-      "meeting_kind": "internal" | "department" | "management" | "client" | "project" | "one_to_one"
+      "meeting_kind": "internal" | "department" | "management" | "client" | "project" | "one_to_one" | "content"
       "meeting_response": "pending" | "accepted" | "declined"
       "meeting_status": "scheduled" | "completed" | "cancelled"
-      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided" | "invoice_due_soon" | "follow_up_due" | "vendor_bill_due" | "reimbursement_submitted" | "reimbursement_decided" | "reimbursement_paid"
+      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided" | "invoice_due_soon" | "follow_up_due" | "vendor_bill_due" | "reimbursement_submitted" | "reimbursement_decided" | "reimbursement_paid" | "budget_alert" | "employee_added" | "attendance_irregularity"
       "notification_priority": "normal" | "high"
       "payment_method": "bank_transfer" | "upi" | "cheque" | "cash" | "card" | "tds" | "other"
       "payroll_rule_kind": "pf" | "esi" | "pt" | "tds"
@@ -6830,10 +7080,10 @@ export const Constants = {
       "job_opening_status": ["open", "on_hold", "closed"],
       "leave_status": ["pending", "approved", "rejected", "cancelled"],
       "letter_kind": ["offer", "internship_completion", "experience", "relieving"],
-      "meeting_kind": ["internal", "department", "management", "client", "project", "one_to_one"],
+      "meeting_kind": ["internal", "department", "management", "client", "project", "one_to_one", "content"],
       "meeting_response": ["pending", "accepted", "declined"],
       "meeting_status": ["scheduled", "completed", "cancelled"],
-      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided", "invoice_due_soon", "follow_up_due", "vendor_bill_due", "reimbursement_submitted", "reimbursement_decided", "reimbursement_paid"],
+      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided", "invoice_due_soon", "follow_up_due", "vendor_bill_due", "reimbursement_submitted", "reimbursement_decided", "reimbursement_paid", "budget_alert", "employee_added", "attendance_irregularity"],
       "notification_priority": ["normal", "high"],
       "payment_method": ["bank_transfer", "upi", "cheque", "cash", "card", "tds", "other"],
       "payroll_rule_kind": ["pf", "esi", "pt", "tds"],

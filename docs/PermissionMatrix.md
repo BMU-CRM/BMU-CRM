@@ -267,6 +267,20 @@ Human Resource also has the HR work that already existed, across the organisatio
 - Every decision on leave, claims, payroll runs and resignations is kept in an approvals record, shown as **Approval history** on the claim, payroll run and exit pages. It is read only through a function that checks the reader may see the item.
 - **Approvals** shows a tab for each kind of decision a person can make: leave and work, reimbursements, payroll runs, resignations.
 
+### Profit and loss, budgets and reports (Stages 11 and 12)
+
+| Permission | Founder | Finance Head | Human Resource | Everyone else |
+| --- | --- | --- | --- | --- |
+| `ledger.manage`: also opens **Profit & loss** | Organisation | Organisation | — | — |
+| `budgets.manage`: set department budgets, see spending against them | Organisation | Organisation | — | — |
+| `hr.dashboard`: also opens **HR reports** | Organisation | — | Organisation | — |
+
+- Profit and loss is cash basis: invoice payments and other income received, against every expense paid (salaries and settlements apart from operating expenses). It compares the period with the one before and the same period last year, and prints and exports as CSV.
+- A budget is per department for a month or a financial year (April to March). Spent is that department's expenses in the period. Everyone with `budgets.manage`, including whoever entered the expense, and the department head are told once at 80% and once at 100%.
+- The Finance dashboard shows each figure only to people who may see the money behind it: ledger figures need `ledger.manage` or `banks.manage`, payables need `purchases.manage` or `reimbursements.pay`, and payroll needs `payroll.manage` or `payroll.approve`.
+- HR reports cover headcount, joinings and leavers, leave by type, and salaries paid (the Salaries tab needs `payroll.manage` or `payroll.approve`). Each exports as CSV and prints.
+- New notifications: HR and the reporting manager are told when an employee is added; each morning anyone who checked in yesterday without checking out is reminded, and people with organisation-wide `attendance.manage` get one summary.
+
 ## Overseeing work
 
 The Founder, Co-Founder, Client Managers and department heads oversee others' tasks:

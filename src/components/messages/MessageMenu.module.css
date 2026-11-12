@@ -51,6 +51,12 @@
   left: 0;
 }
 
+/* Opened by a right-click: placed at the pointer, kept inside the window by the script. */
+.menu[data-at-pointer='true'] {
+  position: fixed;
+  right: auto;
+}
+
 .item {
   display: flex;
   align-items: center;

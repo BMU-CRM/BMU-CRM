@@ -87,7 +87,11 @@ export default async function FilesPage({ searchParams }: FilesPageProps) {
             ) : (
               <>
                 {result.kind === 'files' ? (
-                  <FileTable files={result.files} />
+                  <FileTable
+                    files={result.files}
+                    myEmployeeId={access.employee.id}
+                    canDeleteAny={access.permissions[permissionKeys.filesView] === 'organisation'}
+                  />
                 ) : (
                   <ShareTable shares={result.shares} direction={section === 'sent' ? 'sent' : 'received'} />
                 )}

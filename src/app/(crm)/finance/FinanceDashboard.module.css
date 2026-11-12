@@ -1,0 +1,8 @@
+/* Charts side by side at equal width, so neither is shrunk until its labels cannot be
+   read; one per row on narrower screens. */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+  align-items: start;
+  gap: var(--space-4);
+}

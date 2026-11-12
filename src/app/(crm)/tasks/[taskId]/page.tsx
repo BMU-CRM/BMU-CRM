@@ -182,6 +182,10 @@ export default async function TaskPage({ params }: TaskPageProps) {
                 <dd>{task.creator?.full_name ?? 'System'}</dd>
               </div>
               <div>
+                <dt>Created</dt>
+                <dd>{formatDateTime(task.created_at)}</dd>
+              </div>
+              <div>
                 <dt>Reviewer</dt>
                 <dd>{task.reviewer?.full_name ?? task.creator?.full_name ?? 'Not set'}</dd>
               </div>

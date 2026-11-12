@@ -95,6 +95,7 @@ export default async function MeetingPage({ params }: MeetingPageProps) {
           <Panel>
             <div className={layout.badges}>
               <StatusBadge>{meetingKindLabels[meeting.kind]}</StatusBadge>
+              {meeting.category && <StatusBadge tone="warning">{meeting.category.name}</StatusBadge>}
               {meeting.status === 'cancelled' && <StatusBadge tone="critical">Cancelled</StatusBadge>}
               {meeting.status === 'completed' && <StatusBadge tone="good">Held</StatusBadge>}
             </div>

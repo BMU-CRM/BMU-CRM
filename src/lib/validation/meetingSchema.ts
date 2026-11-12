@@ -15,7 +15,7 @@ const optionalId = z
 
 const clock = z.string().regex(/^\d{2}:\d{2}$/, 'Enter a time such as 10:00.');
 
-export const meetingKinds = ['internal', 'department', 'management', 'client', 'project', 'one_to_one'] as const;
+export const meetingKinds = ['internal', 'department', 'management', 'client', 'project', 'one_to_one', 'content'] as const;
 
 export const meetingKindLabels: Record<(typeof meetingKinds)[number], string> = {
   internal: 'Internal',
@@ -24,6 +24,7 @@ export const meetingKindLabels: Record<(typeof meetingKinds)[number], string> = 
   client: 'Client',
   project: 'Project',
   one_to_one: 'One to one',
+  content: 'Content work',
 };
 
 // Only web addresses are stored, because these values are later rendered as links.
@@ -45,12 +46,21 @@ export const meetingSchema = z
     meetingLink,
     clientId: optionalId,
     projectId: optionalId,
+    // A content calendar category; its people are added automatically.
+    categoryId: optionalId,
     participantIds: z.array(z.uuid()).max(200, 'Invite up to 200 people.'),
   })
   .refine((values) => values.endTime > values.startTime, {
     message: 'The meeting must end after it starts.',
     path: ['endTime'],
   });
+
+export const calendarCategorySchema = z.object({
+  name: z.string().trim().min(2, 'Enter a name.').max(80, 'Use 80 characters or fewer.'),
+  description: optionalText(300),
+  memberIds: z.array(z.uuid()).max(100, 'Choose up to 100 people.'),
+  isActive: z.boolean(),
+});
 
 export const meetingNotesSchema = z.object({
   notes: optionalText(20000),

@@ -19,7 +19,7 @@ import { fileTypeOf, formatFileSize } from '@/lib/files/fileTypes';
 import { formatDate, formatDateTime } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { safeExternalUrl } from '@/lib/safeExternalUrl';
-import { addFileCommentAction, removeShareAction, setFileArchivedAction } from '@/server/actions/fileActions';
+import { addFileCommentAction, deleteFileAction, removeShareAction, setFileArchivedAction } from '@/server/actions/fileActions';
 import { requirePagePermission } from '@/server/services/accessService';
 import { listEmployeeOptions } from '@/server/services/employeeService';
 import { getFile, loadFilePanels } from '@/server/services/fileService';
@@ -77,6 +77,16 @@ export default async function FilePage({ params }: FilePageProps) {
                   action={setFileArchivedAction.bind(null, file.id, true)}
                 />
               ))}
+            {(isOwner || access.permissions[permissionKeys.filesView] === 'organisation') && (
+              <ConfirmActionButton
+                label="Delete"
+                title={`Delete ${file.name}?`}
+                description="It is removed for everyone it was sent to, with every version. This cannot be undone. Archive it instead to keep it out of the way."
+                confirmLabel="Delete file"
+                variant="danger"
+                action={deleteFileAction.bind(null, file.id, '/files')}
+              />
+            )}
           </>
         }
       />

@@ -40,6 +40,9 @@ export const notificationKindLabels: Record<NotificationKind, string> = {
   reimbursement_submitted: 'Someone claims a reimbursement I can approve',
   reimbursement_decided: 'A reimbursement is approved, rejected or ready to pay',
   reimbursement_paid: 'My reimbursement is paid',
+  budget_alert: 'A department budget is 80% used or over',
+  employee_added: 'A new employee is added',
+  attendance_irregularity: 'Attendance is missing a check-out',
 };
 
 export const notificationKinds = Object.keys(notificationKindLabels) as NotificationKind[];

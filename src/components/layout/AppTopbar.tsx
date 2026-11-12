@@ -7,7 +7,6 @@ import { PresenceDot } from '@/components/presence/PresenceDot';
 import { StatusMenu } from '@/components/presence/StatusMenu';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';
 import { signOutAction } from '@/server/actions/authActions';
-import { AppBreadcrumbs } from './AppBreadcrumbs';
 import { RoleSwitcher, type RoleChoice } from './RoleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import styles from './AppTopbar.module.css';
@@ -38,8 +37,6 @@ export function AppTopbar({ user, notifications, onOpenMobileMenu }: AppTopbarPr
       <button type="button" className={styles.iconButton} data-mobile-only onClick={onOpenMobileMenu} aria-label="Open menu">
         <Menu size={18} aria-hidden="true" />
       </button>
-
-      <AppBreadcrumbs />
 
       <div className={styles.tools}>
         <NotificationBell

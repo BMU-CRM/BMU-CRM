@@ -2,8 +2,8 @@ import 'server-only';
 import { getSessionUser } from '@/server/auth/currentSession';
 import { databaseProvider, getAppDatabase } from '@/server/database/appDatabase';
 import { signToken } from '@/server/security/signingSecret';
-import { canReadObject, canUploadObject } from './objectStore';
-import { createSignedDownloadUrl, createSignedUploadUrl } from './supabaseStorage';
+import { canReadObject, canUploadObject, removeObjects } from './objectStore';
+import { createSignedDownloadUrl, createSignedUploadUrl, removeStoredObjects } from './supabaseStorage';
 
 // Every file link is made here. On this computer, files are kept on disk and the links
 // point at this app (objectStore.ts). On Supabase, they point at Supabase Storage
@@ -37,6 +37,17 @@ export async function createUploadLink(path: string) {
   // The disk store checks the rules itself when the file arrives.
   const token = await signToken(db, { k: 'upload', b: bucket, n: path, u: userId }, uploadLinkSeconds);
   return `/api/storage/upload/${token}`;
+}
+
+// Removes the stored copies of a file the database has already deleted (delete_file
+// checks who may). Paths that were never uploaded are simply not found.
+export async function removeStoredFiles(paths: string[]) {
+  if (paths.length === 0) return;
+  if (databaseProvider() === 'supabase') {
+    await removeStoredObjects(bucket, paths);
+    return;
+  }
+  await removeObjects(await getAppDatabase(), bucket, paths);
 }
 
 export async function createDownloadLink(path: string, options: { downloadAs?: string }) {

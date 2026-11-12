@@ -12,7 +12,7 @@ const closedStatuses = '("completed","rejected")';
 
 const taskListFields = `
   id, task_code, title, status, priority, due_date, completion_percentage, client_id, project_id,
-  parent_task_id, created_by, assignee_id, reviewer_id, escalated_to,
+  parent_task_id, created_by, assignee_id, reviewer_id, escalated_to, created_at,
   assignee:employees!tasks_assignee_id_fkey(id, full_name),
   creator:employees!tasks_created_by_fkey(id, full_name),
   project:projects(id, name)
@@ -41,9 +41,14 @@ type TaskFilters = {
   stage?: TaskStage;
   priority?: WorkPriority;
   overdue?: boolean;
+  // Due dates from and to, YYYY-MM-DD, either one or both.
+  dueFrom?: string;
+  dueTo?: string;
   projectId?: string;
   clientId?: string;
   assigneeId?: string;
+  // Who gave the task.
+  creatorId?: string;
   departmentId?: string;
   page: number;
 };
@@ -81,7 +86,7 @@ export async function listTaskOversightOptions(access: CurrentAccess) {
 }
 
 export async function listTasks(access: CurrentAccess, filters: TaskFilters) {
-  const { view, search, status, stage, priority, overdue, projectId, clientId, assigneeId, departmentId, page } = filters;
+  const { view, search, status, stage, priority, overdue, dueFrom, dueTo, projectId, clientId, assigneeId, creatorId, departmentId, page } = filters;
   const database = await createDatabaseClient();
   const from = (page - 1) * tasksPerPage;
   const me = access.employee.id;
@@ -110,6 +115,7 @@ export async function listTasks(access: CurrentAccess, filters: TaskFilters) {
   if (projectId) query = query.eq('project_id', projectId);
   if (clientId) query = query.eq('client_id', clientId);
   if (assigneeId) query = query.eq('assignee_id', assigneeId);
+  if (creatorId) query = query.eq('created_by', creatorId);
   if (departmentId) {
     // A department's work: tasks filed under it, and tasks held by its people.
     const { data: members, error: membersError } = await database
@@ -125,9 +131,12 @@ export async function listTasks(access: CurrentAccess, filters: TaskFilters) {
     );
   }
   if (overdue) query = query.lt('due_date', todayInIndia()).not('status', 'in', closedStatuses);
+  if (dueFrom) query = query.gte('due_date', dueFrom);
+  if (dueTo) query = query.lte('due_date', dueTo);
 
-  // Unless asked for, finished work drops out of the personal lists.
-  if (!status && !stage && !overdue && (view === 'mine' || view === 'assigned')) {
+  // Unless asked for, finished work drops out of the personal lists. Choosing dates
+  // shows everything due then, finished or not.
+  if (!status && !stage && !overdue && !dueFrom && !dueTo && (view === 'mine' || view === 'assigned')) {
     query = query.not('status', 'in', closedStatuses);
   }
 

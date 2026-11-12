@@ -15,6 +15,7 @@ type MessageMenuProps = {
   conversationId: string;
   messageId: string;
   body: string;
+  sentAt: string;
   isMine: boolean;
   isPinned: boolean;
   isStarred: boolean;
@@ -44,21 +45,50 @@ export function MessageMenu(props: MessageMenuProps) {
   const [isPending, startTransition] = useTransition();
   // Read when the menu opens, so the 5-minute window is checked at that moment.
   const [openedAt, setOpenedAt] = useState(0);
+  // Where a right-click opened the menu; null when the ⌄ opened it.
+  const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const selecting = Boolean(selection?.selecting);
+
+  // Right-clicking anywhere on the message opens the same menu at the pointer, as in
+  // WhatsApp. With text selected, the browser's own menu stays, so copying still works.
+  useEffect(() => {
+    const bubble = menuRef.current?.parentElement;
+    if (!bubble || selecting || editing) return;
+    const onContextMenu = (event: MouseEvent) => {
+      if (window.getSelection()?.toString().trim()) return;
+      if ((event.target as HTMLElement).closest('a, input, textarea, button[data-native-menu]')) return;
+      event.preventDefault();
+      setOpenedAt(Date.now());
+      setPoint({
+        x: Math.max(8, Math.min(event.clientX, window.innerWidth - 210)),
+        y: Math.max(8, Math.min(event.clientY, window.innerHeight - 380)),
+      });
+      setOpen(true);
+    };
+    bubble.addEventListener('contextmenu', onContextMenu);
+    return () => bubble.removeEventListener('contextmenu', onContextMenu);
+  }, [selecting, editing]);
 
   useEffect(() => {
     if (!open) return;
+    const close = () => setOpen(false);
     const onPointer = (event: PointerEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+      if (!menuRef.current?.contains(event.target as Node)) close();
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') close();
     };
     document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
+    // A menu placed at the pointer would drift away from its message on scroll.
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
     return () => {
       document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
     };
   }, [open]);
 
@@ -75,7 +105,7 @@ export function MessageMenu(props: MessageMenuProps) {
     });
   }
 
-  if (selection?.selecting) return null;
+  if (selecting) return null;
 
   if (editing) {
     return (
@@ -158,13 +188,20 @@ export function MessageMenu(props: MessageMenuProps) {
         onClick={() => {
           // The time is read on click, outside of rendering.
           setOpenedAt(Date.now());
+          setPoint(null);
           setOpen((value) => !value);
         }}
       >
         <ChevronDown size={16} aria-hidden="true" />
       </button>
       {open && (
-        <div className={styles.menu} role="menu" aria-label="Message options">
+        <div
+          className={styles.menu}
+          data-at-pointer={point !== null}
+          style={point ? { left: point.x, top: point.y } : undefined}
+          role="menu"
+          aria-label="Message options"
+        >
           {items
             .filter((item) => item.show)
             .map((item) => (
@@ -182,7 +219,7 @@ export function MessageMenu(props: MessageMenuProps) {
       )}
 
       <ChatDialog title="Message info" open={dialog === 'info'} onClose={() => setDialog(null)}>
-        <MessageInfo messageId={messageId} />
+        <MessageInfo messageId={messageId} body={body} sentAt={props.sentAt} />
       </ChatDialog>
       <ChatDialog title="Forward message" open={dialog === 'forward'} onClose={() => setDialog(null)}>
         <ForwardForm messageIds={[messageId]} targets={targets} onDone={() => setDialog(null)} />

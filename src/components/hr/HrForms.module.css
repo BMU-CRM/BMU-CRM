@@ -29,6 +29,45 @@
   accent-color: var(--color-primary);
 }
 
+/* A leave type: four fields on one line, aligned at the top so labels and hints line up,
+   then its choices and buttons. Two per line on narrower screens, one on a phone. */
+.leaveFields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.leaveOptions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.leaveButtons {
+  display: inline-flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+@media (max-width: 1100px) {
+  .leaveFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .leaveFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .leaveButtons {
+    margin-left: 0;
+  }
+}
+
 .inline {
   display: flex;
   flex-wrap: wrap;

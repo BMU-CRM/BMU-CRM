@@ -19,6 +19,7 @@ import {
   type WorkPriority,
 } from '@/lib/tasks/taskWorkflow';
 import { requirePagePermission } from '@/server/services/accessService';
+import { listEmployeeOptions } from '@/server/services/employeeService';
 import {
   getTaskStats,
   listTaskOversightOptions,
@@ -45,7 +46,10 @@ type TasksPageProps = {
     stage?: string;
     priority?: string;
     overdue?: string;
+    dueFrom?: string;
+    dueTo?: string;
     assignee?: string;
+    creator?: string;
     department?: string;
     page?: string;
   }>;
@@ -60,20 +64,26 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
   const stage = isTaskStage(params.stage) ? params.stage : undefined;
   const priority = params.priority && params.priority in priorityLabels ? (params.priority as WorkPriority) : undefined;
   const overdue = params.overdue === '1';
+  const isDate = (value?: string) => (value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) ? value : undefined);
+  const dueFrom = isDate(params.dueFrom);
+  const dueTo = isDate(params.dueTo);
   const page = parsePage(params.page);
 
   // Looking at someone else's or a department's work only makes sense across all tasks.
   const oversight = view === 'all' || view === 'assigned' ? await listTaskOversightOptions(access) : null;
   const assigneeId = oversight ? (parseId(params.assignee) ?? undefined) : undefined;
+  // "Assigned by" is offered wherever the list holds work from more than one person.
+  const creatorId = view !== 'assigned' ? (parseId(params.creator) ?? undefined) : undefined;
   const departmentId = oversight ? (parseId(params.department) ?? undefined) : undefined;
 
-  const [{ tasks, total }, stats] = await Promise.all([
-    listTasks(access, { view, search: params.search, status, stage, priority, overdue, assigneeId, departmentId, page }),
+  const [{ tasks, total }, stats, people] = await Promise.all([
+    listTasks(access, { view, search: params.search, status, stage, priority, overdue, dueFrom, dueTo, assigneeId, creatorId, departmentId, page }),
     getTaskStats(access),
+    view !== 'assigned' ? listEmployeeOptions() : Promise.resolve([]),
   ]);
 
   const canCreate = access.permissions[permissionKeys.tasksCreate] !== undefined;
-  const isFiltered = Boolean(params.search || status || stage || priority || overdue || assigneeId || departmentId);
+  const isFiltered = Boolean(params.search || status || stage || priority || overdue || dueFrom || dueTo || assigneeId || creatorId || departmentId);
 
   function hrefForPage(target: number) {
     const query = new URLSearchParams({ view, page: String(target) });
@@ -82,7 +92,10 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     if (stage) query.set('stage', stage);
     if (priority) query.set('priority', priority);
     if (overdue) query.set('overdue', '1');
+    if (dueFrom) query.set('dueFrom', dueFrom);
+    if (dueTo) query.set('dueTo', dueTo);
     if (assigneeId) query.set('assignee', assigneeId);
+    if (creatorId) query.set('creator', creatorId);
     if (departmentId) query.set('department', departmentId);
     return `/tasks?${query.toString()}`;
   }
@@ -105,8 +118,9 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
       <TaskViewTabs current={view} reviewCount={stats.toReview} />
       <TaskFilters
         view={view}
-        values={{ search: params.search, status, stage, priority, overdue, assigneeId, departmentId }}
+        values={{ search: params.search, status, stage, priority, overdue, dueFrom, dueTo, assigneeId, creatorId, departmentId }}
         oversight={oversight}
+        creators={view !== 'assigned' ? people.map((person) => ({ value: person.id, label: person.full_name })) : undefined}
       />
       <Panel flush>
         {tasks.length === 0 ? (

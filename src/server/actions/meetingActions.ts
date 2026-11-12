@@ -12,7 +12,7 @@ import {
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { indiaDateTime } from '@/lib/calendar/calendarRange';
 import { createDatabaseClient } from '@/server/database/databaseClient';
-import { meetingNotesSchema, meetingSchema } from '@/lib/validation/meetingSchema';
+import { calendarCategorySchema, meetingNotesSchema, meetingSchema } from '@/lib/validation/meetingSchema';
 import { getActionAccess } from '@/server/services/accessService';
 
 const noPermission = 'You do not have permission to do this.';
@@ -36,12 +36,16 @@ export async function saveMeetingAction(
     meetingLink: formData.get('meetingLink') ?? '',
     clientId: formData.get('clientId') ?? '',
     projectId: formData.get('projectId') ?? '',
+    categoryId: formData.get('categoryId') ?? '',
     participantIds: formData.getAll('participantIds'),
   });
   if (!parsed.success) return validationFailure(parsed.error);
 
   const values = parsed.data;
+  // Only content planners see the category; for anyone else it is left as it was.
+  const plansContent = access.permissions[permissionKeys.contentCalendarManage] !== undefined;
   const row = {
+    ...(plansContent ? { category_id: values.categoryId } : {}),
     title: values.title,
     agenda: values.agenda,
     kind: values.kind,
@@ -67,8 +71,13 @@ export async function saveMeetingAction(
   }
 
   // Brings the guest list in line with the form: new people are invited, removed
-  // people are taken off. Existing answers are kept.
-  const wanted = new Set(values.participantIds.filter((id) => id !== access.employee.id));
+  // people are taken off. Existing answers are kept. The category's people always stay
+  // (the database adds them when the category is set).
+  const { data: saved } = await database.from('meetings').select('category_id').eq('id', savedId as string).single();
+  const categoryPeople = saved?.category_id
+    ? ((await database.from('calendar_category_members').select('employee_id').eq('category_id', saved.category_id)).data ?? []).map((row) => row.employee_id)
+    : [];
+  const wanted = new Set([...values.participantIds, ...categoryPeople].filter((id) => id !== access.employee.id));
   const { data: current } = await database
     .from('meeting_participants')
     .select('employee_id')
@@ -95,6 +104,47 @@ export async function saveMeetingAction(
 
   revalidatePath('/calendar');
   redirect(`/meetings/${savedId}`);
+}
+
+export async function saveCalendarCategoryAction(categoryId: string | null, _previous: ActionResult, formData: FormData): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.contentCalendarManage))) return failure(noPermission);
+  const parsed = calendarCategorySchema.safeParse({
+    name: formData.get('name'),
+    description: formData.get('description') ?? '',
+    memberIds: formData.getAll('memberIds'),
+    isActive: categoryId ? formData.get('isActive') === 'on' : true,
+  });
+  if (!parsed.success) return validationFailure(parsed.error);
+
+  const values = parsed.data;
+  const database = await createDatabaseClient();
+  const row = { name: values.name, description: values.description, is_active: values.isActive };
+  const { data, error } = categoryId
+    ? await database.from('calendar_categories').update(row).eq('id', categoryId).select('id')
+    : await database.from('calendar_categories').insert(row).select('id');
+  if (error) return databaseFailure(error, 'A category with this name already exists.');
+  if (data.length === 0) return failure(noPermission);
+  const id = data[0]!.id;
+
+  // The people it goes to: added and removed to match the form. Entries already in the
+  // calendar keep the people they had.
+  const { data: current, error: currentError } = await database.from('calendar_category_members').select('employee_id').eq('category_id', id);
+  if (currentError) return databaseFailure(currentError);
+  const existing = new Set(current.map((member) => member.employee_id));
+  const wanted = new Set(values.memberIds);
+  const toAdd = [...wanted].filter((person) => !existing.has(person));
+  const toRemove = [...existing].filter((person) => !wanted.has(person));
+  if (toAdd.length > 0) {
+    const { error: addError } = await database.from('calendar_category_members').insert(toAdd.map((employee_id) => ({ category_id: id, employee_id })));
+    if (addError) return databaseFailure(addError);
+  }
+  if (toRemove.length > 0) {
+    const { error: removeError } = await database.from('calendar_category_members').delete().eq('category_id', id).in('employee_id', toRemove);
+    if (removeError) return databaseFailure(removeError);
+  }
+
+  revalidatePath('/settings/calendar');
+  return success(categoryId ? 'Category saved.' : 'Category added.');
 }
 
 export async function respondToMeetingAction(meetingId: string, response: 'accepted' | 'declined'): Promise<ActionResult> {

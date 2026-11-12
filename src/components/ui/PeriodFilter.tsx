@@ -7,15 +7,30 @@ const periodOptions = periodKeys.map((key) => ({ value: key, label: periodLabels
 
 // The period choice used by dashboards and reports: a named period, or chosen dates.
 // It is a plain form, so the choice lives in the address and can be shared.
-export function PeriodFilter({ basePath, range, period }: { basePath: string; range: DateRange; period?: PeriodKey }) {
+// `hidden` carries other choices, such as the report tab, through a change of period.
+export function PeriodFilter({
+  basePath,
+  range,
+  period,
+  hidden = {},
+}: {
+  basePath: string;
+  range: DateRange;
+  period?: PeriodKey;
+  hidden?: Record<string, string>;
+}) {
+  const clearHref = Object.keys(hidden).length ? `${basePath}?${new URLSearchParams(hidden)}` : basePath;
   return (
     <form method="get" className={filterStyles.filters}>
+      {Object.entries(hidden).map(([name, value]) => (
+        <input key={name} type="hidden" name={name} value={value} />
+      ))}
       <SelectField label="Period" name="period" options={periodOptions} defaultValue={period ?? ''} placeholder="Chosen dates" />
       <TextField label="From" name="from" type="date" defaultValue={period ? '' : range.from} />
       <TextField label="To" name="to" type="date" defaultValue={period ? '' : range.to} />
       <div className={filterStyles.actions}>
         <Button type="submit">Apply</Button>
-        <ButtonLink href={basePath} variant="ghost">
+        <ButtonLink href={clearHref} variant="ghost">
           Clear
         </ButtonLink>
       </div>

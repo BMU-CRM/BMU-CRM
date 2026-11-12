@@ -24,7 +24,7 @@ async function listMyMeetings(access: CurrentAccess, from: string, to: string) {
 
   const { data, error } = await database
     .from('meetings')
-    .select('id, title, kind, status, starts_at, ends_at, location')
+    .select('id, title, kind, status, starts_at, ends_at, location, category:calendar_categories(name)')
     .or(`organizer_id.eq.${access.employee.id}${idFilter}`)
     .gte('starts_at', `${from}T00:00:00+05:30`)
     .lte('starts_at', `${to}T23:59:59+05:30`)
@@ -82,7 +82,8 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
       id: meeting.id,
       kind: 'meeting' as const,
       date: datePartInIndia(meeting.starts_at),
-      title: meeting.title,
+      // Content work shows its category first, such as "Posters and design: Diwali post".
+      title: meeting.category ? `${meeting.category.name}: ${meeting.title}` : meeting.title,
       time: `${clock.format(new Date(meeting.starts_at))} to ${clock.format(new Date(meeting.ends_at))}`,
       href: `/meetings/${meeting.id}`,
       isCancelled: meeting.status === 'cancelled',
@@ -127,6 +128,23 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
   });
 }
 
+// Content calendar categories with the people each goes to.
+export async function listCalendarCategories() {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('calendar_categories')
+    .select('id, name, description, is_active, sort_order, members:calendar_category_members(employee:employees(id, full_name))')
+    .order('sort_order')
+    .order('name');
+  if (error) throw error;
+  return data.map((category) => ({
+    ...category,
+    members: category.members.flatMap((member) => (member.employee ? [member.employee] : [])).sort((a, b) => a.full_name.localeCompare(b.full_name)),
+  }));
+}
+
+export type CalendarCategory = Awaited<ReturnType<typeof listCalendarCategories>>[number];
+
 export async function listUpcomingMeetings(access: CurrentAccess, limit: number) {
   const database = await createDatabaseClient();
   const ids = await myMeetingIds(access);
@@ -167,6 +185,7 @@ export async function getMeeting(meetingId: string) {
        organizer:employees!meetings_organizer_id_fkey(id, full_name),
        client:clients(id, company_name),
        project:projects(id, name),
+       category:calendar_categories(id, name),
        participants:meeting_participants(response, employee:employees(id, full_name))`,
     )
     .eq('id', meetingId)

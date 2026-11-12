@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
+import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import { FormActions, FormGrid, SelectField, TextAreaField, TextField, type SelectOption } from '@/components/ui/FormFields';
 import formStyles from '@/components/ui/FormFields.module.css';
 import { FormMessage } from '@/components/ui/FormMessage';
@@ -12,6 +13,7 @@ import { dayStatusLabels, dayStatusOverrides } from '@/lib/attendance/summariseA
 import { holidayKindLabels, holidayKinds, workModeLabels } from '@/lib/validation/hrSchema';
 import {
   correctAttendanceAction,
+  deleteLeaveTypeAction,
   importAttendanceAction,
   saveEmploymentTypeAction,
   saveHolidayAction,
@@ -131,7 +133,8 @@ export function LeaveTypeForm({ leaveType }: { leaveType?: LeaveType }) {
   return (
     <KeepValuesForm action={formAction} key={!leaveType && result.status === 'success' ? result.message : prefix}>
       <FormMessage result={result} />
-      <div className={styles.inline}>
+      {/* Four fields of equal width, aligned at the top; the choices and buttons below. */}
+      <div className={styles.leaveFields}>
         <TextField label="Name" name="name" id={`${prefix}-name`} defaultValue={leaveType?.name} required error={result.fieldErrors?.name} />
         <TextField
           label="Days per year"
@@ -141,18 +144,18 @@ export function LeaveTypeForm({ leaveType }: { leaveType?: LeaveType }) {
           min={0}
           step="0.5"
           defaultValue={leaveType?.yearly_allowance ?? ''}
-          hint="Empty means no limit."
+          hint="Empty: no limit."
           error={result.fieldErrors?.yearlyAllowance}
         />
         <TextField
-          label="Carry forward up to"
+          label="Carry forward up to (days)"
           name="carryForwardCap"
           id={`${prefix}-carry`}
           type="number"
           min={0.5}
           step="0.5"
           defaultValue={leaveType?.carry_forward_cap ?? ''}
-          hint="Unused days moved to next year. Empty means none."
+          hint="Empty: none carried."
           error={result.fieldErrors?.carryForwardCap}
         />
         <TextField
@@ -163,9 +166,11 @@ export function LeaveTypeForm({ leaveType }: { leaveType?: LeaveType }) {
           min={1}
           max={12}
           defaultValue={leaveType?.carry_forward_expiry_months ?? ''}
-          hint="Empty means all year."
+          hint="Empty: all year."
           error={result.fieldErrors?.carryForwardExpiryMonths}
         />
+      </div>
+      <div className={styles.leaveOptions}>
         <label className={styles.check}>
           <input type="checkbox" name="isPaid" defaultChecked={leaveType?.is_paid ?? true} /> Paid
         </label>
@@ -180,7 +185,19 @@ export function LeaveTypeForm({ leaveType }: { leaveType?: LeaveType }) {
             <input type="checkbox" name="isActive" defaultChecked={leaveType.is_active} /> Available
           </label>
         )}
-        <SubmitButton label={leaveType ? 'Save' : 'Add'} pendingLabel="Saving…" variant="secondary" />
+        <span className={styles.leaveButtons}>
+          <SubmitButton label={leaveType ? 'Save' : 'Add'} pendingLabel="Saving…" variant="secondary" />
+          {leaveType && (
+            <ConfirmActionButton
+              label="Delete"
+              title={`Delete ${leaveType.name}?`}
+              description="Only a leave type nobody has used can be deleted. To stop new requests for a used one, untick Available instead."
+              confirmLabel="Delete leave type"
+              variant="danger"
+              action={deleteLeaveTypeAction.bind(null, leaveType.id)}
+            />
+          )}
+        </span>
       </div>
     </KeepValuesForm>
   );

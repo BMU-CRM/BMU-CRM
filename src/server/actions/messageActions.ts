@@ -349,7 +349,7 @@ export async function removeGroupMemberAction(conversationId: string, employeeId
   return success('Removed from the group.');
 }
 
-export type MessageInfoRow = { employeeId: string; name: string; readAt: string | null; delivered: boolean };
+export type MessageInfoRow = { employeeId: string; name: string; readAt: string | null; delivered: boolean; deliveredAt: string | null };
 
 // Who your message reached and who read it.
 export async function getMessageInfoAction(messageId: string): Promise<MessageInfoRow[]> {
@@ -360,7 +360,13 @@ export async function getMessageInfoAction(messageId: string): Promise<MessageIn
   const database = await createDatabaseClient();
   const { data, error } = await database.rpc('get_message_info', { p_message: parsed.data });
   if (error) return [];
-  return data.map((row) => ({ employeeId: row.employee_id, name: row.full_name, readAt: row.read_at, delivered: row.delivered }));
+  return data.map((row) => ({
+    employeeId: row.employee_id,
+    name: row.full_name,
+    readAt: row.read_at,
+    delivered: row.delivered,
+    deliveredAt: row.delivered_at,
+  }));
 }
 
 export async function setMessagePinnedAction(

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import {
   databaseFailure,
   failure,
+  isStillInUse,
   success,
   validationFailure,
   type ActionResult,
@@ -364,4 +365,19 @@ export async function saveLeaveTypeAction(
 
   revalidatePath('/settings/hr');
   return success(leaveTypeId ? 'Leave type saved.' : 'Leave type added.');
+}
+
+// Only a type nobody has asked for can be deleted; a used one is turned off instead, so
+// past leave keeps its type.
+export async function deleteLeaveTypeAction(leaveTypeId: string): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.hrManage))) return failure(noPermission);
+  const database = await createDatabaseClient();
+  const { data, error } = await database.from('leave_types').delete().eq('id', leaveTypeId).select('id');
+  if (error) {
+    if (isStillInUse(error)) return failure('Leave has already been taken or requested under this type. Untick Available to stop new requests instead.');
+    return databaseFailure(error);
+  }
+  if (data.length === 0) return failure(noPermission);
+  revalidatePath('/settings/hr');
+  return success('Leave type deleted.');
 }

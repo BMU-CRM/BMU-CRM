@@ -120,6 +120,36 @@ export function daysBetween(fromIso: string, toIso: string) {
   return Math.round((Date.parse(`${toIso}T00:00:00Z`) - Date.parse(`${fromIso}T00:00:00Z`)) / 86_400_000);
 }
 
+function isWholeMonths({ from, to }: DateRange) {
+  const end = parts(to);
+  return parts(from).day === 1 && end.day === lastDayOfMonth(end.year, end.month);
+}
+
+// The range moved back by whole months, keeping month ends as month ends.
+export function shiftRangeByMonths(range: DateRange, months: number): DateRange {
+  const from = parts(range.from);
+  const to = parts(range.to);
+  const start = shiftMonth(from.year, from.month, months);
+  const end = shiftMonth(to.year, to.month, months);
+  const endDay = isWholeMonths(range) ? lastDayOfMonth(end.year, end.month) : Math.min(to.day, lastDayOfMonth(end.year, end.month));
+  return { from: iso(start.year, start.month, Math.min(from.day, lastDayOfMonth(start.year, start.month))), to: iso(end.year, end.month, endDay) };
+}
+
+// The period just before this one, of the same length: the previous month, quarter or
+// financial year for those, and the same number of days before for chosen dates.
+export function previousRange(range: DateRange): DateRange {
+  if (isWholeMonths(range)) {
+    const length = monthsInRange(range).length;
+    return shiftRangeByMonths(range, -length);
+  }
+  const days = daysBetween(range.from, range.to) + 1;
+  return { from: addDays(range.from, -days), to: addDays(range.to, -days) };
+}
+
+export function sameRangeLastYear(range: DateRange): DateRange {
+  return shiftRangeByMonths(range, -12);
+}
+
 export function addDays(isoDate: string, days: number) {
   const date = new Date(`${isoDate}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);

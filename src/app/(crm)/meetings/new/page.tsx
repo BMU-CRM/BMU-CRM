@@ -9,6 +9,7 @@ import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
 import { listClientOptions } from '@/server/services/clientService';
 import { listEmployeeOptions } from '@/server/services/employeeService';
+import { listCalendarCategories } from '@/server/services/meetingService';
 import { listProjectOptions } from '@/server/services/projectService';
 
 export const metadata: Metadata = { title: 'New meeting' };
@@ -23,11 +24,20 @@ export default async function NewMeetingPage({ searchParams }: NewMeetingPagePro
   const date = isCalendarDate(query.date) ? query.date : todayInIndia();
   const clientId = parseId(query.clientId);
 
-  const [people, clients, projects] = await Promise.all([listEmployeeOptions(), listClientOptions(access), listProjectOptions()]);
+  const plansContent = access.permissions[permissionKeys.contentCalendarManage] !== undefined;
+  const [people, clients, projects, categories] = await Promise.all([
+    listEmployeeOptions(),
+    listClientOptions(access),
+    listProjectOptions(),
+    plansContent ? listCalendarCategories() : Promise.resolve(null),
+  ]);
 
   return (
     <>
-      <PageHeader title="New meeting" description="Everyone invited is notified, and reminded 15 minutes before it starts." />
+      <PageHeader
+        title={plansContent ? 'New calendar entry' : 'New meeting'}
+        description="Everyone invited is notified, and reminded 15 minutes before it starts. Content work under a category goes to that category's people."
+      />
       <Panel>
         <MeetingForm
           defaultDate={date}
@@ -35,6 +45,9 @@ export default async function NewMeetingPage({ searchParams }: NewMeetingPagePro
           people={people.filter((person) => person.id !== access.employee.id).map((person) => ({ value: person.id, label: person.full_name }))}
           clients={clients.map((client) => ({ value: client.id, label: client.company_name }))}
           projects={projects.map((project) => ({ value: project.id, label: project.name }))}
+          categories={categories
+            ?.filter((category) => category.is_active)
+            .map((category) => ({ value: category.id, label: category.name, people: category.members.map((member) => member.full_name) }))}
         />
       </Panel>
     </>

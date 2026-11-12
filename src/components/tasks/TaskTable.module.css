@@ -1,0 +1,4 @@
+/* Dates stay on one line, so "12 Nov 2026" never breaks before the year. */
+.date {
+  white-space: nowrap;
+}

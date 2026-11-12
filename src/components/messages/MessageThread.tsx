@@ -178,6 +178,7 @@ export function MessageThread({
                       conversationId={conversationId}
                       messageId={message.id}
                       body={message.body}
+                      sentAt={message.created_at}
                       isMine={isMine}
                       isPinned={message.pinned_at !== null}
                       isStarred={message.isStarred}

@@ -125,7 +125,7 @@ describe('HR and finance foundation', () => {
         'leave.request': 'own',
       });
       const hrSection = hr.find((section) => section.title === 'HR');
-      expect(hrSection?.items.map((item) => item.label)).toEqual(['HR dashboard', 'Employees', 'Attendance', 'Leave requests']);
+      expect(hrSection?.items.map((item) => item.label)).toEqual(['HR dashboard', 'Employees', 'Attendance', 'Leave requests', 'HR reports']);
       // Approvals, which also holds work to review, stays in Team.
       expect(hr.find((section) => section.title === 'Team')?.items.map((item) => item.href)).toContain('/approvals');
       const hrefs = hr.flatMap((section) => section.items.map((item) => item.href));

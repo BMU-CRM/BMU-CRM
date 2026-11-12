@@ -21,7 +21,8 @@ import {
   type FileLinks,
 } from '@/lib/validation/fileSchema';
 import { getActionAccess } from '@/server/services/accessService';
-import { createUploadLink } from '@/server/storage/fileStorage';
+import { redirect } from 'next/navigation';
+import { createUploadLink, removeStoredFiles } from '@/server/storage/fileStorage';
 
 const noPermission = 'You do not have permission to do this.';
 
@@ -230,6 +231,26 @@ export async function setFileArchivedAction(fileId: string, isArchived: boolean)
 
   revalidatePath('/files', 'layout');
   return success(isArchived ? 'File archived.' : 'File restored.');
+}
+
+// Deletes a file for good. The database checks who may, and refuses receipts and bills
+// on money records; the stored copies go once the record is gone.
+export async function deleteFileAction(fileId: string, returnTo?: string): Promise<ActionResult> {
+  if (!(await getActionAccess())) return failure(noPermission);
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('delete_file', { p_file: fileId });
+  if (error) return databaseFailure(error);
+
+  try {
+    await removeStoredFiles(data.map((row) => row.storage_path));
+  } catch {
+    // The record is gone, so the file can no longer be reached. A copy left in storage
+    // only takes space, and is not worth failing the delete for.
+  }
+
+  revalidatePath('/files', 'layout');
+  if (returnTo) redirect(returnTo);
+  return success('File deleted.');
 }
 
 export async function shareFileAction(fileId: string, _previous: ActionResult, formData: FormData): Promise<ActionResult> {

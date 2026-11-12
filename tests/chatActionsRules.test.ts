@@ -110,6 +110,29 @@ describe('message actions and task times', () => {
       const { data } = await as.sender!.rpc('get_conversation_read_state', { p_conversation: direct });
       expect(new Date(data![0]!.everyone_delivered_at).getTime()).toBeGreaterThanOrEqual(new Date(sent!.created_at).getTime());
     });
+
+    it('records when each message was delivered, for message info', async () => {
+      // The reader's app had been closed for a while.
+      await admin.from('employee_presence').update({ last_seen_at: new Date(Date.now() - 60 * 60_000).toISOString() }).eq('employee_id', ids.reader!);
+      const id = await send('When did it arrive?');
+      expect((await as.sender!.rpc('get_message_info', { p_message: id })).data?.[0]).toMatchObject({ delivered: false, delivered_at: null });
+
+      await as.reader!.rpc('record_presence', { p_active: true });
+      const { data: presence } = await admin.from('employee_presence').select('last_seen_at').eq('employee_id', ids.reader!).single();
+      const info = (await as.sender!.rpc('get_message_info', { p_message: id })).data?.[0];
+      expect(info?.delivered).toBe(true);
+      // Delivered when the app opened again, not when it was sent.
+      expect(new Date(info!.delivered_at!).getTime()).toBe(new Date(presence!.last_seen_at!).getTime());
+    });
+
+    it('counts a message delivered as it was sent while the app stays open', async () => {
+      await as.reader!.rpc('record_presence', { p_active: true });
+      const id = await send('Live delivery');
+      const { data: sent } = await admin.from('messages').select('created_at').eq('id', id).single();
+      await as.reader!.rpc('record_presence', { p_active: true });
+      const info = (await as.sender!.rpc('get_message_info', { p_message: id })).data?.[0];
+      expect(new Date(info!.delivered_at!).getTime()).toBe(new Date(sent!.created_at).getTime());
+    });
   });
 
   describe('clear chat and exit group', () => {

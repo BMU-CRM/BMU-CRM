@@ -1,0 +1,56 @@
+.statement th[scope='row'] {
+  font-weight: 400;
+  text-align: left;
+}
+
+.range {
+  display: block;
+  font-size: var(--text-small);
+  font-weight: 400;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.heading th {
+  padding-top: var(--space-4);
+  font-weight: 600;
+  text-align: left;
+  color: var(--color-text-secondary);
+}
+
+.line {
+  padding-left: var(--space-5);
+}
+
+.total th,
+.total td {
+  font-weight: 600;
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.net th,
+.net td {
+  font-size: var(--text-large);
+  font-weight: 700;
+  border-top: 2px solid var(--color-text);
+}
+
+.change {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Better or worse is also written as + or −, so it is never shown by colour alone. */
+.change[data-better='true'] {
+  color: var(--color-good);
+}
+
+.change[data-better='false'] {
+  color: var(--color-critical);
+}
+
+@media print {
+  .range {
+    white-space: normal;
+  }
+}

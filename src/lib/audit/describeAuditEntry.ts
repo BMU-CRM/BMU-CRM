@@ -53,6 +53,9 @@ const entityLabels: Record<string, string> = {
   vendor_bills: 'vendor bill',
   vendor_bill_payments: 'vendor payment',
   reimbursements: 'reimbursement claim',
+  department_budgets: 'department budget',
+  calendar_categories: 'content calendar category',
+  calendar_category_members: 'content calendar person',
 };
 
 const revealedFields: Record<string, string> = { aadhaar: 'Aadhaar number', account_number: 'bank account number' };
