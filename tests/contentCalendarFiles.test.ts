@@ -52,10 +52,40 @@ describe('content calendar, file and leave type deletion', () => {
       const { data: participants } = await admin.from('meeting_participants').select('employee_id').eq('meeting_id', data!.id);
       expect(participants!.map((row) => row.employee_id)).toEqual([ids.designer!]);
 
-      const { data: notes } = await admin.from('notifications').select('title, link').eq('recipient_id', ids.designer!).eq('kind', 'meeting_invited');
-      expect(notes).toContainEqual({ title: `New in your calendar: Posters ${runId}`, link: `/meetings/${data!.id}` });
       expect((await as.designer!.from('meetings').select('id').eq('id', data!.id)).data).toHaveLength(1);
       expect((await as.editor!.from('meetings').select('id').eq('id', data!.id)).data).toEqual([]);
+    });
+
+    it('gives each of the category\'s people a task for it, and tells them once', async () => {
+      const { data } = await as.planner!
+        .from('meetings')
+        .insert(entry({ title: `Offer poster ${runId}`, category_id: category, agenda: 'Use the new logo', starts_at: '2027-01-15T05:30:00Z', ends_at: '2027-01-15T06:30:00Z' }))
+        .select('id')
+        .single();
+      const { data: tasks } = await admin.from('tasks').select('id, title, description, assignee_id, created_by, status, due_date, due_time').eq('meeting_id', data!.id);
+      expect(tasks).toEqual([
+        expect.objectContaining({
+          title: `Posters ${runId}: Offer poster ${runId}`,
+          description: 'Use the new logo',
+          assignee_id: ids.designer!,
+          created_by: ids.planner!,
+          status: 'assigned',
+          due_date: '2027-01-15',
+          due_time: '11:00:00',
+        }),
+      ]);
+
+      const { data: notes } = await admin.from('notifications').select('kind, title, body').eq('recipient_id', ids.designer!).ilike('body', `%Offer poster ${runId}%`);
+      expect(notes!.map((note) => note.kind)).toEqual(['task_assigned']);
+
+      // The designer works on it like any task.
+      expect((await as.designer!.from('tasks').update({ status: 'accepted' }).eq('id', tasks![0]!.id).select('id')).data).toHaveLength(1);
+      expect((await as.designer!.from('tasks').update({ status: 'in_progress' }).eq('id', tasks![0]!.id).select('work_started_at')).data![0]!.work_started_at).not.toBeNull();
+
+      // Moving the entry moves the open task with it.
+      await as.planner!.from('meetings').update({ starts_at: '2027-01-16T08:30:00Z', ends_at: '2027-01-16T09:30:00Z' }).eq('id', data!.id).select('id');
+      const { data: moved } = await admin.from('tasks').select('due_date, due_time').eq('id', tasks![0]!.id).single();
+      expect(moved).toEqual({ due_date: '2027-01-16', due_time: '14:00:00' });
     });
 
     it('brings in a new category\'s people when an entry is moved to it', async () => {

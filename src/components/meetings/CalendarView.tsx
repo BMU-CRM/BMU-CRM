@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { CalendarRange } from '@/lib/calendar/calendarRange';
 import { formatDate } from '@/lib/formatDate';
 import type { CalendarItem } from '@/server/services/meetingService';
-import { CalendarDayMenu } from './CalendarDayMenu';
+import { CalendarDayMenu, type ContentCategoryChoice } from './CalendarDayMenu';
 import { CalendarDragArea, TaskMoveButton } from './CalendarTaskMove';
 import styles from './CalendarView.module.css';
 
@@ -75,9 +75,11 @@ type CalendarViewProps = {
   today: string;
   // Whether this person may add their own tasks from the calendar.
   canAddTasks: boolean;
+  // Content categories, for people who plan content.
+  contentCategories?: ContentCategoryChoice[];
 };
 
-export function CalendarView({ range, items, today, canAddTasks }: CalendarViewProps) {
+export function CalendarView({ range, items, today, canAddTasks, contentCategories }: CalendarViewProps) {
   const groups = groupByDate(items);
   const monthPrefix = range.focus.slice(0, 7);
 
@@ -103,11 +105,13 @@ export function CalendarView({ range, items, today, canAddTasks }: CalendarViewP
   );
 
   return (
-    <CalendarDayMenu canAddTasks={canAddTasks}>
+    <CalendarDayMenu canAddTasks={canAddTasks} contentCategories={contentCategories}>
     <CalendarDragArea>
       <Legend />
       <p className={styles.hint}>
-        Click any day to add your own task or schedule a meeting.
+        {contentCategories && contentCategories.length > 0
+          ? 'Click any day to add content work for a category, your own task or a meeting.'
+          : 'Click any day to add your own task or schedule a meeting.'}
         {items.some((item) => item.canMove) && ' Drag one of your tasks to another day, or use its Move button, to postpone or bring it forward.'}
       </p>
       {range.view === 'month' ? (

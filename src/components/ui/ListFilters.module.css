@@ -10,3 +10,9 @@
   display: flex;
   gap: var(--space-1);
 }
+
+/* Filters apply themselves as they change (ListInteractions), so the Apply button is not
+   shown. It stays in the page, so pressing Enter in a box still applies. */
+.actions button[type='submit'] {
+  display: none;
+}

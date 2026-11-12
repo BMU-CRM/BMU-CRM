@@ -106,6 +106,54 @@ export async function saveMeetingAction(
   redirect(`/meetings/${savedId}`);
 }
 
+// Content work added straight from a day on the calendar. The database adds the
+// category's people and gives each of them a task for it.
+export async function addContentWorkAction(values: {
+  title: string;
+  categoryId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  brief: string;
+}): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.contentCalendarManage))) return failure(noPermission);
+  const parsed = meetingSchema.safeParse({
+    title: values.title,
+    agenda: values.brief,
+    kind: 'content',
+    date: values.date,
+    startTime: values.startTime,
+    endTime: values.endTime,
+    location: '',
+    meetingLink: '',
+    clientId: '',
+    projectId: '',
+    categoryId: values.categoryId,
+    participantIds: [],
+  });
+  if (!parsed.success) return validationFailure(parsed.error);
+  if (!parsed.data.categoryId) return { status: 'error', message: 'Choose a category.', fieldErrors: { categoryId: 'Choose a category.' } };
+
+  const database = await createDatabaseClient();
+  const { error } = await database
+    .from('meetings')
+    .insert({
+      title: parsed.data.title,
+      agenda: parsed.data.agenda,
+      kind: 'content',
+      category_id: parsed.data.categoryId,
+      starts_at: indiaDateTime(parsed.data.date, parsed.data.startTime),
+      ends_at: indiaDateTime(parsed.data.date, parsed.data.endTime),
+    })
+    .select('id')
+    .single();
+  if (error) return databaseFailure(error);
+
+  revalidatePath('/calendar');
+  revalidatePath('/tasks', 'layout');
+  return success('Added. The category’s people have it in their calendar and tasks.');
+}
+
 export async function saveCalendarCategoryAction(categoryId: string | null, _previous: ActionResult, formData: FormData): Promise<ActionResult> {
   if (!(await getActionAccess(permissionKeys.contentCalendarManage))) return failure(noPermission);
   const parsed = calendarCategorySchema.safeParse({

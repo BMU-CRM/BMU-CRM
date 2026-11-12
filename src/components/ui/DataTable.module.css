@@ -44,6 +44,11 @@
   background: var(--color-surface-muted);
 }
 
+/* A row with a link opens its page wherever it is clicked (ListInteractions). */
+.table tbody tr:has(a[href]) {
+  cursor: pointer;
+}
+
 .primaryText {
   font-weight: 500;
 }

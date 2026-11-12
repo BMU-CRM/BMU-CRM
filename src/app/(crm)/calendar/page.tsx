@@ -9,7 +9,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { calendarRange, calendarViews, isCalendarDate } from '@/lib/calendar/calendarRange';
 import { todayInIndia } from '@/lib/formatDate';
 import { requirePagePermission } from '@/server/services/accessService';
-import { getCalendarItems } from '@/server/services/meetingService';
+import { getCalendarItems, listCalendarCategories } from '@/server/services/meetingService';
 import styles from './CalendarPage.module.css';
 
 export const metadata: Metadata = { title: 'Calendar' };
@@ -26,7 +26,11 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const view = calendarViews.find((option) => option === params.view) ?? 'month';
   const focus = isCalendarDate(params.date) ? params.date : today;
   const range = calendarRange(view, focus);
-  const items = await getCalendarItems(access, range.from, range.to);
+  const plansContent = access.permissions[permissionKeys.contentCalendarManage] !== undefined;
+  const [items, categories] = await Promise.all([
+    getCalendarItems(access, range.from, range.to),
+    plansContent ? listCalendarCategories() : Promise.resolve(null),
+  ]);
 
   return (
     <>
@@ -36,7 +40,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         actions={
           <ButtonLink href={`/meetings/new?date=${view === 'month' ? today : focus}`} variant="primary">
             <Plus size={16} aria-hidden="true" />
-            {access.permissions[permissionKeys.contentCalendarManage] !== undefined ? 'New entry' : 'New meeting'}
+            {plansContent ? 'New entry' : 'New meeting'}
           </ButtonLink>
         }
       />
@@ -66,6 +70,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         items={items}
         today={today}
         canAddTasks={access.permissions[permissionKeys.tasksCreate] !== undefined}
+        contentCategories={categories
+          ?.filter((category) => category.is_active)
+          .map((category) => ({ value: category.id, label: category.name, people: category.members.map((member) => member.full_name) }))}
       />
     </>
   );

@@ -130,6 +130,9 @@ export function SearchableSelect({
       select.value = choice.value;
       onChange({ target: select, currentTarget: select } as ChangeEvent<HTMLSelectElement>);
     }
+    // Lets filter bars apply the choice straight away (ListInteractions). A custom event,
+    // because a real "change" would make React put the old value back first.
+    select?.dispatchEvent(new CustomEvent('searchable-change', { bubbles: true }));
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {

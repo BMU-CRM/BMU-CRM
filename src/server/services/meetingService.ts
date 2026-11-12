@@ -57,7 +57,7 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
     // Finished work stays on the calendar, struck through. Rejected work does not.
     database
       .from('tasks')
-      .select('id, title, due_date, due_time, status')
+      .select('id, title, due_date, due_time, status, meeting_id')
       .eq('assignee_id', access.employee.id)
       .neq('status', 'rejected')
       .gte('due_date', from)
@@ -68,6 +68,10 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
   if (tasks.error) throw tasks.error;
   if (holidays.error) throw holidays.error;
   const now = Date.now();
+  // Content work comes to its people as a task, which they start and submit; the entry
+  // itself would only repeat it, so it shows for the planner but not for them.
+  const entriesWithMyTask = new Set(tasks.data.flatMap((task) => (task.meeting_id ? [task.meeting_id] : [])));
+  const contentEntries = new Set(meetings.flatMap((meeting) => (meeting.category ? [meeting.id] : [])));
 
   const items: CalendarItem[] = [
     ...holidays.data.map((holiday) => ({
@@ -78,7 +82,7 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
       time: null,
       href: null,
     })),
-    ...meetings.map((meeting) => ({
+    ...meetings.filter((meeting) => !(meeting.category && entriesWithMyTask.has(meeting.id))).map((meeting) => ({
       id: meeting.id,
       kind: 'meeting' as const,
       date: datePartInIndia(meeting.starts_at),
@@ -93,7 +97,8 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
       id: task.id,
       kind: 'task' as const,
       date: task.due_date as string,
-      title: task.status === 'completed' ? `Done: ${task.title}` : `Due: ${task.title}`,
+      // Content work already reads "Posters and design: …", so it needs no "Due:".
+      title: task.status === 'completed' ? `Done: ${task.title}` : task.meeting_id && contentEntries.has(task.meeting_id) ? task.title : `Due: ${task.title}`,
       time: task.due_time ? task.due_time.slice(0, 5) : null,
       href: `/tasks/${task.id}`,
       isDone: task.status === 'completed',

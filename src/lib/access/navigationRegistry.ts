@@ -181,6 +181,13 @@ const navigationSections: NavigationSection[] = [
   },
 ];
 
+// Every main page in the menu. Pages below them (a task, a new invoice, an edit form)
+// show a Back button in the top bar instead of a breadcrumb trail.
+export function isMainPage(pathname: string) {
+  const path = pathname.replace(/\/+$/, '') || '/';
+  return path === '/' || ['/profile', '/notifications'].includes(path) || navigationSections.some((section) => section.items.some((item) => item.href === path));
+}
+
 function hasReach(scope: PermissionScope | undefined, minimum: PermissionScope | undefined) {
   if (scope === undefined) return false;
   return !minimum || permissionScopes.indexOf(scope) >= permissionScopes.indexOf(minimum);
