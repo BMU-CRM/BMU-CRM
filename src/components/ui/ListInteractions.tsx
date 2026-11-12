@@ -20,7 +20,10 @@ const interactive = 'a, button, input, select, textarea, label, summary, details
 function filterFormOf(target: EventTarget | null) {
   if (!(target instanceof Element)) return null;
   const form = target.closest('form');
-  if (!form || form.method.toLowerCase() !== 'get' || !form.closest('main')) return null;
+  // Only forms that say method="get" are filter bars. The browser reports "get" for any
+  // form without a method, which includes every save form (Drive links, comments, new
+  // tasks), so the attribute itself is checked, not form.method.
+  if (!form || form.getAttribute('method')?.toLowerCase() !== 'get' || !form.closest('main')) return null;
   return form;
 }
 
@@ -30,7 +33,7 @@ function addressFor(form: HTMLFormElement, pathname: string) {
     if (typeof value === 'string' && value.trim() !== '') query.append(name, value);
   }
   const action = form.getAttribute('action');
-  const path = action ? new URL(action, window.location.origin).pathname : pathname;
+  const path = action?.startsWith('/') ? new URL(action, window.location.origin).pathname : pathname;
   const text = query.toString();
   return text ? `${path}?${text}` : path;
 }
