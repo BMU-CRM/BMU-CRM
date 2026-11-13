@@ -18,6 +18,8 @@ const noPermission = 'You do not have permission to do this.';
 function refresh() {
   revalidatePath('/settings/services');
   revalidatePath('/clients', 'layout');
+  revalidatePath('/quotations', 'layout');
+  revalidatePath('/invoices', 'layout');
 }
 
 export async function saveServiceGroupAction(groupId: string | null, _previous: ActionResult, formData: FormData): Promise<ActionResult> {
@@ -49,10 +51,22 @@ export async function saveServiceAction(serviceId: string | null, _previous: Act
     name: formData.get('name') ?? '',
     groupId: formData.get('groupId') ?? '',
     isActive: serviceId ? formData.get('isActive') === 'on' : true,
+    billing: formData.get('billing') || 'monthly',
+    starterPrice: formData.get('starterPrice') ?? '',
+    growthPrice: formData.get('growthPrice') ?? '',
+    premiumPrice: formData.get('premiumPrice') ?? '',
   });
   if (!parsed.success) return validationFailure(parsed.error);
 
-  const row = { name: parsed.data.name, group_id: parsed.data.groupId, is_active: parsed.data.isActive };
+  const row = {
+    name: parsed.data.name,
+    group_id: parsed.data.groupId,
+    is_active: parsed.data.isActive,
+    billing: parsed.data.billing,
+    starter_price: parsed.data.starterPrice,
+    growth_price: parsed.data.growthPrice,
+    premium_price: parsed.data.premiumPrice,
+  };
   const database = await createDatabaseClient();
   const { data, error } = serviceId
     ? await database.from('services').update(row).eq('id', serviceId).select('id')

@@ -6,6 +6,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { todayInIndia } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
+import { listPricedServices } from '@/server/services/catalogService';
 import {
   getFinanceSettings,
   hasFinanceReach,
@@ -26,12 +27,13 @@ export default async function EditQuotationPage({ params }: EditQuotationPagePro
   const quotationId = parseId((await params).quotationId);
   if (!quotationId) notFound();
 
-  const [quotation, items, settings, clients, projects] = await Promise.all([
+  const [quotation, items, settings, clients, projects, services] = await Promise.all([
     getQuotation(quotationId),
     listQuotationItems(quotationId),
     getFinanceSettings(),
     listBillingClients(access, permissionKeys.quotationsManage),
     listProjectOptions(),
+    listPricedServices(),
   ]);
   if (!quotation || !hasFinanceReach(access, permissionKeys.quotationsManage, quotation)) notFound();
   if (quotation.status !== 'draft' && quotation.status !== 'sent') notFound();
@@ -61,6 +63,7 @@ export default async function EditQuotationPage({ params }: EditQuotationPagePro
         endDays={settings?.quotation_validity_days ?? 30}
         defaultTerms={settings?.quotation_terms ?? null}
         today={todayInIndia()}
+        services={services}
       />
     </>
   );

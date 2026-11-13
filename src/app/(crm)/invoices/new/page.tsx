@@ -5,6 +5,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { todayInIndia } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
+import { listPricedServices } from '@/server/services/catalogService';
 import { getFinanceSettings, listBillingClients, toClientChoices } from '@/server/services/financeService';
 import { listProjectOptions } from '@/server/services/projectService';
 
@@ -18,10 +19,11 @@ export default async function NewInvoicePage({ searchParams }: NewInvoicePagePro
   const access = await requirePagePermission(permissionKeys.invoicesManage);
   const clientId = parseId((await searchParams).clientId);
 
-  const [settings, clients, projects] = await Promise.all([
+  const [settings, clients, projects, services] = await Promise.all([
     getFinanceSettings(),
     listBillingClients(access, permissionKeys.invoicesManage),
     listProjectOptions(),
+    listPricedServices(),
   ]);
 
   return (
@@ -40,6 +42,7 @@ export default async function NewInvoicePage({ searchParams }: NewInvoicePagePro
         endDays={settings?.payment_terms_days ?? 15}
         defaultTerms={settings?.invoice_terms ?? null}
         today={todayInIndia()}
+        services={services}
       />
     </>
   );

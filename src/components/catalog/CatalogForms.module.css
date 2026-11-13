@@ -1,0 +1,6 @@
+/* A sub service: its name and billing on one line, its plan prices on the next. */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

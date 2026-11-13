@@ -9,8 +9,8 @@ describe('services and industries', () => {
   const { admin, ids, clients: as } = people;
   let clientId = '';
   let seo = '';
-  let localSeo = '';
-  let photography = '';
+  let businessProfile = '';
+  let videoEditing = '';
 
   async function serviceId(name: string) {
     return (await admin.from('services').select('id').eq('name', name).single()).data!.id;
@@ -28,9 +28,9 @@ describe('services and industries', () => {
     await people.addPerson('otherManager', 'Client Manager', 'Client Services', 'founder');
     await people.addPerson('employee', 'Employee', 'Design & Development', 'founder');
 
-    seo = await serviceId('SEO (Search Engine Optimisation)');
-    localSeo = await serviceId('Local SEO');
-    photography = await serviceId('Photography');
+    seo = await serviceId('SEO');
+    businessProfile = await serviceId('Google Business Profile');
+    videoEditing = await serviceId('Video Editing');
     const { data } = await as.manager!
       .from('clients')
       .insert({ company_name: `Catalog client ${runId}`, client_manager_id: ids.manager! })
@@ -47,10 +47,56 @@ describe('services and industries', () => {
     expect(groups.data?.map((group) => group.name)).toEqual([
       'Marketing & Visibility', 'Social & Personal Brand', 'UGC & Creator Marketing', 'Brand & Design', 'Web & AI', 'Content & Production',
     ]);
-    expect(services.count).toBe(29);
+    // The 29 first sub services, plus 14 from the price list (the old ones are kept, hidden).
+    expect(services.count).toBe(43);
     expect(industries.data).toHaveLength(58);
     expect(industries.data?.some((industry) => industry.name.endsWith('Marketing'))).toBe(false);
     expect(industries.data?.some((industry) => industry.name === 'Real Estate')).toBe(true);
+  });
+
+  it('has the price list: 22 sub services that can be chosen, each billed and priced', async () => {
+    const { data: shown } = await admin.from('services').select('name, billing, starter_price, growth_price, premium_price').eq('is_active', true);
+    const byName = new Map((shown ?? []).map((service) => [service.name, service]));
+    const price = (name: string) => {
+      const service = byName.get(name)!;
+      return [service.billing, Number(service.starter_price), Number(service.growth_price), Number(service.premium_price)];
+    };
+
+    expect(shown).toHaveLength(22);
+    expect((shown ?? []).every((service) => service.starter_price !== null && service.growth_price !== null && service.premium_price !== null)).toBe(true);
+    expect(price('SEO')).toEqual(['monthly', 15000, 30000, 60000]);
+    expect(price('ChatGPT Ads')).toEqual(['monthly', 20000, 40000, 75000]);
+    expect(price('Social Media Management — Influencers')).toEqual(['monthly', 25000, 45000, 65000]);
+    expect(price('Experiential Ads')).toEqual(['per_unit', 25000, 50000, 100000]);
+    expect(price('Complete Branding')).toEqual(['one_time', 40000, 75000, 150000]);
+    expect(price('Website Design & Development')).toEqual(['one_time', 25000, 60000, 125000]);
+    expect(price('Podcast Shoots')).toEqual(['per_unit', 15000, 30000, 50000]);
+  });
+
+  it('renames the matching old sub services and hides the rest', async () => {
+    const { data: old } = await admin
+      .from('services')
+      .select('name, is_active')
+      .in('name', ['SEO (Search Engine Optimisation)', 'UGC Videos', 'Website Design', 'Local SEO', 'Photography', 'Website Development']);
+
+    expect((old ?? []).map((service) => [service.name, service.is_active]).sort()).toEqual([
+      ['Local SEO', false],
+      ['Photography', false],
+      ['Website Development', false],
+    ]);
+  });
+
+  it('lets only those who manage the lists change prices', async () => {
+    const byManager = await as.manager!.from('services').update({ starter_price: 1 }).eq('id', seo).select('id');
+    const byFounder = await as.founder!.from('services').update({ starter_price: 16000 }).eq('id', seo).select('starter_price');
+    const negative = await as.founder!.from('services').update({ growth_price: -1 }).eq('id', seo).select('id');
+    const badBilling = await as.founder!.from('services').update({ billing: 'yearly' }).eq('id', seo).select('id');
+
+    expect(byManager.data ?? []).toHaveLength(0);
+    expect(Number(byFounder.data?.[0]?.starter_price)).toBe(16000);
+    expect(negative.error?.code).toBe('23514');
+    expect(badBilling.error?.code).toBe('23514');
+    await as.founder!.from('services').update({ starter_price: 15000 }).eq('id', seo).select('id');
   });
 
   it('lets every signed-in person read the lists, but not anonymous visitors', async () => {
@@ -72,18 +118,18 @@ describe('services and industries', () => {
   });
 
   it('sets a client\'s services in one step, with their names', async () => {
-    const { error } = await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [seo, localSeo] });
+    const { error } = await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [seo, businessProfile] });
 
     expect(error).toBeNull();
-    expect(await currentServices(clientId)).toEqual(['Local SEO', 'SEO (Search Engine Optimisation)']);
+    expect(await currentServices(clientId)).toEqual(['Google Business Profile', 'SEO']);
   });
 
   it('replaces the current services, and keeps ended ones as history', async () => {
-    await admin.from('client_services').update({ status: 'ended' }).eq('client_id', clientId).eq('service_id', localSeo);
-    await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [seo, photography] });
+    await admin.from('client_services').update({ status: 'ended' }).eq('client_id', clientId).eq('service_id', businessProfile);
+    await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [seo, videoEditing] });
 
     const { data: ended } = await admin.from('client_services').select('id').eq('client_id', clientId).eq('status', 'ended');
-    expect(await currentServices(clientId)).toEqual(['Photography', 'SEO (Search Engine Optimisation)']);
+    expect(await currentServices(clientId)).toEqual(['SEO', 'Video Editing']);
     expect(ended).toHaveLength(1);
   });
 
@@ -91,7 +137,7 @@ describe('services and industries', () => {
     await admin.from('client_services').insert({ client_id: clientId, service_name: 'Old typed service', status: 'active' });
     await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [seo] });
 
-    expect(await currentServices(clientId)).toEqual(['Old typed service', 'SEO (Search Engine Optimisation)']);
+    expect(await currentServices(clientId)).toEqual(['Old typed service', 'SEO']);
   });
 
   it('requires at least one service from the list', async () => {
@@ -116,7 +162,7 @@ describe('services and industries', () => {
       .single();
 
     const first = await as.otherManager!.rpc('set_client_services', { p_client: data!.id, p_services: [seo] });
-    const later = await as.otherManager!.rpc('set_client_services', { p_client: data!.id, p_services: [photography] });
+    const later = await as.otherManager!.rpc('set_client_services', { p_client: data!.id, p_services: [videoEditing] });
 
     expect(first.error).toBeNull();
     expect(later.error?.code).toBe('42501');

@@ -16,6 +16,7 @@ import { Panel } from '@/components/ui/Panel';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { idleResult } from '@/lib/actionResult';
+import type { PricedService } from '@/lib/catalog/servicePricing';
 import { isInterStateSupply } from '@/lib/finance/documentTotals';
 import { stateOptionsWith } from '@/lib/finance/indianStates';
 import { saveInvoiceAction } from '@/server/actions/invoiceActions';
@@ -52,6 +53,7 @@ type FinanceDocumentFormProps = {
   endDays: number;
   defaultTerms: string | null;
   today: string;
+  services: PricedService[];
 };
 
 // One form for quotations and invoices. Bill-to details left empty are filled in from
@@ -68,6 +70,7 @@ export function FinanceDocumentForm({
   endDays,
   defaultTerms,
   today,
+  services,
 }: FinanceDocumentFormProps) {
   const save = kind === 'quotation' ? saveQuotationAction : saveInvoiceAction;
   const [result, formAction] = useActionState(save.bind(null, document?.id ?? null), idleResult);
@@ -185,6 +188,7 @@ export function FinanceDocumentForm({
             defaultTaxRate={defaultTaxRate}
             isInterState={isInterStateSupply(companyState, effectivePlace)}
             error={errors?.items}
+            services={services}
           />
         </Panel>
 

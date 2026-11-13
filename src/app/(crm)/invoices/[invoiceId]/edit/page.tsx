@@ -6,6 +6,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { todayInIndia } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
+import { listPricedServices } from '@/server/services/catalogService';
 import {
   getFinanceSettings,
   hasFinanceReach,
@@ -27,12 +28,13 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
   const invoiceId = parseId((await params).invoiceId);
   if (!invoiceId) notFound();
 
-  const [invoice, items, settings, clients, projects] = await Promise.all([
+  const [invoice, items, settings, clients, projects, services] = await Promise.all([
     getInvoice(invoiceId),
     listInvoiceItems(invoiceId),
     getFinanceSettings(),
     listBillingClients(access, permissionKeys.invoicesManage),
     listProjectOptions(),
+    listPricedServices(),
   ]);
   if (!invoice || invoice.status !== 'draft' || !hasFinanceReach(access, permissionKeys.invoicesManage, invoice)) notFound();
 
@@ -61,6 +63,7 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
         endDays={settings?.payment_terms_days ?? 15}
         defaultTerms={settings?.invoice_terms ?? null}
         today={todayInIndia()}
+        services={services}
       />
     </>
   );

@@ -5,6 +5,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { todayInIndia } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
+import { listPricedServices } from '@/server/services/catalogService';
 import { getFinanceSettings, listBillingClients, toClientChoices } from '@/server/services/financeService';
 import { listProjectOptions } from '@/server/services/projectService';
 
@@ -18,10 +19,11 @@ export default async function NewQuotationPage({ searchParams }: NewQuotationPag
   const access = await requirePagePermission(permissionKeys.quotationsManage);
   const clientId = parseId((await searchParams).clientId);
 
-  const [settings, clients, projects] = await Promise.all([
+  const [settings, clients, projects, services] = await Promise.all([
     getFinanceSettings(),
     listBillingClients(access, permissionKeys.quotationsManage),
     listProjectOptions(),
+    listPricedServices(),
   ]);
 
   return (
@@ -37,6 +39,7 @@ export default async function NewQuotationPage({ searchParams }: NewQuotationPag
         endDays={settings?.quotation_validity_days ?? 30}
         defaultTerms={settings?.quotation_terms ?? null}
         today={todayInIndia()}
+        services={services}
       />
     </>
   );

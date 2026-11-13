@@ -1,15 +1,18 @@
 import 'server-only';
+import { isServiceBilling, type PricedService } from '@/lib/catalog/servicePricing';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 
 // The services (in groups) and industries clients choose from.
 
-const byName = (first: { name: string }, second: { name: string }) => first.name.localeCompare(second.name, 'en', { sensitivity: 'base' });
+const toPrice = (value: number | string | null) => (value === null ? null : Number(value));
+
+const byName =(first: { name: string }, second: { name: string }) => first.name.localeCompare(second.name, 'en', { sensitivity: 'base' });
 
 export async function getCatalog() {
   const database = await createDatabaseClient();
   const [groups, services, industries] = await Promise.all([
     database.from('service_groups').select('id, name, sort_order, is_active').order('sort_order').order('name'),
-    database.from('services').select('id, group_id, name, is_active'),
+    database.from('services').select('id, group_id, name, is_active, billing, starter_price, growth_price, premium_price'),
     database.from('industries').select('id, name, is_active'),
   ]);
   if (groups.error) throw groups.error;
@@ -51,6 +54,26 @@ export async function listServiceOptions(keepIds: string[] = []) {
 }
 
 export type SubServiceOption = Awaited<ReturnType<typeof listServiceOptions>>[number];
+
+// Sub services with at least one plan price, for quotation and invoice items: under
+// their service, both alphabetical. Hidden ones are left out.
+export async function listPricedServices(): Promise<PricedService[]> {
+  const { groups } = await getCatalog();
+  return [...groups]
+    .filter((group) => group.is_active)
+    .sort(byName)
+    .flatMap((group) =>
+      group.services
+        .filter((service) => service.is_active && [service.starter_price, service.growth_price, service.premium_price].some((price) => price !== null))
+        .map((service) => ({
+          id: service.id,
+          name: service.name,
+          group: group.name,
+          billing: isServiceBilling(service.billing) ? service.billing : 'monthly',
+          prices: { starter: toPrice(service.starter_price), growth: toPrice(service.growth_price), premium: toPrice(service.premium_price) },
+        })),
+    );
+}
 
 // Industries for a picker, alphabetical. A hidden industry stays if the client has it.
 export async function listIndustryOptions(keepId?: string | null) {

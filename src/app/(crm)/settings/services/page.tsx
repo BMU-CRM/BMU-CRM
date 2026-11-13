@@ -18,16 +18,24 @@ export default async function ServicesSettingsPage() {
     <>
       <PageHeader
         title="Services and industries"
-        description="What clients choose from when they are added: first the services, then the sub services under them. Untick “Can be chosen” to hide an entry; clients who already have it keep it."
+        description="What clients choose from when they are added: first the services, then the sub services under them. Each sub service has its billing and Starter, Growth and Premium prices (before GST), which fill in quotation and invoice items. Untick “Can be chosen” to hide an entry; clients who already have it keep it."
       />
       <div className={layout.stack}>
-        {groups.map((group) => (
-          <Panel key={group.id} title={group.name} description={`${group.services.length} sub services`} flush>
+        {groups.map((group) => {
+          const shown = group.services.filter((service) => service.is_active);
+          const hidden = group.services.length - shown.length;
+          return (
+          <Panel
+            key={group.id}
+            title={group.name}
+            description={`${shown.length} sub services${hidden ? `, ${hidden} hidden` : ''}`}
+            flush
+          >
             <ul className={layout.list}>
               <li className={layout.sectionForm}>
                 <ServiceGroupForm group={group} />
               </li>
-              {group.services.map((service) => (
+              {[...shown, ...group.services.filter((service) => !service.is_active)].map((service) => (
                 <li key={service.id} className={layout.sectionForm}>
                   <ServiceForm service={service} groupId={group.id} groups={groupOptions} />
                 </li>
@@ -38,7 +46,8 @@ export default async function ServicesSettingsPage() {
               </li>
             </ul>
           </Panel>
-        ))}
+          );
+        })}
         <Panel title="Add a service">
           <ServiceGroupForm />
         </Panel>

@@ -4971,28 +4971,40 @@ export type Database = {
       }
       "services": {
         Row: {
+          "billing": string
           "created_at": string
           "group_id": string
+          "growth_price": number | null
           "id": string
           "is_active": boolean
           "name": string
+          "premium_price": number | null
+          "starter_price": number | null
           "updated_at": string
         }
         ComputedFields: never
         Insert: {
+          "billing"?: string
           "created_at"?: string
           "group_id": string
+          "growth_price"?: number | null
           "id"?: string
           "is_active"?: boolean
           "name": string
+          "premium_price"?: number | null
+          "starter_price"?: number | null
           "updated_at"?: string
         }
         Update: {
+          "billing"?: string
           "created_at"?: string
           "group_id"?: string
+          "growth_price"?: number | null
           "id"?: string
           "is_active"?: boolean
           "name"?: string
+          "premium_price"?: number | null
+          "starter_price"?: number | null
           "updated_at"?: string
         }
         Relationships: [
