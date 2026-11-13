@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { holidayKindLabels } from '@/lib/validation/hrSchema';
 import styles from './HolidayCalendar.module.css';
 

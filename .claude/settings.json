@@ -1,5 +1,9 @@
 {
   "permissions": {
+    "allow": [
+      "Read(//c/Users/dhanu/Downloads/BMU Mobile App/**)",
+      "Bash(grep -n -v \"^\\\\s*$\")"
+    ],
     "additionalDirectories": [
       "C:\\Users\\dhanu\\.claude\\projects\\e--CRM-2-0\\versions"
     ]

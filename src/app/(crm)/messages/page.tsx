@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { MessagesShell } from '@/components/messages/MessagesShell';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { formatDateTime } from '@/lib/formatDate';

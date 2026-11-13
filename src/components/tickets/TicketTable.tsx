@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PriorityBadge } from '@/components/tasks/TaskBadges';
 import styles from '@/components/ui/DataTable.module.css';
 import { formatDateTime } from '@/lib/formatDate';

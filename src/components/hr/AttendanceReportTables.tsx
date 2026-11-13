@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import {

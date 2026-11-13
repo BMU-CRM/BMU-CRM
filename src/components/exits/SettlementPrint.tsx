@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PrintButton } from '@/components/finance/PrintButton';
 import styles from '@/components/payroll/PayslipPrint.module.css';
 import { amountInWords, formatRupees } from '@/lib/finance/moneyFormat';

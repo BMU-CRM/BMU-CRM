@@ -8,6 +8,7 @@ import {
 import type { CurrentAccess } from '@/server/services/accessService';
 import { ClientProjectStatsWidget } from './ClientProjectStatsWidget';
 import { DepartmentHeadcountWidget } from './DepartmentHeadcountWidget';
+import { DocumentSignatureWidget } from './DocumentSignatureWidget';
 import { AwaitingQuotationsWidget, FinanceStatsWidget, OverdueInvoicesWidget } from './FinanceWidgets';
 import { FollowUpsWidget } from './FollowUpsWidget';
 import { AttendanceTodayWidget, LeaveApprovalsWidget, LeaveBalanceWidget } from './HrWidgets';
@@ -43,6 +44,7 @@ const widgetComponents: Record<DashboardWidgetKey, (access: CurrentAccess) => Re
   overdueInvoices: () => <OverdueInvoicesWidget />,
   awaitingQuotations: () => <AwaitingQuotationsWidget />,
   myWorkload: () => <MyWorkloadWidget />,
+  documentSignature: (access) => <DocumentSignatureWidget access={access} />,
 };
 
 type WidgetStackProps = {

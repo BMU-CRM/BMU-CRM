@@ -1,6 +1,6 @@
 import { Pencil, ReceiptText } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { StatementImportForm } from '@/components/finance/LedgerForms';
 import { ActionButton } from '@/components/ui/ActionButton';

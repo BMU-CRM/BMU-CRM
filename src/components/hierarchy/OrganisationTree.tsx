@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';
 import type { OrganisationNode, OrganisationPerson } from '@/lib/organisation/buildOrganisationTree';
 import styles from './OrganisationTree.module.css';

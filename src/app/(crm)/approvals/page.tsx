@@ -1,6 +1,6 @@
 import { Stamp } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { LeaveDecisionButtons } from '@/components/hr/LeaveDecisionButtons';
 import { TaskTable } from '@/components/tasks/TaskTable';

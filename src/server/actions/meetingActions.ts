@@ -11,6 +11,8 @@ import {
 } from '@/lib/actionResult';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { indiaDateTime } from '@/lib/calendar/calendarRange';
+import { parseCalendarSheet } from '@/lib/calendar/parseCalendarSheet';
+import { readSpreadsheet } from '@/lib/csv/readSpreadsheet';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import { calendarCategorySchema, meetingNotesSchema, meetingSchema } from '@/lib/validation/meetingSchema';
 import { getActionAccess } from '@/server/services/accessService';
@@ -152,6 +154,88 @@ export async function addContentWorkAction(values: {
   revalidatePath('/calendar');
   revalidatePath('/tasks', 'layout');
   return success('Added. The category’s people have it in their calendar and tasks.');
+}
+
+// Content work from a spreadsheet (CSV or Excel), one entry per row. Every row is
+// checked first; then all of them are added in one step, so a sheet is never half
+// imported. Rows already in the calendar (same category, title, date and time) are
+// skipped, so the same sheet can be imported again after adding rows to it.
+export async function importContentCalendarAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.contentCalendarManage))) return failure(noPermission);
+  const file = formData.get('file');
+  if (!(file instanceof File) || file.size === 0) return failure('Choose a spreadsheet file.');
+  if (file.size > 2 * 1024 * 1024) return failure('The file can be up to 2 MB.');
+
+  const rows = await readSpreadsheet(file);
+  if (!rows) return failure('Use a CSV or Excel (.xlsx) file. From Google Sheets: File, Download, Microsoft Excel or CSV.');
+  const sheet = parseCalendarSheet(rows);
+  if (sheet.error) return failure(sheet.error);
+  if (sheet.entries.length > 300) return failure('Import up to 300 rows at a time.');
+
+  const database = await createDatabaseClient();
+  const { data: categories, error: categoryError } = await database.from('calendar_categories').select('id, name').eq('is_active', true);
+  if (categoryError) return databaseFailure(categoryError);
+  const categoryIds = new Map(categories.map((category) => [category.name.trim().toLowerCase(), category.id]));
+
+  const problems = [...sheet.problems];
+  const wanted = sheet.entries.flatMap((entry) => {
+    const categoryId = categoryIds.get(entry.category.toLowerCase());
+    if (!categoryId) {
+      problems.push({ line: entry.line, message: `there is no category called "${entry.category}"` });
+      return [];
+    }
+    return [{ ...entry, categoryId, startsAt: indiaDateTime(entry.date, entry.startTime), endsAt: indiaDateTime(entry.date, entry.endTime) }];
+  });
+  if (problems.length > 0) {
+    const listed = problems
+      .sort((first, second) => first.line - second.line)
+      .slice(0, 8)
+      .map((problem) => `row ${problem.line}: ${problem.message}`);
+    return failure(
+      `Nothing was imported. Fix ${problems.length === 1 ? 'this row' : `these ${problems.length} rows`} and try again: ${listed.join('; ')}${problems.length > 8 ? '; …' : ''}. Categories in use: ${categories.map((category) => category.name).join(', ')}.`,
+    );
+  }
+
+  const times = wanted.map((entry) => entry.startsAt).sort();
+  const { data: existing, error: existingError } = await database
+    .from('meetings')
+    .select('title, category_id, starts_at')
+    .not('category_id', 'is', null)
+    .gte('starts_at', times[0]!)
+    .lte('starts_at', times.at(-1)!);
+  if (existingError) return databaseFailure(existingError);
+  const key = (categoryId: string | null, title: string, startsAt: string) => `${categoryId}|${title.trim().toLowerCase()}|${new Date(startsAt).getTime()}`;
+  const seen = new Set(existing.map((meeting) => key(meeting.category_id, meeting.title, meeting.starts_at)));
+
+  const fresh = wanted.filter((entry) => {
+    const entryKey = key(entry.categoryId, entry.title, entry.startsAt);
+    if (seen.has(entryKey)) return false;
+    seen.add(entryKey);
+    return true;
+  });
+  const skipped = wanted.length - fresh.length;
+  if (fresh.length === 0) return success(`Everything in this sheet is already in the calendar (${skipped} ${skipped === 1 ? 'row' : 'rows'}).`);
+
+  const { data: added, error } = await database
+    .from('meetings')
+    .insert(
+      fresh.map((entry) => ({
+        title: entry.title,
+        agenda: entry.brief || null,
+        kind: 'content' as const,
+        category_id: entry.categoryId,
+        starts_at: entry.startsAt,
+        ends_at: entry.endsAt,
+      })),
+    )
+    .select('id');
+  if (error) return databaseFailure(error);
+
+  revalidatePath('/calendar');
+  revalidatePath('/tasks', 'layout');
+  return success(
+    `Imported ${added.length} ${added.length === 1 ? 'entry' : 'entries'}. Each category’s people have them in their calendar and tasks.${skipped > 0 ? ` ${skipped} already in the calendar ${skipped === 1 ? 'was' : 'were'} skipped.` : ''}`,
+  );
 }
 
 export async function saveCalendarCategoryAction(categoryId: string | null, _previous: ActionResult, formData: FormData): Promise<ActionResult> {

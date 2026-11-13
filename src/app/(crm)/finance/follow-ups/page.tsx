@@ -1,6 +1,6 @@
 import { Download, PhoneCall } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { FollowUpStatusBadge } from '@/components/finance/FollowUpStatusBadge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';

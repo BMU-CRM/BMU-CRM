@@ -106,7 +106,7 @@ export async function listInvoiceItems(invoiceId: string) {
   const database = await createDatabaseClient();
   const { data, error } = await database
     .from('invoice_items')
-    .select('id, position, description, hsn_sac, quantity, unit_price, tax_rate, taxable_amount, tax_amount')
+    .select('id, position, description, hsn_sac, quantity, unit_price, tax_rate, taxable_amount, tax_amount, service_group, service_name, billing')
     .eq('invoice_id', invoiceId)
     .order('position');
   if (error) throw error;

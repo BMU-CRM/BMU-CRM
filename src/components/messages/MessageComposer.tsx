@@ -1,7 +1,7 @@
 'use client';
 
 import { SendHorizontal, X } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition, type KeyboardEvent } from 'react';
 import type { SelectOption } from '@/components/ui/FormFields';

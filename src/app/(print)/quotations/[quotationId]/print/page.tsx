@@ -7,6 +7,7 @@ import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
 import { getFinanceSettings } from '@/server/services/financeService';
 import { getQuotation, listQuotationItems } from '@/server/services/quotationService';
+import { getSignatory } from '@/server/services/signatureService';
 
 export const metadata: Metadata = { title: 'Print quotation' };
 
@@ -25,6 +26,7 @@ export default async function PrintQuotationPage({ params }: PrintQuotationPageP
     getFinanceSettings(),
   ]);
   if (!quotation) notFound();
+  const signatory = await getSignatory(quotation.signed_by);
 
   return (
     <PrintableDocument
@@ -43,8 +45,11 @@ export default async function PrintQuotationPage({ params }: PrintQuotationPageP
       money={quotation}
       notes={quotation.notes}
       terms={quotation.terms}
-      showBankDetails={false}
+      showBankDetails
       isTaxInvoice={false}
+      signatory={signatory}
+      showSeal={quotation.show_seal}
+      closingLine="We look forward to working with you"
     />
   );
 }

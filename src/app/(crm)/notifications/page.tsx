@@ -14,7 +14,7 @@ import { parsePage } from '@/lib/parseListParams';
 import { markAllNotificationsReadAction } from '@/server/actions/notificationActions';
 import { requireAccess } from '@/server/services/accessService';
 import { listNotifications, notificationsPerPage } from '@/server/services/notificationService';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 
 export const metadata: Metadata = { title: 'Notifications' };
 

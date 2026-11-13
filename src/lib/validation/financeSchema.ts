@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { serviceBillings } from '@/lib/catalog/servicePricing';
 import type { Database } from '@/types/databaseTypes';
 
 export type QuotationStatus = Database['public']['Enums']['quotation_status'];
@@ -83,6 +84,9 @@ export const financeDocumentSchema = z
     placeOfSupply: optionalText(60),
     notes: optionalText(2000),
     terms: optionalText(2000),
+    // Sign with your own signature, keep the one there, or none.
+    signature: z.enum(['mine', 'keep', 'none']).catch('keep'),
+    showSeal: z.boolean(),
   })
   .refine((values) => !values.endDate || values.endDate >= values.issueDate, {
     path: ['endDate'],
@@ -107,6 +111,8 @@ export function readFinanceDocument(formData: FormData) {
     placeOfSupply: text('placeOfSupply'),
     notes: text('notes'),
     terms: text('terms'),
+    signature: text('signature') || 'keep',
+    showSeal: formData.get('showSeal') === 'on',
   });
 }
 
@@ -125,6 +131,8 @@ export function documentForDatabase(values: FinanceDocumentValues, endDateColumn
     place_of_supply: values.placeOfSupply,
     notes: values.notes,
     terms: values.terms,
+    signature: values.signature,
+    show_seal: values.showSeal,
   };
 }
 
@@ -139,6 +147,10 @@ const lineItemSchema = z.object({
     .refine((value) => value < 10_000_000_000, 'Use a smaller quantity.'),
   unitPrice: decimal('Enter a rate in rupees, with up to two decimal places.'),
   taxRate: decimal('Choose a GST rate.').refine((value) => value <= 40, 'GST cannot be above 40%.'),
+  // The service it is (main and sub service) and how it is billed. All optional.
+  serviceGroup: z.string().trim().max(80, 'Use a shorter service name.'),
+  serviceName: z.string().trim().max(120, 'Use a shorter sub service name.'),
+  billing: z.enum(['', ...serviceBillings], 'Choose how it is billed.'),
 });
 
 export type LineItem = z.infer<typeof lineItemSchema>;
@@ -153,6 +165,9 @@ export function parseLineItems(formData: FormData): LineItemsResult {
   const quantities = read('itemQuantity');
   const prices = read('itemUnitPrice');
   const rates = read('itemTaxRate');
+  const groups = read('itemServiceGroup');
+  const names = read('itemServiceName');
+  const billings = read('itemBilling');
 
   const items: LineItem[] = [];
   for (const [index, description] of descriptions.entries()) {
@@ -162,6 +177,9 @@ export function parseLineItems(formData: FormData): LineItemsResult {
       quantity: quantities[index] ?? '',
       unitPrice: prices[index] ?? '',
       taxRate: rates[index] ?? '',
+      serviceGroup: groups[index] ?? '',
+      serviceName: names[index] ?? '',
+      billing: billings[index] ?? '',
     };
     if (!raw.description.trim() && !raw.hsnSac.trim() && !raw.unitPrice.trim()) continue;
 
@@ -182,6 +200,9 @@ export function itemsForDatabase(items: LineItem[]) {
     quantity: item.quantity,
     unit_price: item.unitPrice,
     tax_rate: item.taxRate,
+    service_group: item.serviceGroup,
+    service_name: item.serviceName,
+    billing: item.billing,
   }));
 }
 
@@ -217,6 +238,11 @@ export const financeSettingsSchema = z.object({
     .transform((value) => (value === '' ? null : value))
     .pipe(z.email('Enter a valid email address.').nullable()),
   phone: optionalText(30),
+  website: z
+    .string()
+    .trim()
+    .transform((value) => (value === '' ? null : /^https?:\/\//i.test(value) ? value : `https://${value}`))
+    .pipe(z.url({ protocol: /^https?$/, error: 'Enter a web address such as https://www.example.com.' }).max(160).nullable()),
   invoicePrefix: z
     .string()
     .trim()

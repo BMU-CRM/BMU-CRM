@@ -1,6 +1,6 @@
 import { Download, Printer, TriangleAlert, Users } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { ApprovalHistoryPanel } from '@/components/approvals/ApprovalHistoryPanel';
 import { PayrollStatusBadge } from '@/components/payroll/PayrollTabs';

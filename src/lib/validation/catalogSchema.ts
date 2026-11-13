@@ -19,6 +19,11 @@ export const serviceSchema = z.object({
   groupId: z.uuid('Choose the service it belongs to.'),
   isActive: z.boolean(),
   billing: z.enum(serviceBillings, 'Choose how it is billed.'),
+  description: z
+    .string()
+    .trim()
+    .max(500, 'Use 500 characters or fewer.')
+    .transform((value) => (value === '' ? null : value)),
   starterPrice: planPrice,
   growthPrice: planPrice,
   premiumPrice: planPrice,

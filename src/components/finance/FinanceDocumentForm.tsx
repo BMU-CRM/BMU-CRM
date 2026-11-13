@@ -1,7 +1,9 @@
 'use client';
 
 import { useActionState, useState } from 'react';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { ButtonLink } from '@/components/ui/Button';
+import formStyles from '@/components/ui/FormFields.module.css';
 import {
   FormActions,
   FormGrid,
@@ -21,6 +23,7 @@ import { isInterStateSupply } from '@/lib/finance/documentTotals';
 import { stateOptionsWith } from '@/lib/finance/indianStates';
 import { saveInvoiceAction } from '@/server/actions/invoiceActions';
 import { saveQuotationAction } from '@/server/actions/quotationActions';
+import type { SigningChoice } from '@/server/services/signatureService';
 import { DocumentItemsEditor, type ItemDraft } from './DocumentItemsEditor';
 
 export type ClientChoice = SelectOption & { billingState: string | null; address: string | null; gstin: string | null };
@@ -54,7 +57,39 @@ type FinanceDocumentFormProps = {
   defaultTerms: string | null;
   today: string;
   services: PricedService[];
+  signing: SigningChoice;
 };
+
+// Sign with your own signature, keep whoever signed it, or leave it to sign by hand.
+// The seal printed is the signer's.
+function SigningFields({ signing }: { signing: SigningChoice }) {
+  const { currentSigner, myId, hasSignature, hasSeal } = signing;
+  const signedByMe = currentSigner?.id === myId;
+  const options: SelectOption[] = [];
+  if (currentSigner) options.push({ value: 'keep', label: signedByMe ? 'Sign with my signature' : `Keep ${currentSigner.name}’s signature` });
+  if (hasSignature && !signedByMe) options.push({ value: 'mine', label: 'Sign with my signature' });
+  options.push({ value: 'none', label: 'No signature (sign by hand after printing)' });
+  const initial = currentSigner ? 'keep' : hasSignature ? 'mine' : 'none';
+  const [choice, setChoice] = useState(initial);
+
+  return (
+    <>
+      <FormGrid>
+        <SelectField label="Signature" name="signature" options={options} value={choice} onChange={(event) => setChoice(event.target.value)} />
+      </FormGrid>
+      {choice !== 'none' && (
+        <label className={layout.spaced}>
+          <input type="checkbox" name="showSeal" defaultChecked={signing.showSeal ?? hasSeal} /> Add the company seal beside the signature
+        </label>
+      )}
+      {!hasSignature && (
+        <p className={formStyles.hint}>
+          To sign with your own signature, first upload it and the company seal in <Link href="/profile#signature">My profile</Link>.
+        </p>
+      )}
+    </>
+  );
+}
 
 // One form for quotations and invoices. Bill-to details left empty are filled in from
 // the client when it is saved.
@@ -71,6 +106,7 @@ export function FinanceDocumentForm({
   defaultTerms,
   today,
   services,
+  signing,
 }: FinanceDocumentFormProps) {
   const save = kind === 'quotation' ? saveQuotationAction : saveInvoiceAction;
   const [result, formAction] = useActionState(save.bind(null, document?.id ?? null), idleResult);
@@ -189,7 +225,12 @@ export function FinanceDocumentForm({
             isInterState={isInterStateSupply(companyState, effectivePlace)}
             error={errors?.items}
             services={services}
+            withServiceDetails
           />
+        </Panel>
+
+        <Panel title="Signature and seal" description="Printed at the bottom, with your name and title under the signature.">
+          <SigningFields signing={signing} />
         </Panel>
 
         <Panel title="Notes and terms" description="Both are printed on the document the client sees.">

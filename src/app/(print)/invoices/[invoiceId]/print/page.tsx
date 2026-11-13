@@ -7,6 +7,7 @@ import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
 import { getFinanceSettings } from '@/server/services/financeService';
 import { getInvoice, listInvoiceItems } from '@/server/services/invoiceService';
+import { getSignatory } from '@/server/services/signatureService';
 
 export const metadata: Metadata = { title: 'Print invoice' };
 
@@ -29,6 +30,7 @@ export default async function PrintInvoicePage({ params }: PrintInvoicePageProps
 
   const [invoice, items, settings] = await Promise.all([getInvoice(invoiceId), listInvoiceItems(invoiceId), getFinanceSettings()]);
   if (!invoice) notFound();
+  const signatory = await getSignatory(invoice.signed_by);
 
   const isDraft = invoice.status === 'draft';
 
@@ -51,6 +53,9 @@ export default async function PrintInvoicePage({ params }: PrintInvoicePageProps
       terms={invoice.terms}
       showBankDetails={invoice.status !== 'cancelled' && invoice.status !== 'paid'}
       isTaxInvoice={!isDraft}
+      signatory={signatory}
+      showSeal={invoice.show_seal}
+      closingLine="Thank you for your business"
     />
   );
 }

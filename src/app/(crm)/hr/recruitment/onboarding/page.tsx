@@ -1,6 +1,6 @@
 import { ClipboardCheck } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { RecruitmentTabs } from '@/components/recruitment/RecruitmentTabs';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { Button, ButtonLink } from '@/components/ui/Button';

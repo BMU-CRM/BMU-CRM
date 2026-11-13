@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import styles from '@/components/tasks/TaskViewTabs.module.css';
 import type { FileSection } from '@/server/services/fileService';
 

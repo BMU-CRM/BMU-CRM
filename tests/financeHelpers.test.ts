@@ -156,7 +156,23 @@ describe('parseLineItems', () => {
 
   it('reads items, accepting Indian commas and skipping empty rows', () => {
     const result = parseLineItems(form([['Design', '998314', '2', '1,50,000.50', '18'], ['', '', '1', '', '18']]));
-    expect(result).toEqual({ ok: true, items: [{ description: 'Design', hsnSac: '998314', quantity: 2, unitPrice: 150000.5, taxRate: 18 }] });
+    expect(result).toEqual({
+      ok: true,
+      items: [{ description: 'Design', hsnSac: '998314', quantity: 2, unitPrice: 150000.5, taxRate: 18, serviceGroup: '', serviceName: '', billing: '' }],
+    });
+  });
+
+  it('reads the service and how an item is billed, and refuses a made-up billing', () => {
+    const data = form([['SEO work', '', '3', '15000', '18']]);
+    data.append('itemServiceGroup', 'Marketing & Visibility');
+    data.append('itemServiceName', 'SEO (Starter plan)');
+    data.append('itemBilling', 'monthly');
+    const result = parseLineItems(data);
+    expect(result.ok && result.items[0]).toMatchObject({ serviceGroup: 'Marketing & Visibility', serviceName: 'SEO (Starter plan)', billing: 'monthly' });
+
+    const wrong = form([['SEO work', '', '3', '15000', '18']]);
+    wrong.append('itemBilling', 'weekly');
+    expect(parseLineItems(wrong).ok).toBe(false);
   });
 
   it('names the item with a problem', () => {

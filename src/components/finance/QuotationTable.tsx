@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import styles from '@/components/ui/DataTable.module.css';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { formatRupees } from '@/lib/finance/moneyFormat';

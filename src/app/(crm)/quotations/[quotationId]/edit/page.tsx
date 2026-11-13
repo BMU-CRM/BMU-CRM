@@ -7,6 +7,7 @@ import { todayInIndia } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
 import { listPricedServices } from '@/server/services/catalogService';
+import { getSigningChoice } from '@/server/services/signatureService';
 import {
   getFinanceSettings,
   hasFinanceReach,
@@ -35,6 +36,7 @@ export default async function EditQuotationPage({ params }: EditQuotationPagePro
     listProjectOptions(),
     listPricedServices(),
   ]);
+  const signing = await getSigningChoice(access.employee.id, quotation);
   if (!quotation || !hasFinanceReach(access, permissionKeys.quotationsManage, quotation)) notFound();
   if (quotation.status !== 'draft' && quotation.status !== 'sent') notFound();
 
@@ -55,6 +57,9 @@ export default async function EditQuotationPage({ params }: EditQuotationPagePro
           quantity: String(item.quantity),
           unitPrice: String(item.unit_price),
           taxRate: String(item.tax_rate),
+          serviceGroup: item.service_group ?? '',
+          serviceName: item.service_name ?? '',
+          billing: item.billing ?? '',
         }))}
         clients={choices}
         projects={projects.map((project) => ({ value: project.id, label: project.name, clientId: project.client_id }))}
@@ -64,6 +69,7 @@ export default async function EditQuotationPage({ params }: EditQuotationPagePro
         defaultTerms={settings?.quotation_terms ?? null}
         today={todayInIndia()}
         services={services}
+        signing={signing}
       />
     </>
   );

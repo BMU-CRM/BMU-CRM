@@ -1,7 +1,7 @@
 'use client';
 
 import { CalendarPlus, ListPlus, Palette, X } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition, type MouseEvent, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';

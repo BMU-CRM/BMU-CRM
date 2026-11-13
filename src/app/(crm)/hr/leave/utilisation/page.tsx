@@ -1,6 +1,6 @@
 import { ChartColumn } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import tableStyles from '@/components/ui/DataTable.module.css';

@@ -1,7 +1,7 @@
 'use client';
 
 import { Bell, X } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { useRef, useState, useTransition, type PointerEvent } from 'react';
 import { formatDateTime } from '@/lib/formatDate';
 import { useLiveRefresh } from '@/lib/live/liveUpdates';

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import styles from '@/components/ui/DataTable.module.css';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { formatDate } from '@/lib/formatDate';

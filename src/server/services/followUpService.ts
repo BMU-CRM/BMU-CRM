@@ -92,7 +92,7 @@ export async function getPaymentReceipt(paymentId: string) {
     .from('payments')
     .select(
       `id, amount, payment_date, method, reference, notes, receipt_number, created_at,
-       invoice:invoices(id, invoice_number, title, total, amount_paid, bill_to_name, bill_to_address, client_gstin,
+       invoice:invoices(id, invoice_number, title, total, amount_paid, bill_to_name, bill_to_address, client_gstin, signed_by, show_seal,
          client:clients(company_name))`,
     )
     .eq('id', paymentId)

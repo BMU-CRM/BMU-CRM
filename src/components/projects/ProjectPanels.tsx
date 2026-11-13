@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { SelectField, TextField, type SelectOption } from '@/components/ui/FormFields';
 import { InlineActionForm } from '@/components/ui/InlineActionForm';

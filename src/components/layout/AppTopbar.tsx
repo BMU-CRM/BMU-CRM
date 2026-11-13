@@ -1,7 +1,7 @@
 'use client';
 
 import { LogOut, Menu, UserRound } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { NotificationBell, type BellNotification } from '@/components/notifications/NotificationBell';
 import { PresenceDot } from '@/components/presence/PresenceDot';
 import { StatusMenu } from '@/components/presence/StatusMenu';

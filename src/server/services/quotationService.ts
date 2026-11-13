@@ -88,7 +88,7 @@ export async function listQuotationItems(quotationId: string) {
   const database = await createDatabaseClient();
   const { data, error } = await database
     .from('quotation_items')
-    .select('id, position, description, hsn_sac, quantity, unit_price, tax_rate, taxable_amount, tax_amount')
+    .select('id, position, description, hsn_sac, quantity, unit_price, tax_rate, taxable_amount, tax_amount, service_group, service_name, billing')
     .eq('quotation_id', quotationId)
     .order('position');
   if (error) throw error;

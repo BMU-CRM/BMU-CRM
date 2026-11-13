@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PrintButton } from '@/components/finance/PrintButton';
 import { ProfitLossStatement } from '@/components/finance/ProfitLossStatement';
 import styles from '@/components/payroll/PayslipPrint.module.css';

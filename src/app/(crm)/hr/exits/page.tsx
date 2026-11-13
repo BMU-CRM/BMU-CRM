@@ -1,6 +1,6 @@
 import { DoorOpen } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { BarChart } from '@/components/charts/BarChart';
 import { ResignationStatusBadge } from '@/components/exits/ResignationStatusBadge';
 import { Button, ButtonLink } from '@/components/ui/Button';

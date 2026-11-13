@@ -1,5 +1,5 @@
 import { UsersRound } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Panel } from '@/components/ui/Panel';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';

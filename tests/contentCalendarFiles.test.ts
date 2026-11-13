@@ -18,10 +18,10 @@ describe('content calendar, file and leave type deletion', () => {
     await people.addPerson('hr', 'Human Resource', 'Management', 'founder');
     await people.addPerson('designer', 'Employee', 'Design & Development', 'founder');
     await people.addPerson('editor', 'Employee', 'Design & Development', 'founder');
-    const { data, error } = await as.hr!.from('calendar_categories').insert({ name: `Posters ${runId}` }).select('id').single();
+    const { data, error } = await as.planner!.from('calendar_categories').insert({ name: `Posters ${runId}` }).select('id').single();
     expect(error).toBeNull();
     category = data!.id;
-    const members = await as.hr!.from('calendar_category_members').insert([{ category_id: category, employee_id: ids.designer! }]).select('employee_id');
+    const members = await as.planner!.from('calendar_category_members').insert([{ category_id: category, employee_id: ids.designer! }]).select('employee_id');
     expect(members.data).toHaveLength(1);
   });
 
@@ -44,6 +44,15 @@ describe('content calendar, file and leave type deletion', () => {
       expect(blocked.error?.message).toContain('content calendar');
       expect((await as.designer!.from('calendar_categories').insert({ name: `Nope ${runId}` })).error).not.toBeNull();
       expect((await as.designer!.from('calendar_categories').select('id').eq('id', category)).data).toHaveLength(1);
+    });
+
+    it('leaves content planning to the Founder and Client Managers, not HR', async () => {
+      const blocked = await as.hr!.from('meetings').insert(entry({ category_id: category }));
+      expect(blocked.error?.message).toContain('content calendar');
+      expect((await as.hr!.from('calendar_categories').insert({ name: `HR ${runId}` })).error).not.toBeNull();
+      // HR still has an ordinary calendar.
+      const meeting = await as.hr!.from('meetings').insert(entry({ title: `HR meeting ${runId}`, kind: 'internal' })).select('id');
+      expect(meeting.data).toHaveLength(1);
     });
 
     it('adds and notifies the category\'s people, so it is in their calendar', async () => {
@@ -89,8 +98,8 @@ describe('content calendar, file and leave type deletion', () => {
     });
 
     it('brings in a new category\'s people when an entry is moved to it', async () => {
-      const { data: other } = await as.hr!.from('calendar_categories').insert({ name: `Reels ${runId}` }).select('id').single();
-      await as.hr!.from('calendar_category_members').insert({ category_id: other!.id, employee_id: ids.editor! });
+      const { data: other } = await as.planner!.from('calendar_categories').insert({ name: `Reels ${runId}` }).select('id').single();
+      await as.planner!.from('calendar_category_members').insert({ category_id: other!.id, employee_id: ids.editor! });
       const { data } = await as.planner!.from('meetings').insert(entry({ title: `Reel ${runId}` })).select('id').single();
       expect((await admin.from('meeting_participants').select('employee_id').eq('meeting_id', data!.id)).data).toEqual([]);
       const moved = await as.planner!.from('meetings').update({ category_id: other!.id }).eq('id', data!.id).select('id');
@@ -99,7 +108,7 @@ describe('content calendar, file and leave type deletion', () => {
     });
 
     it('refuses a category that is not in use', async () => {
-      const { data: old } = await as.hr!.from('calendar_categories').insert({ name: `Old ${runId}`, is_active: false }).select('id').single();
+      const { data: old } = await as.planner!.from('calendar_categories').insert({ name: `Old ${runId}`, is_active: false }).select('id').single();
       expect((await as.planner!.from('meetings').insert(entry({ category_id: old!.id }))).error?.message).toContain('in use');
     });
   });

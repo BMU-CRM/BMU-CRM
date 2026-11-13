@@ -1,6 +1,6 @@
 import { FileSpreadsheet } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';

@@ -1,0 +1,32 @@
+.panel {
+  flex-basis: 100%;
+  order: 10;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.row > :first-child {
+  flex: 1 1 260px;
+}
+
+.help {
+  margin-top: var(--space-3);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.template {
+  display: inline-block;
+  margin-top: var(--space-2);
+  font-size: var(--text-small);
+  font-weight: 600;
+}

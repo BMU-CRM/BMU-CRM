@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronUp, Crown, EllipsisVertical, Info, LogOut, MinusCircle, Search, UserMinus, X, XCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Crown, EllipsisVertical, Info, LogOut, MinusCircle, Pin, PinOff, Search, UserMinus, X, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { PresenceDot } from '@/components/presence/PresenceDot';
@@ -15,8 +15,10 @@ import {
   addGroupMembersAction,
   clearChatAction,
   leaveGroupAction,
+  openDirectChatAction,
   removeGroupMemberAction,
   renameGroupAction,
+  setConversationPinnedAction,
 } from '@/server/actions/messageActions';
 import { ChatDialog } from './ChatDialogs';
 import styles from './ChatHeaderActions.module.css';
@@ -41,6 +43,8 @@ type ChatHeaderActionsProps = {
   createdLabel: string | null;
   // Colleagues who could be added to the group.
   addable: SelectOption[];
+  // Pinned to the top of this person's conversation list.
+  isPinned: boolean;
 };
 
 // Finds words in the messages on screen, highlights them and steps through them.
@@ -113,9 +117,10 @@ function ChatSearch({ onClose }: { onClose: () => void }) {
   );
 }
 
-function PersonRow({ person, children }: { person: ChatPerson; children?: React.ReactNode }) {
-  return (
-    <li className={styles.person}>
+// A member of the chat. With onOpen, tapping them opens your own chat with them.
+function PersonRow({ person, children, onOpen, disabled }: { person: ChatPerson; children?: React.ReactNode; onOpen?: () => void; disabled?: boolean }) {
+  const details = (
+    <>
       <span className={styles.avatar}>
         <PersonAvatar name={person.full_name} size="small" />
         <PresenceDot employeeId={person.id} variant="overlay" />
@@ -133,6 +138,17 @@ function PersonRow({ person, children }: { person: ChatPerson; children?: React.
           {[person.designation?.title, person.department?.name].filter(Boolean).join(' · ') || person.work_email}
         </span>
       </span>
+    </>
+  );
+  return (
+    <li className={styles.person}>
+      {onOpen ? (
+        <button type="button" className={styles.personOpen} onClick={onOpen} disabled={disabled} title={`Message ${person.full_name}`}>
+          {details}
+        </button>
+      ) : (
+        details
+      )}
       {children}
     </li>
   );
@@ -218,6 +234,18 @@ export function ChatHeaderActions(props: ChatHeaderActionsProps) {
             >
               <Search size={16} aria-hidden="true" /> Search
             </button>
+            <button
+              type="button"
+              role="menuitem"
+              className={styles.item}
+              disabled={isPending}
+              onClick={() => {
+                setMenuOpen(false);
+                run(() => setConversationPinnedAction(conversationId, !props.isPinned));
+              }}
+            >
+              {props.isPinned ? <PinOff size={16} aria-hidden="true" /> : <Pin size={16} aria-hidden="true" />} {props.isPinned ? 'Unpin chat' : 'Pin chat'}
+            </button>
             <div className={styles.divider} />
             <button type="button" role="menuitem" className={styles.item} onClick={() => router.push('/messages')}>
               <XCircle size={16} aria-hidden="true" /> Close chat
@@ -265,9 +293,22 @@ export function ChatHeaderActions(props: ChatHeaderActionsProps) {
               )}
               {props.createdLabel && <p className={styles.muted}>{props.createdLabel}</p>}
               <h3 className={styles.heading}>{people.length} members</h3>
+              <p className={styles.muted}>Tap someone to message them.</p>
               <ul className={styles.people}>
                 {people.map((person) => (
-                  <PersonRow key={person.id} person={person}>
+                  <PersonRow
+                    key={person.id}
+                    person={person}
+                    disabled={isPending}
+                    onOpen={
+                      person.id === myEmployeeId
+                        ? undefined
+                        : () => {
+                            setDialog(null);
+                            run(() => openDirectChatAction(person.id));
+                          }
+                    }
+                  >
                     {isAdmin && person.id !== myEmployeeId && (
                       <button
                         type="button"

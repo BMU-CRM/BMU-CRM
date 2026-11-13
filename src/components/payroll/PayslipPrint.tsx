@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PrintButton } from '@/components/finance/PrintButton';
 import { amountInWords, formatRupees } from '@/lib/finance/moneyFormat';
 import { formatDate } from '@/lib/formatDate';

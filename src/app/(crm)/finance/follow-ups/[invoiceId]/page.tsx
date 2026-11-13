@@ -1,6 +1,6 @@
 import { Printer } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { FollowUpForm } from '@/components/finance/FollowUpForms';
 import { FollowUpStatusBadge } from '@/components/finance/FollowUpStatusBadge';

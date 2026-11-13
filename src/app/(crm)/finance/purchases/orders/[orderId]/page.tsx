@@ -1,6 +1,6 @@
 import { Pencil, Plus, Printer } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { DocumentLines } from '@/components/finance/DocumentLines';
 import { PurchaseOrderStatusBadge } from '@/components/purchases/PurchaseBadges';

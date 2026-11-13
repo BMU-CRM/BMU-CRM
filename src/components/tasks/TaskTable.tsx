@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import styles from '@/components/ui/DataTable.module.css';
 import { formatDate, todayInIndia } from '@/lib/formatDate';
 import type { TaskListItem } from '@/server/services/taskService';

@@ -19,11 +19,13 @@ export type DashboardWidgetKey =
   | 'financeStats'
   | 'overdueInvoices'
   | 'awaitingQuotations'
-  | 'myWorkload';
+  | 'myWorkload'
+  | 'documentSignature';
 
 export type DashboardWidget = {
   key: DashboardWidgetKey;
-  permission: PermissionKey;
+  // Shown to anyone with this permission, or with any one of these.
+  permission: PermissionKey | PermissionKey[];
   size: 'full' | 'main' | 'side';
 };
 
@@ -46,6 +48,8 @@ const dashboardWidgets: DashboardWidget[] = [
   { key: 'ticketsToHandle', permission: permissionKeys.ticketsManage, size: 'main' },
   { key: 'overdueInvoices', permission: permissionKeys.invoicesView, size: 'main' },
   { key: 'awaitingQuotations', permission: permissionKeys.quotationsView, size: 'side' },
+  // Whoever prepares quotations or invoices keeps their signature and seal for them.
+  { key: 'documentSignature', permission: [permissionKeys.quotationsManage, permissionKeys.invoicesManage], size: 'side' },
   { key: 'leaveBalance', permission: permissionKeys.leaveRequest, size: 'side' },
   { key: 'teamWorkload', permission: permissionKeys.workloadView, size: 'main' },
   { key: 'departmentHeadcount', permission: permissionKeys.organisationStats, size: 'main' },
@@ -56,5 +60,7 @@ const dashboardWidgets: DashboardWidget[] = [
 ];
 
 export function buildDashboard(permissions: PermissionMap): DashboardWidget[] {
-  return dashboardWidgets.filter((widget) => permissions[widget.permission] !== undefined);
+  return dashboardWidgets.filter((widget) =>
+    (Array.isArray(widget.permission) ? widget.permission : [widget.permission]).some((permission) => permissions[permission] !== undefined),
+  );
 }

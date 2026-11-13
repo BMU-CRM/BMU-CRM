@@ -21,6 +21,22 @@
   gap: var(--space-2);
 }
 
+.row {
+  align-items: start;
+}
+
+/* Service, sub service and how it is billed, under the description. */
+.serviceDetails {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr);
+  gap: var(--space-1);
+}
+
+.serviceDetails input,
+.serviceDetails select {
+  font-size: var(--text-small);
+}
+
 .header {
   font-size: 0.75rem;
   font-weight: 500;
@@ -41,6 +57,7 @@
 }
 
 .amount {
+  padding-top: 0.55rem;
   font-variant-numeric: tabular-nums;
   text-align: right;
   overflow-wrap: anywhere;
@@ -99,7 +116,12 @@
     display: block;
   }
 
+  .serviceDetails {
+    grid-template-columns: 1fr;
+  }
+
   .amount {
+    padding-top: 0;
     text-align: left;
   }
 }

@@ -1,6 +1,6 @@
 import { Handshake, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { ClientFilters } from '@/components/clients/ClientFilters';
 import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';
 import { ButtonLink } from '@/components/ui/Button';

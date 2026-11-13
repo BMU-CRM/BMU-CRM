@@ -12,7 +12,7 @@ export async function getCatalog() {
   const database = await createDatabaseClient();
   const [groups, services, industries] = await Promise.all([
     database.from('service_groups').select('id, name, sort_order, is_active').order('sort_order').order('name'),
-    database.from('services').select('id, group_id, name, is_active, billing, starter_price, growth_price, premium_price'),
+    database.from('services').select('id, group_id, name, is_active, billing, description, starter_price, growth_price, premium_price'),
     database.from('industries').select('id, name, is_active'),
   ]);
   if (groups.error) throw groups.error;
@@ -70,6 +70,7 @@ export async function listPricedServices(): Promise<PricedService[]> {
           name: service.name,
           group: group.name,
           billing: isServiceBilling(service.billing) ? service.billing : 'monthly',
+          description: service.description,
           prices: { starter: toPrice(service.starter_price), growth: toPrice(service.growth_price), premium: toPrice(service.premium_price) },
         })),
     );

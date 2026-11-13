@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { ButtonLink } from '@/components/ui/Button';
 import { Panel } from '@/components/ui/Panel';
 import layout from '@/components/ui/WorkspaceLayout.module.css';

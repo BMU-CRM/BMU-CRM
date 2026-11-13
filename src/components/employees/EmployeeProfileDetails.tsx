@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { Panel } from '@/components/ui/Panel';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';
 import { StatusBadge } from '@/components/ui/StatusBadge';

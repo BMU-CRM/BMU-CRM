@@ -1,6 +1,6 @@
 import { Download } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { ButtonLink } from '@/components/ui/Button';
 import styles from '@/components/ui/DataTable.module.css';
 import { PageHeader } from '@/components/ui/PageHeader';

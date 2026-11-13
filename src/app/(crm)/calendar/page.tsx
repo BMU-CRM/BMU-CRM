@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
+import { CalendarImportForm } from '@/components/meetings/CalendarImportForm';
 import { CalendarView, calendarHref } from '@/components/meetings/CalendarView';
 import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -64,6 +65,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
             </Link>
           ))}
         </nav>
+        {categories && <CalendarImportForm categories={categories.filter((category) => category.is_active).map((category) => category.name)} />}
       </div>
       <CalendarView
         range={range}

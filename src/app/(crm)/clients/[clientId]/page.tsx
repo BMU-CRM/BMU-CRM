@@ -1,6 +1,6 @@
 import { Pencil, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { ClientRecordsPanel, ClientServicesPanel, ClientTimelinePanel } from '@/components/clients/ClientPanels';
 import { ClientStatusBadge } from '@/components/clients/ClientStatusBadge';

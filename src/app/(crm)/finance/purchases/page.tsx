@@ -1,6 +1,6 @@
 import { Plus, ShoppingCart, Truck } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PurchaseOrderStatusBadge, VendorBillStatusBadge } from '@/components/purchases/PurchaseBadges';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';

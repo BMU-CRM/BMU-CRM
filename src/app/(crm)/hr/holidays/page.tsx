@@ -1,6 +1,6 @@
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { HolidayMonth, HolidayYear, monthTitle } from '@/components/hr/HolidayCalendar';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';

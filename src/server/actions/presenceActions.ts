@@ -6,13 +6,6 @@ import { isPresenceStatus, type PresenceStatus } from '@/lib/presence/presenceSt
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import { getActionAccess } from '@/server/services/accessService';
 
-// The app checks in about once a minute while it is open. "Active" means the person
-// used it in the last few minutes; otherwise they show as away.
-export async function recordPresenceAction(active: boolean): Promise<void> {
-  if (!(await getActionAccess())) return;
-  const database = await createDatabaseClient();
-  await database.rpc('record_presence', { p_active: active === true });
-}
 
 // Null resets to the status worked out from activity.
 export async function setMyStatusAction(
@@ -33,12 +26,20 @@ const idsSchema = z.array(z.uuid()).max(500);
 
 export type PresenceSnapshot = Record<string, { status: PresenceStatus; chosen: PresenceStatus | null }>;
 
-export async function getPresenceAction(employeeIds: string[]): Promise<PresenceSnapshot> {
+// One request does both jobs, so an open app costs one request a minute, not three:
+// - checks in, when `active` is given. "Active" means the person used the app in the
+//   last few minutes; otherwise they show as away. Null only reads.
+// - returns the statuses of the colleagues shown on the page, when any are asked for.
+export async function presencePulseAction(active: boolean | null, employeeIds: string[]): Promise<PresenceSnapshot> {
   const parsed = idsSchema.safeParse(employeeIds);
-  if (!parsed.success || parsed.data.length === 0) return {};
+  if (!parsed.success) return {};
+  if (active === null && parsed.data.length === 0) return {};
   if (!(await getActionAccess())) return {};
 
   const database = await createDatabaseClient();
+  if (active !== null) await database.rpc('record_presence', { p_active: active === true });
+  if (parsed.data.length === 0) return {};
+
   const { data, error } = await database.rpc('get_presence', { p_employees: parsed.data });
   if (error) return {};
 

@@ -1,7 +1,7 @@
 import { FileText, Pencil, Printer } from 'lucide-react';
 import { listLetterTemplates } from '@/server/services/recruitmentService';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { EmployeeAccountActions } from '@/components/employees/EmployeeAccountActions';
 import { EmployeeDocumentsPanel } from '@/components/employees/EmployeeDocumentsPanel';

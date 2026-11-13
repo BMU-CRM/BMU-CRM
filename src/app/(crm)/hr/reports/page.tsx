@@ -1,6 +1,6 @@
 import { Download, Printer } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { BarChart } from '@/components/charts/BarChart';
 import { LeaveTable, MovementTables, PayrollTable, PeopleTables } from '@/components/hr/HrReportTables';
 import { ButtonLink } from '@/components/ui/Button';

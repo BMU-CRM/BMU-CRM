@@ -1,7 +1,7 @@
 'use client';
 
 import { CalendarDays, Download, ExternalLink, FileText, Link2, Mail, MessageSquare, Phone, Video } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { useActionState, useState, useTransition } from 'react';
 import { PresenceDot } from '@/components/presence/PresenceDot';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';

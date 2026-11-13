@@ -388,6 +388,41 @@ export async function setMessagePinnedAction(
   return success(isPinned ? 'Message pinned.' : 'Message unpinned.');
 }
 
+// Pins a chat to the top of your own conversation list, or unpins it.
+export async function setConversationPinnedAction(conversationId: string, pinned: boolean): Promise<ActionResult> {
+  const access = await getActionAccess(permissionKeys.messagesUse);
+  if (!access) return failure(noPermission);
+  const id = z.uuid().safeParse(conversationId);
+  if (!id.success) return failure('Choose a chat.');
+
+  const database = await createDatabaseClient();
+  if (pinned) {
+    const { error } = await database
+      .from('conversation_pins')
+      .upsert({ conversation_id: id.data, employee_id: access.employee.id }, { onConflict: 'employee_id,conversation_id', ignoreDuplicates: true });
+    if (error) return databaseFailure(error);
+  } else {
+    const { error } = await database.from('conversation_pins').delete().eq('conversation_id', id.data).eq('employee_id', access.employee.id);
+    if (error) return databaseFailure(error);
+  }
+
+  revalidatePath('/messages', 'layout');
+  return success(pinned ? 'Chat pinned to the top.' : 'Chat unpinned.');
+}
+
+// Opens your one-to-one chat with a colleague, starting it if there is none yet.
+export async function openDirectChatAction(employeeId: string): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+  const other = z.uuid().safeParse(employeeId);
+  if (!other.success) return failure('Choose someone to message.');
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('get_or_create_direct_conversation', { p_other: other.data });
+  if (error) return databaseFailure(error);
+
+  redirect(`/messages/${data}`);
+}
+
 export async function startDirectConversationAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
   if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
 

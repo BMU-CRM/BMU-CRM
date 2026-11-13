@@ -876,6 +876,40 @@ export type Database = {
           },
         ]
       }
+      "conversation_pins": {
+        Row: {
+          "conversation_id": string
+          "employee_id": string
+          "pinned_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "conversation_id": string
+          "employee_id": string
+          "pinned_at"?: string
+        }
+        Update: {
+          "conversation_id"?: string
+          "employee_id"?: string
+          "pinned_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_pins_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_pins_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "conversation_reads": {
         Row: {
           "conversation_id": string
@@ -1107,6 +1141,39 @@ export type Database = {
           "updated_at"?: string
         }
         Relationships: []
+      }
+      "document_signatures": {
+        Row: {
+          "employee_id": string
+          "seal_image": string | null
+          "signatory_title": string | null
+          "signature_image": string | null
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "employee_id": string
+          "seal_image"?: string | null
+          "signatory_title"?: string | null
+          "signature_image"?: string | null
+          "updated_at"?: string
+        }
+        Update: {
+          "employee_id"?: string
+          "seal_image"?: string | null
+          "signatory_title"?: string | null
+          "signature_image"?: string | null
+          "updated_at"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_signatures_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       "employee_extra_roles": {
         Row: {
@@ -2123,6 +2190,7 @@ export type Database = {
           "receipt_prefix": string
           "state": string | null
           "updated_at": string
+          "website": string | null
         }
         ComputedFields: never
         Insert: {
@@ -2144,6 +2212,7 @@ export type Database = {
           "receipt_prefix"?: string
           "state"?: string | null
           "updated_at"?: string
+          "website"?: string | null
         }
         Update: {
           "address"?: string | null
@@ -2164,6 +2233,7 @@ export type Database = {
           "receipt_prefix"?: string
           "state"?: string | null
           "updated_at"?: string
+          "website"?: string | null
         }
         Relationships: []
       }
@@ -2465,12 +2535,15 @@ export type Database = {
       }
       "invoice_items": {
         Row: {
+          "billing": string | null
           "description": string
           "hsn_sac": string | null
           "id": string
           "invoice_id": string
           "position": number
           "quantity": number
+          "service_group": string | null
+          "service_name": string | null
           "tax_amount": number
           "tax_rate": number
           "taxable_amount": number
@@ -2478,24 +2551,30 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          "billing"?: string | null
           "description": string
           "hsn_sac"?: string | null
           "id"?: string
           "invoice_id": string
           "position": number
           "quantity": number
+          "service_group"?: string | null
+          "service_name"?: string | null
           "tax_amount": number
           "tax_rate": number
           "taxable_amount": number
           "unit_price": number
         }
         Update: {
+          "billing"?: string | null
           "description"?: string
           "hsn_sac"?: string | null
           "id"?: string
           "invoice_id"?: string
           "position"?: number
           "quantity"?: number
+          "service_group"?: string | null
+          "service_name"?: string | null
           "tax_amount"?: number
           "tax_rate"?: number
           "taxable_amount"?: number
@@ -2552,6 +2631,8 @@ export type Database = {
           "project_id": string | null
           "quotation_id": string | null
           "sgst_total": number
+          "show_seal": boolean
+          "signed_by": string | null
           "status": Database["public"]["Enums"]["invoice_status"]
           "subtotal": number
           "tax_total": number
@@ -2585,6 +2666,8 @@ export type Database = {
           "project_id"?: string | null
           "quotation_id"?: string | null
           "sgst_total"?: number
+          "show_seal"?: boolean
+          "signed_by"?: string | null
           "status"?: Database["public"]["Enums"]["invoice_status"]
           "subtotal"?: number
           "tax_total"?: number
@@ -2617,6 +2700,8 @@ export type Database = {
           "project_id"?: string | null
           "quotation_id"?: string | null
           "sgst_total"?: number
+          "show_seal"?: boolean
+          "signed_by"?: string | null
           "status"?: Database["public"]["Enums"]["invoice_status"]
           "subtotal"?: number
           "tax_total"?: number
@@ -2652,6 +2737,13 @@ export type Database = {
             columns: ["quotation_id"]
             isOneToOne: false
             referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_signed_by_fkey"
+            columns: ["signed_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -4314,12 +4406,15 @@ export type Database = {
       }
       "quotation_items": {
         Row: {
+          "billing": string | null
           "description": string
           "hsn_sac": string | null
           "id": string
           "position": number
           "quantity": number
           "quotation_id": string
+          "service_group": string | null
+          "service_name": string | null
           "tax_amount": number
           "tax_rate": number
           "taxable_amount": number
@@ -4327,24 +4422,30 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          "billing"?: string | null
           "description": string
           "hsn_sac"?: string | null
           "id"?: string
           "position": number
           "quantity": number
           "quotation_id": string
+          "service_group"?: string | null
+          "service_name"?: string | null
           "tax_amount": number
           "tax_rate": number
           "taxable_amount": number
           "unit_price": number
         }
         Update: {
+          "billing"?: string | null
           "description"?: string
           "hsn_sac"?: string | null
           "id"?: string
           "position"?: number
           "quantity"?: number
           "quotation_id"?: string
+          "service_group"?: string | null
+          "service_name"?: string | null
           "tax_amount"?: number
           "tax_rate"?: number
           "taxable_amount"?: number
@@ -4381,6 +4482,8 @@ export type Database = {
           "quotation_number": string
           "sent_at": string | null
           "sgst_total": number
+          "show_seal": boolean
+          "signed_by": string | null
           "status": Database["public"]["Enums"]["quotation_status"]
           "subtotal": number
           "tax_total": number
@@ -4411,6 +4514,8 @@ export type Database = {
           "quotation_number"?: string
           "sent_at"?: string | null
           "sgst_total"?: number
+          "show_seal"?: boolean
+          "signed_by"?: string | null
           "status"?: Database["public"]["Enums"]["quotation_status"]
           "subtotal"?: number
           "tax_total"?: number
@@ -4440,6 +4545,8 @@ export type Database = {
           "quotation_number"?: string
           "sent_at"?: string | null
           "sgst_total"?: number
+          "show_seal"?: boolean
+          "signed_by"?: string | null
           "status"?: Database["public"]["Enums"]["quotation_status"]
           "subtotal"?: number
           "tax_total"?: number
@@ -4476,6 +4583,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_signed_by_fkey"
+            columns: ["signed_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -4973,6 +5087,7 @@ export type Database = {
         Row: {
           "billing": string
           "created_at": string
+          "description": string | null
           "group_id": string
           "growth_price": number | null
           "id": string
@@ -4986,6 +5101,7 @@ export type Database = {
         Insert: {
           "billing"?: string
           "created_at"?: string
+          "description"?: string | null
           "group_id": string
           "growth_price"?: number | null
           "id"?: string
@@ -4998,6 +5114,7 @@ export type Database = {
         Update: {
           "billing"?: string
           "created_at"?: string
+          "description"?: string | null
           "group_id"?: string
           "growth_price"?: number | null
           "id"?: string
@@ -5855,6 +5972,16 @@ export type Database = {
         | { Args: {
             "p_account": string
           }; Returns: string }
+      "apply_document_signature":
+        | { Args: {
+            "p_signature": string
+            "p_show_seal": boolean
+            "p_current": string
+            "p_current_seal": boolean
+          }; Returns: {
+            "signed_by": string
+            "show_seal": boolean
+          }[] }
       "attendance_check_in":
         | { Args: {
             "p_work_mode"?: Database["public"]["Enums"]["attendance_work_mode"]
@@ -5975,6 +6102,8 @@ export type Database = {
         | { Args: {
             "p_employee": string
           }; Returns: boolean }
+      "can_sign_documents":
+        | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_update_client":
         | { Args: {
             "p_client": string
@@ -6425,6 +6554,7 @@ export type Database = {
             "last_message_body": string
             "last_message_author": string
             "unread_count": number
+            "is_pinned": boolean
           }[] }
       "get_my_permissions":
         | { Args: Record<PropertyKey, never>; Returns: {

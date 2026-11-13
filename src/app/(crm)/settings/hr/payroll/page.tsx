@@ -1,6 +1,6 @@
 import { Plus, TriangleAlert } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { HrSettingsTabs } from '@/components/hr/HrSettingsTabs';
 import { PayrollSettingsForm } from '@/components/payroll/PayrollForms';
 import { ButtonLink } from '@/components/ui/Button';

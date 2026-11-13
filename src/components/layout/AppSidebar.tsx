@@ -1,7 +1,7 @@
 'use client';
 
 import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { usePathname } from 'next/navigation';
 import { buildNavigation } from '@/lib/access/navigationRegistry';
 import type { PermissionMap } from '@/lib/access/permissionKeys';

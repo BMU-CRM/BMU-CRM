@@ -142,6 +142,17 @@ describe('chat, availability and reviewers', () => {
       expect(await statusOf('developer', 'outsider')).toBe('available');
     });
 
+    it('keeps an app checking in from the background (every 4 minutes) as away, not offline', async () => {
+      const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+      await as.outsider!.rpc('record_presence', { p_active: true });
+
+      await admin.from('employee_presence').update({ last_seen_at: minutesAgo(4), last_active_at: minutesAgo(10) }).eq('employee_id', ids.outsider!);
+      expect(await statusOf('developer', 'outsider')).toBe('away');
+
+      await admin.from('employee_presence').update({ last_seen_at: minutesAgo(7) }).eq('employee_id', ids.outsider!);
+      expect(await statusOf('developer', 'outsider')).toBe('offline');
+    });
+
     it('shows the status someone chooses, and resets to automatic', async () => {
       await as.designer!.rpc('record_presence', { p_active: true });
       for (const status of ['busy', 'do_not_disturb', 'be_right_back', 'away']) {
@@ -158,6 +169,28 @@ describe('chat, availability and reviewers', () => {
     it('refuses a made-up status, and keeps the table itself closed', async () => {
       expect((await as.designer!.rpc('set_my_status', { p_status: 'invisible' })).error?.message).toContain('valid status');
       expect((await as.designer!.from('employee_presence').select('employee_id')).error).not.toBeNull();
+    });
+  });
+
+  describe('pinned chats', () => {
+    it('pins a chat to the top of your own list only', async () => {
+      const { data: group } = await as.designer!.rpc('create_group_conversation', { p_title: `Pin group ${runId}`, p_members: [ids.developer!] });
+      expect(group).toBeTruthy();
+      const pinned = await as.designer!.from('conversation_pins').insert({ conversation_id: direct, employee_id: ids.designer! }).select('conversation_id');
+      expect(pinned.data).toHaveLength(1);
+
+      const mine = (await as.designer!.rpc('get_my_conversations')).data ?? [];
+      expect(mine[0]?.id).toBe(direct);
+      expect(mine[0]?.is_pinned).toBe(true);
+      // The other person's list is unchanged.
+      const theirs = (await as.developer!.rpc('get_my_conversations')).data ?? [];
+      expect(theirs.find((row) => row.id === direct)?.is_pinned).toBe(false);
+    });
+
+    it('refuses pinning a chat you are not in, or for someone else', async () => {
+      expect((await as.outsider!.from('conversation_pins').insert({ conversation_id: direct, employee_id: ids.outsider! })).error).not.toBeNull();
+      expect((await as.developer!.from('conversation_pins').insert({ conversation_id: direct, employee_id: ids.designer! })).error).not.toBeNull();
+      expect((await as.developer!.from('conversation_pins').select('employee_id')).data).toEqual([]);
     });
   });
 

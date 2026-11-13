@@ -1,6 +1,6 @@
 import { Pin } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { ChatHeaderActions } from '@/components/messages/ChatHeaderActions';
 import { MessageComposer } from '@/components/messages/MessageComposer';
@@ -100,6 +100,7 @@ export default async function ConversationPage({ params, searchParams }: Convers
           myEmployeeId={access.employee.id}
           isAdmin={conversation.isAdmin}
           people={conversation.people}
+          isPinned={conversations.some((item) => item.id === conversationId && item.is_pinned)}
           createdLabel={
             conversation.kind === 'group'
               ? `Created${conversation.creator ? ` by ${conversation.creator.full_name}` : ''} on ${formatDate(conversation.created_at)}`

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import styles from './PageTabs.module.css';
 
 export type PageTab = { href: string; label: string; current: boolean };

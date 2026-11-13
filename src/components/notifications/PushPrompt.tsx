@@ -1,7 +1,7 @@
 'use client';
 
 import { BellRing, X } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { checkPushDevice, refreshPushDevice, turnOnPush, type PushDeviceState } from '@/lib/notifications/pushDevice';

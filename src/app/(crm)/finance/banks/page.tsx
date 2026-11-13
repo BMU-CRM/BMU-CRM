@@ -1,6 +1,6 @@
 import { Landmark, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';

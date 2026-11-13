@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import type { CalendarRange } from '@/lib/calendar/calendarRange';
 import { formatDate } from '@/lib/formatDate';
 import type { CalendarItem } from '@/server/services/meetingService';

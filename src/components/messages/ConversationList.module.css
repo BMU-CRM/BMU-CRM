@@ -58,6 +58,10 @@
   gap: var(--space-1);
 }
 
+.pin {
+  color: var(--color-text-muted);
+}
+
 .time {
   font-size: 0.6875rem;
   color: var(--color-text-muted);

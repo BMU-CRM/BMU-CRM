@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PresenceDot } from '@/components/presence/PresenceDot';
 import styles from '@/components/ui/DataTable.module.css';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { PrintButton } from '@/components/finance/PrintButton';
 import { LeaveTable, MovementTables, PayrollTable, PeopleTables } from '@/components/hr/HrReportTables';

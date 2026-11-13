@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PrintButton } from '@/components/finance/PrintButton';
 import styles from './LetterPrint.module.css';
 

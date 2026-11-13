@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { TicketStatusBadge } from '@/components/tickets/TicketBadges';
 import { ButtonLink } from '@/components/ui/Button';
 import { Panel } from '@/components/ui/Panel';

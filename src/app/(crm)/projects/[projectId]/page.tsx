@@ -1,6 +1,6 @@
 import { MessagesSquare, Pencil, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { LinkedFilesPanel } from '@/components/files/LinkedFilesPanel';
 import { ProjectHealthBadge, ProjectStatusBadge } from '@/components/projects/ProjectBadges';

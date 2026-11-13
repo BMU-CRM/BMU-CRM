@@ -1,5 +1,5 @@
-import { Megaphone, MessageCircle, Users } from 'lucide-react';
-import Link from 'next/link';
+import { Megaphone, MessageCircle, Pin, Users } from 'lucide-react';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PresenceDot } from '@/components/presence/PresenceDot';
 import { formatDateTime } from '@/lib/formatDate';
 import type { ConversationSummary } from '@/server/services/messageService';
@@ -43,6 +43,7 @@ export function ConversationList({ conversations, activeId }: ConversationListPr
               </span>
             </span>
             <span className={styles.meta}>
+              {conversation.is_pinned && <Pin size={13} className={styles.pin} aria-label="Pinned" />}
               {conversation.last_message_body && (
                 <time className={styles.time} dateTime={conversation.last_message_at}>
                   {formatDateTime(conversation.last_message_at)}

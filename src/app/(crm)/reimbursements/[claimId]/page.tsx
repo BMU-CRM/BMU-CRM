@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { ApprovalHistoryPanel } from '@/components/approvals/ApprovalHistoryPanel';
 import { ReimbursementStatusBadge } from '@/components/reimbursements/ReimbursementStatusBadge';

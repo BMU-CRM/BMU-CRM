@@ -50,6 +50,7 @@ export function ServiceGroupForm({ group }: { group?: Entry }) {
 
 type PricedEntry = Entry & {
   billing: string;
+  description: string | null;
   starter_price: number | string | null;
   growth_price: number | string | null;
   premium_price: number | string | null;
@@ -78,6 +79,15 @@ export function ServiceForm({ service, groupId, groups }: { service?: PricedEntr
         )}
         <SelectField label="Billed" name="billing" id={`${prefix}-billing`} options={billingOptions} defaultValue={service?.billing ?? 'monthly'} error={errors?.billing} />
       </div>
+      <TextField
+        label="Description on quotations and invoices"
+        name="description"
+        id={`${prefix}-description`}
+        defaultValue={service?.description ?? ''}
+        maxLength={500}
+        placeholder="What the client gets, in a sentence"
+        error={errors?.description}
+      />
       <div className={hrStyles.inline}>
         {servicePlans.map((plan) => (
           <TextField

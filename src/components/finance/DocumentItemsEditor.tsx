@@ -4,13 +4,31 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import formStyles from '@/components/ui/FormFields.module.css';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { billingShort, serviceItemDescription, servicePlans, type PricedService } from '@/lib/catalog/servicePricing';
+import {
+  billingShort,
+  itemBillingLabels,
+  serviceBillings,
+  serviceItemDescription,
+  serviceItemName,
+  servicePlans,
+  type PricedService,
+} from '@/lib/catalog/servicePricing';
 import { documentTotals, lineAmounts } from '@/lib/finance/documentTotals';
 import { formatQuantity, formatRupees } from '@/lib/finance/moneyFormat';
 import { standardTaxRates } from '@/lib/validation/financeSchema';
 import styles from './DocumentItemsEditor.module.css';
 
-export type ItemDraft = { description: string; hsnSac: string; quantity: string; unitPrice: string; taxRate: string };
+export type ItemDraft = {
+  description: string;
+  hsnSac: string;
+  quantity: string;
+  unitPrice: string;
+  taxRate: string;
+  // The service (main and sub service) and how it is billed, on quotations and invoices.
+  serviceGroup?: string;
+  serviceName?: string;
+  billing?: string;
+};
 
 type Line = ItemDraft & { key: number };
 
@@ -32,7 +50,11 @@ type DocumentItemsEditorProps = {
   error?: string;
   // The price list. When given, picking a sub service and plan adds it as an item.
   services?: PricedService[];
+  // Quotations and invoices say which service each item is and how it is billed.
+  withServiceDetails?: boolean;
 };
+
+const billingChoices = [{ value: '', label: 'Not stated' }, ...serviceBillings.map((billing) => ({ value: billing, label: itemBillingLabels[billing] }))];
 
 // Each sub service and plan that has a price, as one choice.
 function priceListOptions(services: PricedService[]) {
@@ -48,8 +70,17 @@ function priceListOptions(services: PricedService[]) {
 
 // The items of a quotation or invoice. The figures shown are worked out the same way
 // as in the database, which recalculates them when the form is saved.
-export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState, error, services = [] }: DocumentItemsEditorProps) {
-  const blank = (): ItemDraft => ({ description: '', hsnSac: '', quantity: '1', unitPrice: '', taxRate: String(defaultTaxRate) });
+export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState, error, services = [], withServiceDetails = false }: DocumentItemsEditorProps) {
+  const blank = (): ItemDraft => ({
+    description: '',
+    hsnSac: '',
+    quantity: '1',
+    unitPrice: '',
+    taxRate: String(defaultTaxRate),
+    serviceGroup: '',
+    serviceName: '',
+    billing: '',
+  });
   const [lines, setLines] = useState<Line[]>(() => (initialItems.length > 0 ? initialItems : [blank()]).map(withKey));
   const priceOptions = priceListOptions(services);
 
@@ -61,7 +92,13 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
     const plan = servicePlans.find((option) => option.key === planKey)?.key;
     const price = service && plan ? service.prices[plan] : null;
     if (!service || !plan || price === null) return;
-    const filled = { description: serviceItemDescription(service, plan), unitPrice: String(price) };
+    const filled = {
+      description: serviceItemDescription(service, plan),
+      unitPrice: String(price),
+      serviceGroup: service.group,
+      serviceName: serviceItemName(service, plan),
+      billing: service.billing,
+    };
     setLines((current) => {
       const last = current.at(-1);
       if (last && !last.description.trim() && !last.unitPrice.trim()) {
@@ -115,21 +152,61 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
         const amount = lineAmounts(figures[index] ?? { quantity: 0, unitPrice: 0, taxRate: 0 }).taxable;
         return (
           <div key={line.key} className={styles.row}>
-            <label className={styles.cell}>
-              <span className={styles.mobileLabel}>Description</span>
-              <input
-                id={`${id}-description`}
-                name="itemDescription"
-                className={formStyles.control}
-                aria-label={`Item ${index + 1} description`}
-                value={line.description}
-                maxLength={500}
-                required
-                onChange={(event) => update(line.key, 'description', event.target.value)}
-              />
-            </label>
+            <div className={styles.cell}>
+              <label className={styles.cell}>
+                <span className={styles.mobileLabel}>Description</span>
+                <input
+                  id={`${id}-description`}
+                  name="itemDescription"
+                  className={formStyles.control}
+                  aria-label={`Item ${index + 1} description`}
+                  value={line.description}
+                  maxLength={500}
+                  required
+                  onChange={(event) => update(line.key, 'description', event.target.value)}
+                />
+              </label>
+              {withServiceDetails && (
+                <div className={styles.serviceDetails}>
+                  <input
+                    id={`${id}-service-group`}
+                    className={formStyles.control}
+                    aria-label={`Item ${index + 1} service`}
+                    placeholder="Service, such as Marketing & Visibility"
+                    value={line.serviceGroup ?? ''}
+                    maxLength={80}
+                    onChange={(event) => update(line.key, 'serviceGroup', event.target.value)}
+                  />
+                  <input
+                    id={`${id}-service-name`}
+                    className={formStyles.control}
+                    aria-label={`Item ${index + 1} sub service`}
+                    placeholder="Sub service, such as SEO"
+                    value={line.serviceName ?? ''}
+                    maxLength={120}
+                    onChange={(event) => update(line.key, 'serviceName', event.target.value)}
+                  />
+                  <select
+                    id={`${id}-billing`}
+                    className={formStyles.control}
+                    aria-label={`Item ${index + 1} billed`}
+                    value={line.billing ?? ''}
+                    onChange={(event) => update(line.key, 'billing', event.target.value)}
+                  >
+                    {billingChoices.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             {/* No HSN/SAC box: a code saved on an older item is kept as it is. */}
             <input type="hidden" name="itemHsnSac" value={line.hsnSac} />
+            <input type="hidden" name="itemServiceGroup" value={line.serviceGroup ?? ''} />
+            <input type="hidden" name="itemServiceName" value={line.serviceName ?? ''} />
+            <input type="hidden" name="itemBilling" value={line.billing ?? ''} />
             <label className={styles.cell}>
               <span className={styles.mobileLabel}>Quantity</span>
               <input

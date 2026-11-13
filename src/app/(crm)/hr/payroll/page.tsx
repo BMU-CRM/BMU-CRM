@@ -1,6 +1,6 @@
 import { Banknote, TriangleAlert } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { PayrollStatusBadge, PayrollTabs } from '@/components/payroll/PayrollTabs';
 import { Button, ButtonLink } from '@/components/ui/Button';

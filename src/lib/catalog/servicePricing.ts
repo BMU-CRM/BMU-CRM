@@ -29,16 +29,32 @@ export type PricedService = {
   name: string;
   group: string;
   billing: ServiceBilling;
+  // What the client gets, printed under the item.
+  description: string | null;
   prices: Record<ServicePlan, number | null>;
 };
+
+// How an item is billed, as printed on quotations and invoices.
+export const itemBillingLabels: Record<ServiceBilling, string> = {
+  monthly: 'Monthly',
+  one_time: 'One-time project',
+  per_unit: 'Per unit',
+};
+
+// The sub service name an item carries, with its plan, such as "SEO (Growth plan)".
+export function serviceItemName(service: PricedService, plan: ServicePlan) {
+  const planLabel = servicePlans.find((option) => option.key === plan)?.label ?? plan;
+  return `${service.name} (${planLabel} plan)`;
+}
 
 export function isServiceBilling(value: string): value is ServiceBilling {
   return (serviceBillings as readonly string[]).includes(value);
 }
 
-// The item description a picked sub service and plan fill in, such as
-// "SEO — Growth plan (per month)".
+// The item description a picked sub service and plan fill in: its description from the
+// price list, else "SEO — Growth plan (per month)".
 export function serviceItemDescription(service: PricedService, plan: ServicePlan) {
+  if (service.description) return service.description;
   const planLabel = servicePlans.find((option) => option.key === plan)?.label ?? plan;
   return `${service.name} — ${planLabel} plan (${billingShort[service.billing]})`;
 }

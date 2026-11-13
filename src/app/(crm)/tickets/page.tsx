@@ -1,6 +1,6 @@
 import { LifeBuoy, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import taskTabs from '@/components/tasks/TaskViewTabs.module.css';
 import { TicketLiveRefresh } from '@/components/tickets/TicketLiveRefresh';
 import { TicketTable } from '@/components/tickets/TicketTable';

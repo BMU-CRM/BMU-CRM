@@ -1,5 +1,5 @@
 import { ExternalLink, FileText, Link2 } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import styles from '@/components/ui/DataTable.module.css';
 import { deleteFileAction } from '@/server/actions/fileActions';

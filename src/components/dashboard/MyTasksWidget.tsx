@@ -1,5 +1,5 @@
 import { ListChecks } from 'lucide-react';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { PriorityBadge, TaskStatusBadge } from '@/components/tasks/TaskBadges';
 import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';

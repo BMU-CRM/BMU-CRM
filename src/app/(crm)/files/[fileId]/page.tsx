@@ -1,6 +1,6 @@
 import { Download } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { FileDetailsForm, FileShareForm } from '@/components/files/FileForms';
 import { FilePreview } from '@/components/files/FilePreview';

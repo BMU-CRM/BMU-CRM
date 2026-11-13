@@ -20,7 +20,7 @@ export function FinanceSettingsForm({ settings }: { settings: FinanceSettings })
     <KeepValuesForm action={formAction}>
       <div className={layout.stack}>
         <FormMessage result={result} />
-        <Panel title="Company details" description="Printed at the top of every quotation and invoice.">
+        <Panel title="Company details" description="Printed on every quotation, invoice and receipt.">
           <FormGrid>
             <TextField label="Legal name" name="legalName" defaultValue={settings.legal_name ?? ''} error={errors?.legalName} />
             <TextField label="GSTIN" name="gstin" defaultValue={settings.gstin ?? ''} maxLength={15} error={errors?.gstin} />
@@ -36,6 +36,7 @@ export function FinanceSettingsForm({ settings }: { settings: FinanceSettings })
             />
             <TextField label="Email" name="email" type="email" defaultValue={settings.email ?? ''} error={errors?.email} />
             <TextField label="Phone" name="phone" type="tel" defaultValue={settings.phone ?? ''} error={errors?.phone} />
+            <TextField label="Website" name="website" defaultValue={settings.website ?? ''} placeholder="https://www.example.com" error={errors?.website} />
           </FormGrid>
           <div className={layout.spaced}>
             <TextAreaField label="Address" name="address" rows={3} defaultValue={settings.address ?? ''} error={errors?.address} />

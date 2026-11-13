@@ -7,6 +7,7 @@ import { todayInIndia } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
 import { listPricedServices } from '@/server/services/catalogService';
+import { getSigningChoice } from '@/server/services/signatureService';
 import {
   getFinanceSettings,
   hasFinanceReach,
@@ -36,6 +37,7 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
     listProjectOptions(),
     listPricedServices(),
   ]);
+  const signing = await getSigningChoice(access.employee.id, invoice);
   if (!invoice || invoice.status !== 'draft' || !hasFinanceReach(access, permissionKeys.invoicesManage, invoice)) notFound();
 
   const choices = toClientChoices(clients);
@@ -55,6 +57,9 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
           quantity: String(item.quantity),
           unitPrice: String(item.unit_price),
           taxRate: String(item.tax_rate),
+          serviceGroup: item.service_group ?? '',
+          serviceName: item.service_name ?? '',
+          billing: item.billing ?? '',
         }))}
         clients={choices}
         projects={projects.map((project) => ({ value: project.id, label: project.name, clientId: project.client_id }))}
@@ -64,6 +69,7 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
         defaultTerms={settings?.invoice_terms ?? null}
         today={todayInIndia()}
         services={services}
+        signing={signing}
       />
     </>
   );
