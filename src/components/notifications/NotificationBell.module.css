@@ -74,11 +74,61 @@
   border-top: 1px solid var(--color-border);
 }
 
+/* One notification. Sideways swipes belong to the item; up and down still scroll. */
+.entry {
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.slide {
+  position: relative;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.slide[data-dragging='true'] {
+  transition: none;
+}
+
+.entry[data-leaving='true'] .slide {
+  pointer-events: none;
+}
+
 .item {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--space-3) var(--space-4);
+  /* Room for the close button. */
+  padding: var(--space-3) calc(var(--space-4) + 32px) var(--space-3) var(--space-4);
+}
+
+.clear {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-small);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.clear:hover,
+.clear:focus-visible {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: none;
+  }
 }
 
 .item:hover {

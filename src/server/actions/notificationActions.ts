@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { databaseFailure, failure, success, type ActionResult } from '@/lib/actionResult';
 import { notificationKinds } from '@/lib/notifications/notificationKinds';
+import { parseId } from '@/lib/parseListParams';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import { getActionAccess } from '@/server/services/accessService';
 
@@ -14,6 +15,26 @@ export async function markAllNotificationsReadAction(): Promise<ActionResult> {
 
   revalidatePath('/', 'layout');
   return success('All caught up.');
+}
+
+// Clears one notification from the bell by marking it read. Row level security limits
+// it to the person's own notifications.
+export async function markNotificationReadAction(notificationId: string): Promise<ActionResult> {
+  const id = parseId(notificationId);
+  if (!id) return failure('This notification was not found.');
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('read_at', null)
+    .select('id');
+  if (error) return databaseFailure(error);
+
+  revalidatePath('/', 'layout');
+  // Nothing came back when it was already read, for example on another device.
+  return data.length ? success('Cleared.') : failure('This notification was already cleared.');
 }
 
 export async function savePushPreferencesAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {

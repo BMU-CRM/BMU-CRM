@@ -10,7 +10,14 @@ export async function getNotificationSummary() {
   const database = await createDatabaseClient();
 
   const [recent, unread] = await Promise.all([
-    database.from('notifications').select(notificationFields).order('created_at', { ascending: false }).limit(8),
+    // The bell lists only unread ones, so clearing or reading one takes it away.
+    // Read ones stay on the notifications page.
+    database
+      .from('notifications')
+      .select(notificationFields)
+      .is('read_at', null)
+      .order('created_at', { ascending: false })
+      .limit(8),
     database.from('notifications').select('id', { count: 'exact', head: true }).is('read_at', null),
   ]);
 
