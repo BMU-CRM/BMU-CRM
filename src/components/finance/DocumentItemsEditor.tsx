@@ -104,7 +104,6 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
       )}
       <div className={styles.header} aria-hidden="true">
         <span>Description</span>
-        <span>HSN/SAC</span>
         <span className={styles.numeric}>Qty</span>
         <span className={styles.numeric}>Rate (₹)</span>
         <span>GST</span>
@@ -129,19 +128,8 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
                 onChange={(event) => update(line.key, 'description', event.target.value)}
               />
             </label>
-            <label className={styles.cell}>
-              <span className={styles.mobileLabel}>HSN/SAC</span>
-              <input
-                id={`${id}-hsn`}
-                name="itemHsnSac"
-                className={formStyles.control}
-                aria-label={`Item ${index + 1} HSN or SAC code`}
-                inputMode="numeric"
-                maxLength={8}
-                value={line.hsnSac}
-                onChange={(event) => update(line.key, 'hsnSac', event.target.value)}
-              />
-            </label>
+            {/* No HSN/SAC box: a code saved on an older item is kept as it is. */}
+            <input type="hidden" name="itemHsnSac" value={line.hsnSac} />
             <label className={styles.cell}>
               <span className={styles.mobileLabel}>Quantity</span>
               <input
