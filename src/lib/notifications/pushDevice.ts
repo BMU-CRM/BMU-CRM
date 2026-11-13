@@ -49,6 +49,33 @@ export async function checkPushDevice(): Promise<PushDeviceState> {
   return subscription ? 'on' : 'off';
 }
 
+function sameKey(subscription: PushSubscription, publicKey: string) {
+  const current = subscription.options.applicationServerKey;
+  if (!current) return true;
+  const expected = toKeyBytes(publicKey);
+  const actual = new Uint8Array(current);
+  return actual.length === expected.length && actual.every((byte, index) => byte === expected[index]);
+}
+
+// When push is already on in this browser, tells the server again, each time the app
+// opens. This keeps the device linked to whoever is signed in, and brings it back if the
+// server dropped it (for example after the push service briefly refused it). If the
+// app's push key changed, the browser subscribes again with the new one.
+export async function refreshPushDevice(publicKey: string) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || Notification.permission !== 'granted') return;
+  const registration = await withTimeout(getActiveRegistration());
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) return;
+  if (!sameKey(subscription, publicKey)) {
+    await subscription.unsubscribe();
+    subscription = await withTimeout(
+      registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toKeyBytes(publicKey) }),
+      60000,
+    );
+  }
+  await savePushSubscriptionAction(subscription.toJSON(), navigator.userAgent);
+}
+
 export async function turnOnPush(publicKey: string): Promise<{ state: PushDeviceState; result: ActionResult }> {
   // Only ask when the browser has not already been told yes.
   const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();

@@ -44,6 +44,7 @@ export const notificationKindLabels: Record<NotificationKind, string> = {
   employee_added: 'A new employee is added',
   attendance_irregularity: 'Attendance is missing a check-out',
   task_resume_requested: 'I am asked to resume a task on hold',
+  task_updated: 'Someone edits a task of mine',
 };
 
 export const notificationKinds = Object.keys(notificationKindLabels) as NotificationKind[];

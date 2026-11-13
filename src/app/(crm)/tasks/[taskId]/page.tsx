@@ -17,6 +17,7 @@ import {
   TaskReassignPanel,
   TaskSubtasksPanel,
 } from '@/components/tasks/TaskPanels';
+import { TaskSendFiles } from '@/components/tasks/TaskSendFiles';
 import { TaskStatusActions } from '@/components/tasks/TaskStatusActions';
 import { TaskWorkTimer } from '@/components/tasks/TaskWorkTimer';
 import { ButtonLink } from '@/components/ui/Button';
@@ -36,6 +37,7 @@ import { requirePagePermission } from '@/server/services/accessService';
 import { listEmployeeOptions } from '@/server/services/employeeService';
 import { listLinkedFiles } from '@/server/services/fileService';
 import {
+  countUnsentTaskFiles,
   getTask,
   getTaskActor,
   listAssignableEmployees,
@@ -60,9 +62,10 @@ export default async function TaskPage({ params }: TaskPageProps) {
   const today = todayInIndia();
   const actor = await getTaskActor(access, task);
 
-  const [panels, attachments, assignable, dependencyOptions, employees] = await Promise.all([
+  const [panels, attachments, unsentFiles, assignable, dependencyOptions, employees] = await Promise.all([
     loadTaskPanels(task.id),
     listLinkedFiles({ taskId: task.id }),
+    countUnsentTaskFiles(task.id),
     actor.canManage ? listAssignableEmployees(task.project_id) : Promise.resolve([]),
     actor.canManage ? listDependencyOptions(task) : Promise.resolve([]),
     actor.canManage ? listEmployeeOptions() : Promise.resolve([]),
@@ -81,6 +84,12 @@ export default async function TaskPage({ params }: TaskPageProps) {
   const escalateName = canEscalate
     ? (await listEmployeeOptions()).find((person) => person.id === escalateId)?.full_name
     : undefined;
+
+  // Files the person added go to whoever assigned the task, and its reviewer.
+  const sendTo = [task.creator, task.reviewer]
+    .filter((person): person is NonNullable<typeof person> => person !== null && person.id !== access.employee.id)
+    .map((person) => person.full_name)
+    .filter((name, index, names) => names.indexOf(name) === index);
 
   const links = task.reference_links.flatMap((link) => {
     const url = safeExternalUrl(link);
@@ -142,17 +151,6 @@ export default async function TaskPage({ params }: TaskPageProps) {
             {task.escalation_reason && (
               <p className={`${layout.muted} ${layout.spaced}`}>Escalation reason: {task.escalation_reason}</p>
             )}
-            {links.length > 0 && (
-              <ul className={layout.spaced}>
-                {links.map((link) => (
-                  <li key={link}>
-                    <a href={link} target="_blank" rel="noopener noreferrer" className={layout.link}>
-                      {link}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
             {canUpdateProgress && (
               <div className={layout.spaced}>
                 <TaskProgressForm taskId={task.id} percentage={task.completion_percentage} />
@@ -164,6 +162,12 @@ export default async function TaskPage({ params }: TaskPageProps) {
             files={attachments}
             links={{ taskId: task.id }}
             canUpload={canWork && access.permissions[permissionKeys.filesUpload] !== undefined}
+            referenceLinks={links}
+            footer={
+              unsentFiles > 0 && sendTo.length > 0 ? (
+                <TaskSendFiles taskId={task.id} unsentCount={unsentFiles} recipientNames={sendTo.join(' and ')} />
+              ) : undefined
+            }
           />
           <TaskChecklistPanel taskId={task.id} items={panels.checklist} canWork={canWork} />
           {!task.parent_task_id && (
@@ -238,9 +242,15 @@ export default async function TaskPage({ params }: TaskPageProps) {
               <div>
                 <dt>Hours worked</dt>
                 <dd>
-                  <TaskWorkTimer workedSeconds={task.workedSeconds} running={task.status === 'in_progress' && task.work_started_at !== null} />
+                  <TaskWorkTimer
+                    countedSeconds={task.countedSeconds}
+                    startedAt={task.status === 'in_progress' ? task.work_started_at : null}
+                  />
                   {task.estimated_hours !== null ? ` of ${task.estimated_hours} h estimated` : ''}
-                  <p className={layout.muted}>Counted from Start work to Submit for review; time on hold is not counted.</p>
+                  <p className={layout.muted}>
+                    Counts only while the task is in progress. It pauses when the task is put on hold or handed in, and carries on
+                    from the same figure on Resume work.
+                  </p>
                 </dd>
               </div>
               <div>

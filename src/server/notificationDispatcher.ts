@@ -5,8 +5,9 @@ import { safeNotificationLink } from '@/lib/notifications/notificationKinds';
 import { buildPushMessage } from '@/lib/notifications/pushMessage';
 import { createAdminDatabaseClient } from '@/server/database/databaseClient';
 
-// Push services expire undeliverable messages after an hour.
-const pushTimeToLiveSeconds = 3600;
+// How long a push service keeps a notification for a device that is off, offline or has
+// its browser closed. It is delivered when the device is back within a day.
+const pushTimeToLiveSeconds = 24 * 60 * 60;
 
 function pushIsConfigured() {
   return Boolean(

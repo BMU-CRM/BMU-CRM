@@ -6119,6 +6119,10 @@ export type Database = {
             "p_url": string
             "p_secret": string
           }; Returns: undefined }
+      "count_unsent_task_files":
+        | { Args: {
+            "p_task": string
+          }; Returns: number }
       "count_working_days":
         | { Args: {
             "p_start": string
@@ -6916,6 +6920,11 @@ export type Database = {
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "send_meeting_reminders":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
+      "send_task_files":
+        | { Args: {
+            "p_task": string
+            "p_note": string
+          }; Returns: number }
       "send_vendor_bill_reminders":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
       "set_client_services":
@@ -6972,6 +6981,11 @@ export type Database = {
         | { Args: {
             "p_line": string
           }; Returns: undefined }
+      "unsent_task_files":
+        | { Args: {
+            "p_task": string
+            "p_actor": string
+          }; Returns: (string)[] }
       "vendor_bill_status":
         | { Args: {
             "p_amount": number
@@ -7007,7 +7021,7 @@ export type Database = {
       "meeting_kind": "internal" | "department" | "management" | "client" | "project" | "one_to_one" | "content"
       "meeting_response": "pending" | "accepted" | "declined"
       "meeting_status": "scheduled" | "completed" | "cancelled"
-      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided" | "invoice_due_soon" | "follow_up_due" | "vendor_bill_due" | "reimbursement_submitted" | "reimbursement_decided" | "reimbursement_paid" | "budget_alert" | "employee_added" | "attendance_irregularity" | "task_resume_requested"
+      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided" | "invoice_due_soon" | "follow_up_due" | "vendor_bill_due" | "reimbursement_submitted" | "reimbursement_decided" | "reimbursement_paid" | "budget_alert" | "employee_added" | "attendance_irregularity" | "task_resume_requested" | "task_updated"
       "notification_priority": "normal" | "high"
       "payment_method": "bank_transfer" | "upi" | "cheque" | "cash" | "card" | "tds" | "other"
       "payroll_rule_kind": "pf" | "esi" | "pt" | "tds"
@@ -7119,7 +7133,7 @@ export const Constants = {
       "meeting_kind": ["internal", "department", "management", "client", "project", "one_to_one", "content"],
       "meeting_response": ["pending", "accepted", "declined"],
       "meeting_status": ["scheduled", "completed", "cancelled"],
-      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided", "invoice_due_soon", "follow_up_due", "vendor_bill_due", "reimbursement_submitted", "reimbursement_decided", "reimbursement_paid", "budget_alert", "employee_added", "attendance_irregularity", "task_resume_requested"],
+      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided", "invoice_due_soon", "follow_up_due", "vendor_bill_due", "reimbursement_submitted", "reimbursement_decided", "reimbursement_paid", "budget_alert", "employee_added", "attendance_irregularity", "task_resume_requested", "task_updated"],
       "notification_priority": ["normal", "high"],
       "payment_method": ["bank_transfer", "upi", "cheque", "cash", "card", "tds", "other"],
       "payroll_rule_kind": ["pf", "esi", "pt", "tds"],

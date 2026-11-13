@@ -4,7 +4,7 @@ import { BellRing, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { checkPushDevice, turnOnPush, type PushDeviceState } from '@/lib/notifications/pushDevice';
+import { checkPushDevice, refreshPushDevice, turnOnPush, type PushDeviceState } from '@/lib/notifications/pushDevice';
 import styles from './PushPrompt.module.css';
 
 const dismissedKey = 'crm.pushPromptDismissedAt';
@@ -41,6 +41,8 @@ export function PushPrompt({ publicKey }: { publicKey: string }) {
       (current) => {
         setState(current);
         setHidden(wasDismissedRecently());
+        // Already on: make sure the server still has this device, for whoever is signed in.
+        if (current === 'on') refreshPushDevice(publicKey).catch(() => undefined);
       },
       () => setState('unsupported'),
     );

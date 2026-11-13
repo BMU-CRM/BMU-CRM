@@ -514,6 +514,86 @@ describe('clients, projects and the task engine', () => {
       });
     });
 
+    describe('telling the people on a task', () => {
+      it('tells the assignee when someone else edits their task, grouped into one notice', async () => {
+        const { data } = await newTask(as.designHead!, { assignee_id: ids.designer!, title: `Edited ${runId}` });
+
+        expect((await as.designHead!.from('tasks').update({ priority: 'urgent', description: 'New brief' }).eq('id', data!.id)).error).toBeNull();
+        expect((await as.designHead!.from('tasks').update({ title: `Edited again ${runId}` }).eq('id', data!.id)).error).toBeNull();
+
+        const { data: notes } = await admin
+          .from('notifications')
+          .select('title, body, event_count, priority')
+          .eq('recipient_id', ids.designer!)
+          .eq('kind', 'task_updated')
+          .eq('link', `/tasks/${data!.id}`);
+        expect(notes).toHaveLength(1);
+        expect(notes?.[0]?.event_count).toBe(2);
+        expect(notes?.[0]?.title).toBe('Your task was updated');
+        expect(notes?.[0]?.body).toBe(`Edited again ${runId}: changed title`);
+        expect(notes?.[0]?.priority).toBe('high');
+      });
+
+      it('does not tell the assignee about their own progress, or the person who made the change', async () => {
+        const { data } = await newTask(as.designHead!, { assignee_id: ids.designer! });
+        await as.designer!.from('tasks').update({ completion_percentage: 30 }).eq('id', data!.id);
+        await as.designHead!.from('tasks').update({ priority: 'low' }).eq('id', data!.id);
+
+        const { data: notes } = await admin.from('notifications').select('recipient_id').eq('kind', 'task_updated').eq('link', `/tasks/${data!.id}`);
+        expect(notes?.map((note) => note.recipient_id)).toEqual([ids.designer!]);
+      });
+
+      it('lets the assignee send files added after submitting to whoever assigned the task', async () => {
+        const { data } = await newTask(as.designHead!, { assignee_id: ids.designer!, title: `Files ${runId}` });
+        const attach = (name: string) =>
+          as.designer!.from('files').insert({ kind: 'link', name, external_url: 'https://drive.google.com/x', task_id: data!.id }).select('id');
+
+        await setStatus(as.designer!, data!.id, 'accepted');
+        await setStatus(as.designer!, data!.id, 'in_progress');
+        expect((await attach('Draft')).error).toBeNull();
+        expect((await as.designer!.rpc('count_unsent_task_files', { p_task: data!.id })).data).toBe(1);
+
+        // Files handed in with the submission are not offered again.
+        await setStatus(as.designer!, data!.id, 'under_review');
+        expect((await as.designer!.rpc('count_unsent_task_files', { p_task: data!.id })).data).toBe(0);
+        const nothing = await as.designer!.rpc('send_task_files', { p_task: data!.id, p_note: '' });
+        expect(nothing.error?.message).toContain('no new files');
+
+        expect((await attach('Final cut')).error).toBeNull();
+        expect((await attach('Thumbnail')).error).toBeNull();
+        expect((await as.designer!.rpc('count_unsent_task_files', { p_task: data!.id })).data).toBe(2);
+        expect((await as.developer!.rpc('count_unsent_task_files', { p_task: data!.id })).data).toBe(0);
+        expect((await as.developer!.rpc('send_task_files', { p_task: data!.id, p_note: '' })).error?.code).toBe('42501');
+
+        const sent = await as.designer!.rpc('send_task_files', { p_task: data!.id, p_note: 'Last two pieces' });
+        expect(sent.error).toBeNull();
+        expect(sent.data).toBe(2);
+        expect((await as.designer!.rpc('count_unsent_task_files', { p_task: data!.id })).data).toBe(0);
+
+        const { data: notes } = await admin
+          .from('notifications')
+          .select('title, body')
+          .eq('recipient_id', ids.designHead!)
+          .eq('kind', 'file_received')
+          .eq('link', `/tasks/${data!.id}`);
+        expect(notes).toHaveLength(1);
+        expect(notes?.[0]?.title).toContain('sent 2 files on a task');
+        expect(notes?.[0]?.body).toBe(`Files ${runId}: Final cut, Thumbnail. Last two pieces`);
+
+        const { data: history } = await as.designHead!.rpc('get_task_history', { p_task: data!.id });
+        expect(history?.[0]?.action).toBe('files_sent');
+        expect(history?.[0]?.details).toHaveProperty('summary');
+      });
+
+      it('refuses to send when there is nobody else to send to', async () => {
+        const { data } = await newTask(as.designer!, { assignee_id: ids.designer! });
+        await as.designer!.from('files').insert({ kind: 'link', name: 'Mine', external_url: 'https://drive.google.com/y', task_id: data!.id }).select('id');
+
+        const { error } = await as.designer!.rpc('send_task_files', { p_task: data!.id, p_note: '' });
+        expect(error?.message).toContain('nobody to send');
+      });
+    });
+
     it('resets the workflow when reassigned', async () => {
       const { data } = await newTask(as.designHead!, { assignee_id: ids.designer! });
       await setStatus(as.designer!, data!.id, 'accepted');

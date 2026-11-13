@@ -120,35 +120,58 @@ export async function changeTaskStatusAction(
   if (link && !link.success) return failure(link.error.issues[0]?.message ?? 'Enter a valid link.');
 
   const database = await createDatabaseClient();
+
+  // The link is attached before the status changes, so it counts as handed in with the
+  // submission and is not offered again under "Send files".
+  let linkFileId: string | null = null;
+  let linkFailed = false;
+  if (link?.success) {
+    const host = new URL(link.data).hostname.replace(/^www\./, '');
+    const { data: linkFile, error: linkError } = await database
+      .from('files')
+      .insert({ kind: 'link', name: `Submitted work (${host})`, external_url: link.data, task_id: taskId })
+      .select('id')
+      .single();
+    if (linkError) console.error('Could not attach the work link', linkError);
+    linkFileId = linkFile?.id ?? null;
+    linkFailed = !linkFile;
+  }
+
   const { data, error } = await database
     .from('tasks')
     .update({ status, ...(rating ? { quality_rating: rating } : {}) })
     .eq('id', taskId)
     .select('id');
 
-  if (error) return databaseFailure(error);
-  if (data.length === 0) return failure(noPermission);
+  if (error || data.length === 0) {
+    // The task did not move, so the link is taken back off.
+    if (linkFileId) await database.rpc('delete_file', { p_file: linkFileId });
+    return error ? databaseFailure(error) : failure(noPermission);
+  }
 
   if (note?.trim()) {
     await database.from('task_comments').insert({ task_id: taskId, body: note.trim() });
   }
 
-  if (link?.success) {
-    const host = new URL(link.data).hostname.replace(/^www\./, '');
-    const { error: linkError } = await database
-      .from('files')
-      .insert({ kind: 'link', name: `Submitted work (${host})`, external_url: link.data, task_id: taskId })
-      .select('id');
-    refreshTask(taskId);
-    if (linkError) {
-      console.error('Could not attach the work link', linkError);
-      return failure('The task was updated, but the link could not be attached. Please add it under Attachments.');
-    }
-    return success('Task updated.');
+  refreshTask(taskId);
+  if (linkFailed) {
+    return failure('The task was updated, but the link could not be attached. Please add it under Attachments.');
   }
+  return success('Task updated.');
+}
+
+// Sends the files the person added to a task to whoever assigned it and its reviewer,
+// for example files added after submitting the work. The database picks the files not
+// sent before, notifies them and records it in the task's history.
+export async function sendTaskFilesAction(taskId: string, note: string | null): Promise<ActionResult> {
+  if (!(await getActionAccess())) return failure(noPermission);
+
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('send_task_files', { p_task: taskId, p_note: note?.trim() ?? '' });
+  if (error) return databaseFailure(error);
 
   refreshTask(taskId);
-  return success('Task updated.');
+  return success(`${data} ${data === 1 ? 'file' : 'files'} sent.`);
 }
 
 // A manager asks the assignee to pick an on-hold task back up. It stays on hold, and the

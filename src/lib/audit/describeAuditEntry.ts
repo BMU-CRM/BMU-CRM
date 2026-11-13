@@ -193,6 +193,8 @@ const readableValues: Record<string, (value: unknown) => string> = {
 export function describeTaskChanges(details: unknown): string[] {
   const detailRecord = recordOf(details);
   if (recordOf(detailRecord.created).id) return ['Created this task'];
+  // Entries that are not a change to the task itself, such as sending files, say what happened.
+  if (typeof detailRecord.summary === 'string') return [detailRecord.summary];
 
   return Object.entries(recordOf(detailRecord.changes))
     .filter(([field]) => !hiddenFields.has(field))

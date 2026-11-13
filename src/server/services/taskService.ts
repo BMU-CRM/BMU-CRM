@@ -187,9 +187,17 @@ export async function getTask(taskId: string) {
 
   const [task] = await addClientNames([data]);
   if (!task) return null;
-  // Hours counted so far, including the stretch running now.
-  const running = task.work_started_at ? Math.max(0, Date.now() - Date.parse(task.work_started_at)) / 1000 : 0;
-  return { ...task, workedSeconds: Math.round(Number(task.actual_hours) * 3600 + running) };
+  // Hours counted before the stretch running now; the page adds the running stretch.
+  return { ...task, countedSeconds: Math.round(Number(task.actual_hours) * 3600) };
+}
+
+// How many of the files the current person added to a task have not been handed to
+// whoever assigned it. Zero for anyone not working on the task.
+export async function countUnsentTaskFiles(taskId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('count_unsent_task_files', { p_task: taskId });
+  if (error) throw error;
+  return data ?? 0;
 }
 
 export type TaskDetails = NonNullable<Awaited<ReturnType<typeof getTask>>>;

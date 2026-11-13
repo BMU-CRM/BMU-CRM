@@ -1,3 +1,10 @@
+.reference {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-wrap: anywhere;
+}
+
 .linkForm {
   margin-top: var(--space-3);
 }

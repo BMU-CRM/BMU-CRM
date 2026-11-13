@@ -135,6 +135,9 @@
   .layout {
     grid-template-columns: minmax(0, 1fr);
     height: calc(100dvh - var(--topbar-height) - var(--space-4) * 2);
+    /* With the keyboard open there is often less than 480px left, and the message box
+       must stay above it, so the conversation shrinks as far as it needs to. */
+    min-height: 0;
   }
 
   /* On a phone, the list and a conversation each take the full screen. */

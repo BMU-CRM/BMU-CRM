@@ -21,6 +21,7 @@ const titleWithActor: Partial<Record<NotificationKind, (actor: string) => string
   task_changes_requested: (actor) => `${actor} asked for changes`,
   task_comment: (actor) => `${actor} commented on a task`,
   task_rescheduled: (actor) => `${actor} moved a deadline`,
+  task_updated: (actor) => `${actor} updated your task`,
   task_escalated: (actor) => `${actor} escalated a task to you`,
   task_rejected: (actor) => `${actor} declined a task you assigned`,
   file_received: (actor) => `${actor} sent you a file`,

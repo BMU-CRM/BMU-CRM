@@ -9,22 +9,36 @@ export function formatWorked(seconds: number) {
   return `${hours} h ${String(minutes % 60).padStart(2, '0')} min`;
 }
 
-// Hours worked on a task. While it is in progress the figure keeps counting on screen,
-// from what the server worked out when the page loaded.
-export function TaskWorkTimer({ workedSeconds, running }: { workedSeconds: number; running: boolean }) {
-  const [extra, setExtra] = useState(0);
+type TaskWorkTimerProps = {
+  // Hours already counted before the stretch now running, in seconds.
+  countedSeconds: number;
+  // When the running stretch began; null while the task is not being worked on.
+  startedAt: string | null;
+};
+
+// Hours worked on a task. Time on hold is not counted: on Resume work the figure carries
+// on from where it stopped. While work is under way it keeps counting on screen.
+export function TaskWorkTimer({ countedSeconds, startedAt }: TaskWorkTimerProps) {
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    if (!running) return;
-    const loadedAt = Date.now();
-    const timer = window.setInterval(() => setExtra(Math.floor((Date.now() - loadedAt) / 1000)), 30_000);
-    return () => window.clearInterval(timer);
-  }, [running]);
+    if (!startedAt) return;
+    const tick = () => setNow(Date.now());
+    const first = window.setTimeout(tick, 0);
+    const timer = window.setInterval(tick, 15_000);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(timer);
+    };
+  }, [startedAt]);
+
+  const running = startedAt ? Math.max(0, Math.floor((now - Date.parse(startedAt)) / 1000)) : 0;
 
   return (
-    <span>
-      {formatWorked(workedSeconds + (running ? extra : 0))}
-      {running ? ' (counting now)' : ''}
+    // The server and the browser read the clock moments apart.
+    <span suppressHydrationWarning>
+      {formatWorked(countedSeconds + running)}
+      {startedAt ? ' (counting now)' : ''}
     </span>
   );
 }
