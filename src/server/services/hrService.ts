@@ -1,8 +1,10 @@
 import 'server-only';
+import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 import { cleanSearchTerm } from '@/lib/cleanSearchTerm';
 import { todayInIndia } from '@/lib/formatDate';
 import type { leaveListSorts, leaveListStatuses } from '@/lib/validation/hrSchema';
-import { createDatabaseClient } from '@/server/database/databaseClient';
+import { createAdminDatabaseClient, createDatabaseClient } from '@/server/database/databaseClient';
 import type { AttendanceReportData } from '@/lib/attendance/summariseAttendance';
 import type { CurrentAccess } from './accessService';
 
@@ -33,15 +35,26 @@ export async function getHrDashboard(from: string, to: string): Promise<HrDashbo
   };
 }
 
-export async function getCompanySettings() {
-  const database = await createDatabaseClient();
-  const { data, error } = await database
-    .from('company_settings')
-    .select('work_start, work_end, late_grace_minutes, working_days, default_probation_months, overtime_after_minutes, half_day_minutes')
-    .single();
-  if (error) throw error;
-  return data;
-}
+// Working hours and days. Every employee may read them and they rarely change, so they
+// are kept for five minutes and shared between requests, and cleared the moment they are
+// saved (companySettingsTag). The read uses no session, as cached work cannot read
+// cookies; the pages that call this are all for signed-in people.
+export const companySettingsTag = 'company-settings';
+
+const readCompanySettings = unstable_cache(
+  async () => {
+    const { data, error } = await createAdminDatabaseClient()
+      .from('company_settings')
+      .select('work_start, work_end, late_grace_minutes, working_days, default_probation_months, overtime_after_minutes, half_day_minutes')
+      .single();
+    if (error) throw error;
+    return data;
+  },
+  ['company-settings'],
+  { revalidate: 300, tags: [companySettingsTag] },
+);
+
+export const getCompanySettings = cache(() => readCompanySettings());
 
 export async function listHolidays(year: number) {
   return listHolidaysBetween(`${year}-01-01`, `${year}-12-31`);
@@ -210,6 +223,14 @@ export async function getTeamLeave(from: string, to: string) {
   const { data, error } = await database.rpc('get_team_leave', { p_from: from, p_to: to });
   if (error) throw error;
   return data;
+}
+
+// Whether the person's role records attendance. Off for roles such as the Founder's.
+export async function tracksAttendance(employeeId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('employee_tracks_attendance', { p_employee: employeeId });
+  if (error) throw error;
+  return data !== false;
 }
 
 export async function getTodayAttendance(access: CurrentAccess) {

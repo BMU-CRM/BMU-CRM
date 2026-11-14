@@ -4870,6 +4870,8 @@ export type Database = {
           "is_default": boolean
           "is_protected": boolean
           "name": string
+          "private_records": boolean
+          "tracks_attendance": boolean
           "updated_at": string
         }
         ComputedFields: never
@@ -4881,6 +4883,8 @@ export type Database = {
           "is_default"?: boolean
           "is_protected"?: boolean
           "name": string
+          "private_records"?: boolean
+          "tracks_attendance"?: boolean
           "updated_at"?: string
         }
         Update: {
@@ -4891,6 +4895,8 @@ export type Database = {
           "is_default"?: boolean
           "is_protected"?: boolean
           "name"?: string
+          "private_records"?: boolean
+          "tracks_attendance"?: boolean
           "updated_at"?: string
         }
         Relationships: []
@@ -6118,6 +6124,10 @@ export type Database = {
         | { Args: {
             "p_path": string
           }; Returns: boolean }
+      "can_see_employee_record":
+        | { Args: {
+            "p_employee": string
+          }; Returns: boolean }
       "can_see_ledger":
         | { Args: Record<PropertyKey, never>; Returns: boolean }
       "can_see_payroll":
@@ -6244,6 +6254,11 @@ export type Database = {
         | { Args: {
             "p_year": number
           }; Returns: number }
+      "change_employee_login_email":
+        | { Args: {
+            "p_employee": string
+            "p_email": string
+          }; Returns: undefined }
       "check_budget_alerts":
         | { Args: {
             "p_department": string
@@ -6339,6 +6354,10 @@ export type Database = {
             "p_employee": string
             "p_key": string
           }; Returns: boolean }
+      "employee_has_private_record":
+        | { Args: {
+            "p_employee": string
+          }; Returns: boolean }
       "employee_history_value":
         | { Args: {
             "p_field": string
@@ -6348,6 +6367,10 @@ export type Database = {
         | { Args: {
             "p_employee": string
           }; Returns: string }
+      "employee_tracks_attendance":
+        | { Args: {
+            "p_employee": string
+          }; Returns: boolean }
       "employees_with_permission":
         | { Args: {
             "p_permission": string
@@ -6498,6 +6521,8 @@ export type Database = {
             "promised_on": string
             "follow_up_count": number
           }[] }
+      "get_hidden_employee_ids":
+        | { Args: Record<PropertyKey, never>; Returns: string[] }
       "get_hr_dashboard":
         | { Args: {
             "p_from": string
@@ -7025,6 +7050,10 @@ export type Database = {
             "p_role": string
           }; Returns: boolean }
       "role_is_protected":
+        | { Args: {
+            "p_role": string
+          }; Returns: boolean }
+      "role_within_own_access":
         | { Args: {
             "p_role": string
           }; Returns: boolean }

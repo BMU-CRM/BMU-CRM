@@ -21,6 +21,7 @@ import { idleResult } from '@/lib/actionResult';
 import type { PricedService } from '@/lib/catalog/servicePricing';
 import { isInterStateSupply } from '@/lib/finance/documentTotals';
 import { stateOptionsWith } from '@/lib/finance/indianStates';
+import { formatLongDate, validUntilDate, withValidUntil, writtenValidUntil } from '@/lib/finance/quotationTerms';
 import { autosaveInvoiceAction, saveInvoiceAction } from '@/server/actions/invoiceActions';
 import { autosaveQuotationAction, saveQuotationAction } from '@/server/actions/quotationActions';
 import type { ClientServiceItem } from '@/server/services/catalogService';
@@ -212,8 +213,31 @@ export function FinanceDocumentForm({
     }
   }, [autosave, document, noun]);
 
+  // Quotation terms: "valid until <date>" follows the Valid until date while that line
+  // still shows the date it was given automatically.
+  const initialValidUntil = validUntilDate(document?.end_date, document?.issue_date ?? today, endDays);
+  const shownValidUntil = useRef(initialValidUntil);
+  const initialTerms = document
+    ? (document.terms ?? '')
+    : kind === 'quotation'
+      ? withValidUntil(defaultTerms ?? '', initialValidUntil)
+      : (defaultTerms ?? '');
+
+  function followValidUntil(form: HTMLFormElement) {
+    const field = (name: string) => form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
+    const terms = field('terms');
+    if (!terms) return;
+    const next = validUntilDate(field('endDate')?.value, field('issueDate')?.value || today, endDays);
+    const previous = shownValidUntil.current;
+    if (!next || next === previous) return;
+    if (previous && writtenValidUntil(terms.value) === formatLongDate(previous)) terms.value = withValidUntil(terms.value, next);
+    shownValidUntil.current = next;
+  }
+
   function changed(event: React.FormEvent<HTMLFormElement>) {
     if (submitted.current) return;
+    const name = (event.target as HTMLInputElement).name;
+    if (kind === 'quotation' && (name === 'issueDate' || name === 'endDate')) followValidUntil(event.currentTarget);
     if ((event.target as HTMLElement).closest('[data-items]')) itemsEdited.current = true;
     dirty.current = true;
     clearTimeout(timer.current);
@@ -379,7 +403,7 @@ export function FinanceDocumentForm({
               label="Terms"
               name="terms"
               rows={4}
-              defaultValue={document ? (document.terms ?? '') : (defaultTerms ?? '')}
+              defaultValue={initialTerms}
               error={errors?.terms}
             />
           </div>

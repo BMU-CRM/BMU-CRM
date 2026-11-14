@@ -12,7 +12,14 @@
       "Bash(npx vitest *)",
       "Bash(npm test *)",
       "Bash(mkdir -p shots-bulk)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3101/login)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3101/login)",
+      "Bash(awk '/function public.guard_employee_update\\\\\\(/,/^\\\\$\\\\$;/' database/migrations/20261112000004_exit_management.sql)",
+      "Bash(awk 'NR>=380 && NR<=470 && /create \\(or replace \\)?function/ {print NR\": \"$0}' database/migrations/20261112000002_payroll.sql)",
+      "Bash(grep -n \"^\\\\$\\\\$;\" database/migrations/20261112000002_payroll.sql)",
+      "Bash(awk -F: '$1>430')",
+      "Bash(awk '/function public.set_employee_extra_roles\\\\\\(/,/^\\\\$\\\\$;/' database/migrations/20261111000004_hr_finance_foundation.sql)",
+      "Bash(awk '/function public.attendance_check_in\\\\\\(/,/^\\\\$\\\\$;/' database/migrations/20261111000006_attendance_leave.sql)",
+      "Bash(npm run *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\dhanu\\.claude\\projects\\e--CRM-2-0\\versions"

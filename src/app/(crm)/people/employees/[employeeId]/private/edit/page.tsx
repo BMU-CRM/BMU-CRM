@@ -7,7 +7,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { parseId } from '@/lib/parseListParams';
 import { isEncryptionReady } from '@/server/security/fieldEncryption';
 import { requirePagePermission } from '@/server/services/accessService';
-import { getEmployee, getPrivateDetails } from '@/server/services/employeeService';
+import { getEmployee, getEmployeeRecordAccess, getPrivateDetails } from '@/server/services/employeeService';
 
 export const metadata: Metadata = { title: 'Edit ID and bank details' };
 
@@ -17,12 +17,13 @@ type EditPrivateDetailsPageProps = {
 
 // HR only. The person sees their own details masked on their record.
 export default async function EditPrivateDetailsPage({ params }: EditPrivateDetailsPageProps) {
-  await requirePagePermission(permissionKeys.employeesPrivateView);
+  const access = await requirePagePermission(permissionKeys.employeesPrivateView);
   const employeeId = parseId((await params).employeeId);
   if (!employeeId) notFound();
 
-  const employee = await getEmployee(employeeId);
-  if (!employee) notFound();
+  // Leadership records with private records are left out for HR, as on the profile.
+  const [employee, recordAccess] = await Promise.all([getEmployee(employeeId), getEmployeeRecordAccess(access, employeeId)]);
+  if (!employee || !recordAccess.canEditPrivate) notFound();
 
   return (
     <>

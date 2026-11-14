@@ -14,7 +14,7 @@ import styles from './PrintableDocument.module.css';
 type PrintLine = DocumentLine & { service_group?: string | null; service_name?: string | null; billing?: string | null };
 
 // The first page holds this many items; the rest continue on the next page.
-export const itemsOnFirstPage = 6;
+export const itemsOnFirstPage = 3;
 
 type PrintableDocumentProps = {
   heading: string;
@@ -156,8 +156,29 @@ export function PaymentDetails({ settings }: { settings: FinanceSettings | null 
   );
 }
 
-// Questions and terms, along the bottom of the last page.
-export function DocumentFooter({ settings, terms }: { settings: FinanceSettings | null; terms: string | null }) {
+// Notes and terms and conditions, across the page, before the signatures.
+export function DocumentTerms({ notes, terms }: { notes: string | null; terms: string | null }) {
+  if (!notes && !terms) return null;
+  return (
+    <section className={styles.terms}>
+      {notes && (
+        <div>
+          <p className={styles.footerHeading}>Notes</p>
+          <p className={styles.preserve}>{notes}</p>
+        </div>
+      )}
+      {terms && (
+        <div>
+          <p className={styles.footerHeading}>Terms and conditions</p>
+          <p className={styles.preserve}>{terms}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Who to ask, along the bottom of the last page.
+export function DocumentFooter({ settings, terms }: { settings: FinanceSettings | null; terms?: string | null }) {
   const website = websiteLabel(settings?.website);
   return (
     <footer className={styles.footer}>
@@ -197,7 +218,7 @@ export function DocumentFooter({ settings, terms }: { settings: FinanceSettings 
 // A quotation, invoice or purchase order laid out for paper, in the company's style. It
 // carries what a GST invoice must show: both parties' GSTINs, the place of supply, HSN
 // or SAC codes where saved, the tax split (CGST and SGST, or IGST) and the amount in
-// words. The first six items are on the first page; the rest continue on the next.
+// words. The first three items are on the first page; the rest continue on the next.
 export function PrintableDocument({
   heading,
   stamp,
@@ -315,12 +336,6 @@ export function PrintableDocument({
 
         <section className={styles.summary}>
           <div className={styles.words}>
-            {notes && (
-              <>
-                <p className={styles.noteHeading}>Note:</p>
-                <p className={styles.preserve}>{notes}</p>
-              </>
-            )}
             <p className={styles.noteHeading}>Amount in words:</p>
             <p>{amountInWords(money.total)}</p>
           </div>
@@ -359,13 +374,15 @@ export function PrintableDocument({
 
         {showBankDetails && !paidInFull && <PaymentDetails settings={settings} />}
 
+        <DocumentTerms notes={notes} terms={terms} />
+
         {closingLine && <p className={styles.thanks}>{closingLine}</p>}
         <section className={styles.signatures}>
           {clientAcceptance ? <ClientAcceptance /> : <span />}
           <SignatureBlock companyName={companyName} signatory={signatory} showSeal={showSeal} />
         </section>
 
-        <DocumentFooter settings={settings} terms={terms} />
+        <DocumentFooter settings={settings} />
       </DocumentSheet>
     </div>
   );

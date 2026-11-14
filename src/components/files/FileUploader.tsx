@@ -1,7 +1,6 @@
 'use client';
 
 import { CloudUpload } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useRef, useState, type DragEvent } from 'react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { acceptedFileTypes, checkUploadable, fileTypeOf } from '@/lib/files/fileTypes';
@@ -47,7 +46,6 @@ function sendToStorage(ticket: UploadTicket, file: File, onProgress: (percentage
 }
 
 export function FileUploader({ links, versionOfFileId, compact = false }: FileUploaderProps) {
-  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<UploadItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -97,7 +95,6 @@ export function FileUploader({ links, versionOfFileId, compact = false }: FileUp
 
     await Promise.all(files.map((file, index) => uploadOne(file, newItems[index]!.key)));
     if (inputRef.current) inputRef.current.value = '';
-    router.refresh();
   }
 
   function handleDrop(event: DragEvent) {

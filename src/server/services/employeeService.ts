@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import { permissionKeys, type PermissionKey } from '@/lib/access/permissionKeys';
 import { cleanSearchTerm } from '@/lib/cleanSearchTerm';
@@ -36,19 +37,33 @@ async function directoryIds(access: CurrentAccess) {
   return data;
 }
 
-export async function canViewEmployeeProfile(access: CurrentAccess, employeeId: string) {
-  if (access.permissions[permissionKeys.employeesView] === 'organisation') return true;
+// People in a role with private records, such as the Founder, are left out for anyone
+// not in such a role themselves.
+async function hiddenIds() {
   const database = await createDatabaseClient();
-  const { data } = await database.rpc('can_view_employee_profile', { p_target: employeeId });
-  return data === true;
+  const { data, error } = await database.rpc('get_hidden_employee_ids');
+  if (error) throw error;
+  return (data ?? []) as string[];
+}
+
+export async function canViewEmployeeProfile(access: CurrentAccess, employeeId: string) {
+  const database = await createDatabaseClient();
+  const [record, profile] = await Promise.all([
+    database.rpc('can_see_employee_record', { p_employee: employeeId }),
+    access.permissions[permissionKeys.employeesView] === 'organisation'
+      ? Promise.resolve({ data: true })
+      : database.rpc('can_view_employee_profile', { p_target: employeeId }),
+  ]);
+  return record.data === true && profile.data === true;
 }
 
 async function employeeQuery(access: CurrentAccess, { search, departmentId, roleId, accountStatus }: Omit<EmployeeFilters, 'page'>) {
   const database = await createDatabaseClient();
-  const ids = await directoryIds(access);
+  const [ids, hidden] = await Promise.all([directoryIds(access), hiddenIds()]);
 
   let query = database.from('employees').select(employeeFields, { count: 'exact' }).order('full_name');
   if (ids) query = query.in('id', ids);
+  if (hidden.length > 0) query = query.not('id', 'in', `(${hidden.join(',')})`);
 
   const term = search ? cleanSearchTerm(search) : '';
   if (term) {
@@ -143,12 +158,13 @@ export async function listExtraRoleIds(employeeId: string) {
 }
 
 // The roles the signed-in person can switch between, with the one in use marked.
-export async function listMyRoles() {
+// Once per request, however many parts of the page ask.
+export const listMyRoles = cache(async function loadMyRoles() {
   const database = await createDatabaseClient();
   const { data, error } = await database.rpc('get_my_roles');
   if (error) throw error;
   return data.map((row) => ({ id: row.role_id, name: row.name, isMain: row.is_main, isCurrent: row.is_current }));
-}
+});
 
 // The role given to people added by someone who cannot choose roles.
 export async function getDefaultRole() {
@@ -181,14 +197,15 @@ export async function listHierarchyPeople() {
 export async function getEmployeeRecordAccess(access: CurrentAccess, employeeId: string) {
   const database = await createDatabaseClient();
   const isSelf = employeeId === access.employee.id;
-  const isHr = access.permissions[permissionKeys.employeesPrivateView] === 'organisation';
-
-  const [seesPersonal, managesEmployee] = await Promise.all([
+  const [seesPersonal, managesEmployee, seesRecord] = await Promise.all([
     database.rpc('can_see_personal_details', { p_employee: employeeId }),
     isSelf
       ? Promise.resolve({ data: false })
       : database.rpc('can_access_employee', { p_permission: permissionKeys.employeesUpdate, p_target: employeeId }),
+    database.rpc('can_see_employee_record', { p_employee: employeeId }),
   ]);
+  // HR, for everyone whose record is not private to leadership.
+  const isHr = access.permissions[permissionKeys.employeesPrivateView] === 'organisation' && seesRecord.data === true;
 
   return {
     isSelf,
@@ -282,19 +299,22 @@ export async function getEmployeeControls(access: CurrentAccess, employee: Emplo
   const database = await createDatabaseClient();
   const isSelf = employee.id === access.employee.id;
 
-  const [canUpdate, canAssignRole, canDeactivate, canInvite, roleIsWithinReach] = await Promise.all([
+  const [canUpdate, canAssignRole, canDeactivate, canInvite, roleIsWithinReach, seesRecord] = await Promise.all([
     database.rpc('can_access_employee', { p_permission: permissionKeys.employeesUpdate, p_target: employee.id }),
     database.rpc('can_access_employee', { p_permission: permissionKeys.employeesAssignRole, p_target: employee.id }),
     database.rpc('can_access_employee', { p_permission: permissionKeys.employeesDeactivate, p_target: employee.id }),
     database.rpc('can_access_employee', { p_permission: permissionKeys.employeesCreate, p_target: employee.id }),
     database.rpc('role_is_assignable', { p_role: employee.role_id }),
+    database.rpc('can_see_employee_record', { p_employee: employee.id }),
   ]);
 
-  const withinReach = roleIsWithinReach.data === true;
+  const withinReach = roleIsWithinReach.data === true && seesRecord.data === true;
   const updateScope = access.permissions[permissionKeys.employeesUpdate];
 
   return {
     canEdit: canUpdate.data === true && withinReach && (!isSelf || updateScope === 'organisation'),
+    // The email they sign in with. Changed through change_employee_login_email.
+    canChangeEmail: canUpdate.data === true && withinReach,
     canTransfer: updateScope === 'organisation',
     canChangeRole: canAssignRole.data === true && withinReach && !isSelf,
     canChangeAccount: canDeactivate.data === true && withinReach && !isSelf,

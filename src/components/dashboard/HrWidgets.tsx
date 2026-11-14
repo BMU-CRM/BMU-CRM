@@ -4,9 +4,11 @@ import { Panel } from '@/components/ui/Panel';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { formatDate } from '@/lib/formatDate';
 import type { CurrentAccess } from '@/server/services/accessService';
-import { getLeaveBalances, getTodayAttendance, listLeaveAwaitingDecision } from '@/server/services/hrService';
+import { getLeaveBalances, getTodayAttendance, listLeaveAwaitingDecision, tracksAttendance } from '@/server/services/hrService';
 
 export async function AttendanceTodayWidget({ access }: { access: CurrentAccess }) {
+  // Nothing to check in to for people whose role does not record attendance.
+  if (!(await tracksAttendance(access.employee.id))) return null;
   return <AttendanceTodayPanel record={await getTodayAttendance(access)} />;
 }
 

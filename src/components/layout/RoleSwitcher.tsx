@@ -27,7 +27,6 @@ export function RoleSwitcher({ roles }: { roles: RoleChoice[] }) {
       }
       // The current page may not belong to the new role, so start from the overview.
       router.push('/overview');
-      router.refresh();
     });
   }
 

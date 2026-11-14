@@ -340,6 +340,20 @@
   object-fit: contain;
 }
 
+/* Notes and terms, across the page, before the signatures. */
+.terms {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  break-inside: avoid;
+}
+
+.terms ol,
+.terms p {
+  margin: 0;
+}
+
 /* The closing line, in the middle of the page. */
 .thanks {
   padding: 20px 0 4px;
@@ -363,6 +377,7 @@
 .signature {
   width: 280px;
   max-width: 100%;
+  text-align: center;
 }
 
 .forCompany {
@@ -383,7 +398,8 @@
 .seal {
   position: absolute;
   bottom: 0;
-  left: 24px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 92px;
   height: auto;
   opacity: 0.85;
@@ -392,14 +408,15 @@
 .signatureImage {
   position: absolute;
   bottom: 4px;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1;
   width: auto;
   max-width: 220px;
   height: auto;
   max-height: 80px;
   object-fit: contain;
-  object-position: left bottom;
+  object-position: center bottom;
 }
 
 .signatureLine {

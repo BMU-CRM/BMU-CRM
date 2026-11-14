@@ -1,7 +1,6 @@
 'use client';
 
 import { CalendarClock } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useRef, useState, useTransition, type DragEvent, type ReactNode } from 'react';
 import { FormMessage } from '@/components/ui/FormMessage';
 import type { ActionResult } from '@/lib/actionResult';
@@ -9,7 +8,6 @@ import { rescheduleTaskAction } from '@/server/actions/taskActions';
 import styles from './CalendarTaskMove.module.css';
 
 function useTaskMove() {
-  const router = useRouter();
   const [result, setResult] = useState<ActionResult>({ status: 'idle' });
   const [isPending, startTransition] = useTransition();
 
@@ -17,7 +15,6 @@ function useTaskMove() {
     startTransition(async () => {
       const outcome = await rescheduleTaskAction(taskId, date);
       setResult(outcome.status === 'success' ? { status: 'idle' } : outcome);
-      if (outcome.status === 'success') router.refresh();
     });
   }
 

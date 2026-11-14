@@ -9,7 +9,9 @@
 
 .planRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  /* The name beside its plan box, close together; every row lines up the same. */
+  grid-template-columns: minmax(0, 240px) minmax(0, 360px);
+  justify-content: start;
   align-items: center;
   gap: var(--space-3);
 }

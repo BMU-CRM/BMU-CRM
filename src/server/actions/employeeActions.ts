@@ -104,6 +104,8 @@ export async function updateEmployeeAction(
   const parsed = updateEmployeeSchema.safeParse({
     fullName: formData.get('fullName'),
     phone: formData.get('phone') ?? '',
+    workEmail: controls.canChangeEmail ? (formData.get('workEmail') ?? '') : undefined,
+    skills: formData.get('skills') ?? '',
     designationId: formData.get('designationId') ?? '',
     departmentId: controls.canTransfer ? (formData.get('departmentId') ?? '') : (employee.department_id ?? ''),
     reportingManagerId: formData.get('reportingManagerId') ?? '',
@@ -124,6 +126,7 @@ export async function updateEmployeeAction(
     .update({
       full_name: values.fullName,
       phone: values.phone,
+      skills: values.skills,
       designation_id: values.designationId,
       department_id: values.departmentId,
       reporting_manager_id: values.reportingManagerId,
@@ -139,6 +142,15 @@ export async function updateEmployeeAction(
 
   if (error) return databaseFailure(error);
   if (updatedRows.length === 0) return failure(noPermission);
+
+  // The login email changes on the sign-in account too, so it has its own database step.
+  if (values.workEmail && values.workEmail !== employee.work_email) {
+    const { error: emailError } = await database.rpc('change_employee_login_email', { p_employee: employeeId, p_email: values.workEmail });
+    if (emailError) {
+      if (emailError.code === '23505') return { status: 'error', message: 'Someone already uses this email.', fieldErrors: { workEmail: 'Already in use.' } };
+      return databaseFailure(emailError);
+    }
+  }
 
   // A second role, for someone who does two jobs. The database checks who may give it.
   if (controls.canChangeRole) {

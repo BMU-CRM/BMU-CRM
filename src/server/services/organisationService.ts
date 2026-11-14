@@ -89,7 +89,7 @@ export async function getRoleWithPermissions(roleId: string) {
 
   const { data, error } = await database
     .from('roles')
-    .select('id, name, description, is_protected, role_permissions(permission_key, scope)')
+    .select('id, name, description, is_protected, private_records, tracks_attendance, role_permissions(permission_key, scope)')
     .eq('id', roleId)
     .maybeSingle();
 

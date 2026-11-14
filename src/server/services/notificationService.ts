@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { notificationKinds } from '@/lib/notifications/notificationKinds';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 
@@ -6,7 +7,8 @@ export const notificationsPerPage = 30;
 
 const notificationFields = 'id, kind, priority, title, body, link, actor_name, event_count, read_at, created_at';
 
-export async function getNotificationSummary() {
+// Once per request, however many parts of the page ask.
+export const getNotificationSummary = cache(async function loadNotificationSummary() {
   const database = await createDatabaseClient();
 
   const [recent, unread] = await Promise.all([
@@ -23,7 +25,7 @@ export async function getNotificationSummary() {
 
   if (recent.error) throw recent.error;
   return { recent: recent.data, unreadCount: unread.count ?? 0 };
-}
+});
 
 export type NotificationItem = Awaited<ReturnType<typeof getNotificationSummary>>['recent'][number];
 

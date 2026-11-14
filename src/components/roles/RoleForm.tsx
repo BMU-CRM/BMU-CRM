@@ -32,6 +32,8 @@ type RoleFormProps = {
     id: string;
     name: string;
     description: string | null;
+    private_records: boolean;
+    tracks_attendance: boolean;
     role_permissions: { permission_key: string; scope: PermissionScope }[];
   };
   permissions: RolePermissionOption[];
@@ -50,6 +52,29 @@ export function RoleForm({ role, permissions }: RoleFormProps) {
         <TextField label="Role name" name="name" defaultValue={role?.name} required error={errors?.name} />
         <TextField label="Description" name="description" defaultValue={role?.description ?? ''} error={errors?.description} />
       </FormGrid>
+
+      <fieldset className={styles.module}>
+        <legend className={styles.moduleTitle}>People in this role</legend>
+        <label className={styles.setting}>
+          <input type="checkbox" name="privateRecords" defaultChecked={role?.private_records ?? false} />
+          <span>
+            <span className={styles.permissionLabel}>Private records</span>
+            <span className={styles.permissionDescription}>
+              Their profile, personal, ID and bank details, documents and attendance are seen only by people in a role with
+              this setting. HR cannot see or change them. For leadership, such as the Founder.
+            </span>
+          </span>
+        </label>
+        <label className={styles.setting}>
+          <input type="checkbox" name="tracksAttendance" defaultChecked={role?.tracks_attendance ?? true} />
+          <span>
+            <span className={styles.permissionLabel}>Records attendance</span>
+            <span className={styles.permissionDescription}>
+              They check in and out and appear in attendance reports. Turn off for people who do not record attendance.
+            </span>
+          </span>
+        </label>
+      </fieldset>
 
       {modules.map((module) => (
         <fieldset key={module} className={styles.module}>

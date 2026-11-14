@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { permissionKeys, type PermissionKey } from '@/lib/access/permissionKeys';
 import { buildFinanceReport, type OpenInvoice, type ReportInvoice, type ReportPayment } from '@/lib/finance/financeReport';
 import type { DateRange } from '@/lib/finance/financialPeriods';
@@ -63,12 +64,13 @@ export function toClientChoices(clients: Awaited<ReturnType<typeof listBillingCl
   }));
 }
 
-export async function getFinanceSettings() {
+// Once per request. Not shared between people: who may read it depends on their access.
+export const getFinanceSettings = cache(async function loadFinanceSettings() {
   const database = await createDatabaseClient();
   const { data, error } = await database.from('finance_settings').select('*').maybeSingle();
   if (error) throw error;
   return data;
-}
+});
 
 export type FinanceSettings = NonNullable<Awaited<ReturnType<typeof getFinanceSettings>>>;
 

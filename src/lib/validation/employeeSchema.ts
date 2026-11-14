@@ -51,9 +51,22 @@ const optionalWholeNumber = (max: number, message: string) =>
     .transform((value) => (value === '' ? null : Number(value)))
     .pipe(z.number({ error: message }).int(message).min(0, message).max(max, message).nullable());
 
+const skillList = z
+  .string()
+  .transform((value) =>
+    value
+      .split(',')
+      .map((skill) => skill.trim())
+      .filter(Boolean),
+  )
+  .pipe(z.array(z.string().max(50, 'Keep each skill under 50 characters.')).max(30, 'Add up to 30 skills.'));
+
 export const updateEmployeeSchema = z.object({
   fullName,
   phone,
+  // Left out when the person editing cannot change the login email.
+  workEmail: z.string().trim().toLowerCase().pipe(z.email('Enter a valid work email.')).optional(),
+  skills: skillList,
   designationId: optionalId,
   departmentId: optionalId,
   reportingManagerId: optionalId,
@@ -122,13 +135,5 @@ export const privateDetailsSchema = z.object({
 
 export const updateMyProfileSchema = z.object({
   phone,
-  skills: z
-    .string()
-    .transform((value) =>
-      value
-        .split(',')
-        .map((skill) => skill.trim())
-        .filter(Boolean),
-    )
-    .pipe(z.array(z.string().max(50, 'Keep each skill under 50 characters.')).max(30, 'Add up to 30 skills.')),
+  skills: skillList,
 });

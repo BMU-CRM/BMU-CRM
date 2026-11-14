@@ -63,6 +63,7 @@ export default async function EditEmployeePage({ params }: EditEmployeePageProps
           managers={managers.map((manager) => ({ value: manager.id, label: manager.full_name }))}
           canTransfer={controls.canTransfer}
           canChangeRole={controls.canChangeRole}
+          canChangeEmail={controls.canChangeEmail}
           extraRoleIds={extraRoleIds}
         />
       </Panel>

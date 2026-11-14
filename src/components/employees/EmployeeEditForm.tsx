@@ -21,7 +21,9 @@ type EmployeeEditFormProps = {
   employee: {
     id: string;
     full_name: string;
+    work_email: string;
     phone: string | null;
+    skills: string[];
     joining_date: string | null;
     employment_status: string;
     role_id: string;
@@ -41,6 +43,7 @@ type EmployeeEditFormProps = {
   managers: SelectOption[];
   canTransfer: boolean;
   canChangeRole: boolean;
+  canChangeEmail: boolean;
   // Roles the person can switch to besides their main one.
   extraRoleIds: string[];
 };
@@ -55,6 +58,7 @@ export function EmployeeEditForm({
   managers,
   canTransfer,
   canChangeRole,
+  canChangeEmail,
   extraRoleIds,
 }: EmployeeEditFormProps) {
   const [result, formAction] = useActionState(updateEmployeeAction.bind(null, employee.id), idleResult);
@@ -65,7 +69,19 @@ export function EmployeeEditForm({
       <FormMessage result={result} />
       <FormGrid>
         <TextField label="Full name" name="fullName" defaultValue={employee.full_name} required error={errors?.fullName} />
+        {canChangeEmail && (
+          <TextField
+            label="Login email"
+            name="workEmail"
+            type="email"
+            defaultValue={employee.work_email}
+            required
+            hint="They sign in with this. A linked Google account is unlinked when it changes."
+            error={errors?.workEmail}
+          />
+        )}
         <TextField label="Phone" name="phone" type="tel" defaultValue={employee.phone ?? ''} error={errors?.phone} />
+        <TextField label="Skills" name="skills" defaultValue={employee.skills.join(', ')} hint="Separate skills with commas." error={errors?.skills} />
         <TextField label="Joining date" name="joiningDate" type="date" defaultValue={employee.joining_date ?? ''} error={errors?.joiningDate} />
         <SelectField label="Employment status" name="employmentStatus" options={employmentStatusOptions} defaultValue={employee.employment_status} error={errors?.employmentStatus} />
         <SelectField

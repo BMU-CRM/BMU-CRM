@@ -2,7 +2,6 @@
 
 import { CalendarPlus, ListPlus, Palette, X } from 'lucide-react';
 import { AppLink as Link } from '@/components/ui/AppLink';
-import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition, type MouseEvent, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import dialogStyles from '@/components/ui/ConfirmActionButton.module.css';
@@ -18,7 +17,6 @@ import styles from './CalendarDayMenu.module.css';
 const priorityOptions = Object.entries(priorityLabels).map(([value, label]) => ({ value, label }));
 
 function AddMyTaskForm({ day, onDone }: { day: string; onDone: () => void }) {
-  const router = useRouter();
   const [result, setResult] = useState<ActionResult>({ status: 'idle' });
   const [isPending, startTransition] = useTransition();
 
@@ -37,7 +35,6 @@ function AddMyTaskForm({ day, onDone }: { day: string; onDone: () => void }) {
           });
           setResult(outcome);
           if (outcome.status === 'success') {
-            router.refresh();
             onDone();
           }
         });
@@ -65,7 +62,6 @@ export type ContentCategoryChoice = { value: string; label: string; people: stri
 // Content work for a category's people, added straight from a day. Each of them gets it
 // in their calendar as a task to start and submit.
 function AddContentWorkForm({ day, categories, onDone }: { day: string; categories: ContentCategoryChoice[]; onDone: () => void }) {
-  const router = useRouter();
   const [result, setResult] = useState<ActionResult>({ status: 'idle' });
   const [isPending, startTransition] = useTransition();
   const [categoryId, setCategoryId] = useState('');
@@ -88,7 +84,6 @@ function AddContentWorkForm({ day, categories, onDone }: { day: string; categori
           });
           setResult(outcome);
           if (outcome.status === 'success') {
-            router.refresh();
             onDone();
           }
         });

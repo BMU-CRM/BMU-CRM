@@ -1,5 +1,6 @@
 import { CalendarClock } from 'lucide-react';
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { AttendanceTodayPanel } from '@/components/hr/AttendanceTodayPanel';
 import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
@@ -12,7 +13,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { dayStatusLabels, formatWorkedTime, indiaClock } from '@/lib/attendance/summariseAttendance';
 import { formatDate, todayInIndia } from '@/lib/formatDate';
 import { requirePagePermission } from '@/server/services/accessService';
-import { getTodayAttendance, listAttendanceRecords } from '@/server/services/hrService';
+import { getTodayAttendance, listAttendanceRecords, tracksAttendance } from '@/server/services/hrService';
 
 export const metadata: Metadata = { title: 'Attendance' };
 
@@ -26,13 +27,25 @@ export default async function AttendancePage() {
   const access = await requirePagePermission(permissionKeys.attendanceView);
   const today = todayInIndia();
   const monthStart = `${today.slice(0, 7)}-01`;
+  const seesOthers = access.permissions[permissionKeys.attendanceView] !== 'own';
+
+  // People whose role does not record attendance have nothing of their own here.
+  if (!(await tracksAttendance(access.employee.id))) {
+    if (seesOthers) redirect('/attendance/report');
+    return (
+      <>
+        <PageHeader title="Attendance" />
+        <Panel>
+          <EmptyState icon={CalendarClock} title="Your role does not record attendance" description="There is nothing to check in to." />
+        </Panel>
+      </>
+    );
+  }
 
   const [todayRecord, records] = await Promise.all([
     getTodayAttendance(access),
     listAttendanceRecords(access.employee.id, monthStart, today),
   ]);
-
-  const seesOthers = access.permissions[permissionKeys.attendanceView] !== 'own';
 
   return (
     <>

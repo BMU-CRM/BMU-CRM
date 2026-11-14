@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
   databaseFailure,
@@ -24,6 +24,7 @@ import {
   workingHoursSchema,
 } from '@/lib/validation/hrSchema';
 import { getActionAccess } from '@/server/services/accessService';
+import { companySettingsTag } from '@/server/services/hrService';
 
 const noPermission = 'You do not have permission to do this.';
 
@@ -284,6 +285,7 @@ export async function saveWorkingHoursAction(_previous: ActionResult, formData: 
   if (error) return databaseFailure(error);
   if (data.length === 0) return failure(noPermission);
 
+  updateTag(companySettingsTag);
   revalidatePath('/settings/hr');
   return success('Working hours saved.');
 }

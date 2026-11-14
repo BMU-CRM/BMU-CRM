@@ -141,12 +141,18 @@ export async function saveRoleAction(
 
   const database = await createDatabaseClient();
   let savedRoleId = roleId;
+  const values = {
+    ...parsed.data,
+    private_records: formData.get('privateRecords') === 'on',
+    tracks_attendance: formData.get('tracksAttendance') === 'on',
+  };
 
   if (roleId) {
-    const { error } = await database.from('roles').update(parsed.data).eq('id', roleId);
+    const { data: updated, error } = await database.from('roles').update(values).eq('id', roleId).select('id');
     if (error) return databaseFailure(error, 'A role with this name already exists.');
+    if (updated.length === 0) return failure(noPermission);
   } else {
-    const { data, error } = await database.from('roles').insert(parsed.data).select('id').single();
+    const { data, error } = await database.from('roles').insert(values).select('id').single();
     if (error) return databaseFailure(error, 'A role with this name already exists.');
     savedRoleId = data.id;
   }

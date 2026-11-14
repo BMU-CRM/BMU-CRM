@@ -202,7 +202,6 @@ export function ChatHeaderActions(props: ChatHeaderActionsProps) {
       setResult(outcome);
       if (outcome.status === 'success') {
         after?.();
-        router.refresh();
       }
     });
   }
