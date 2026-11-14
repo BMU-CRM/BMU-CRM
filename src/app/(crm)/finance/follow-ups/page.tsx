@@ -2,7 +2,7 @@ import { Download, PhoneCall } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { FollowUpStatusBadge } from '@/components/finance/FollowUpStatusBadge';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -69,7 +69,6 @@ export default async function FollowUpsPage({ searchParams }: { searchParams: Pr
           <SelectField label="Paid invoices" name="paid" options={[{ value: 'yes', label: 'Include ones followed up' }]} placeholder="Leave out" defaultValue={params.paid} />
           <SelectField label="Sort by" name="sort" options={followUpSorts} defaultValue={filters.sort} />
           <div className={filterStyles.actions}>
-            <Button type="submit">Apply</Button>
             <ButtonLink href="/finance/follow-ups" variant="ghost">
               Clear
             </ButtonLink>

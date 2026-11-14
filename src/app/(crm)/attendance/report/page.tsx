@@ -8,8 +8,9 @@ import {
   MonthlyAttendanceGrid,
   WorkingHoursTable,
 } from '@/components/hr/AttendanceReportTables';
+import { AttendanceBulkCorrectionForm } from '@/components/hr/AttendanceBulkCorrectionForm';
 import { AttendanceCorrectionForm, AttendanceImportForm } from '@/components/hr/HrForms';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
@@ -150,7 +151,6 @@ export default async function AttendanceReportPage({ searchParams }: AttendanceR
             </>
           )}
           <div className={filterStyles.actions}>
-            <Button type="submit">Show</Button>
             <ButtonLink href={`/attendance/report?view=${view}`} variant="ghost">
               Clear
             </ButtonLink>
@@ -203,6 +203,15 @@ export default async function AttendanceReportPage({ searchParams }: AttendanceR
             </>
           )}
         </Panel>
+
+        {canManage && (
+          <Panel
+            title="Correct several people"
+            description="Tick people, or select all, then choose the dates. Only what you fill in changes. Days on approved leave, holidays and week offs are skipped. Recorded in the audit log."
+          >
+            <AttendanceBulkCorrectionForm people={data.employees.filter((employee) => employee.id !== access.employee.id)} />
+          </Panel>
+        )}
 
         {canManage && (
           <div className={layout.columns}>

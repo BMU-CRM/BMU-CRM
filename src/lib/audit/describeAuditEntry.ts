@@ -56,6 +56,7 @@ const entityLabels: Record<string, string> = {
   department_budgets: 'department budget',
   calendar_categories: 'content calendar category',
   calendar_category_members: 'content calendar person',
+  attendance_records: 'attendance',
 };
 
 const revealedFields: Record<string, string> = { aadhaar: 'Aadhaar number', account_number: 'bank account number' };

@@ -2,7 +2,7 @@ import { Plus, ShoppingCart, Truck } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { PurchaseOrderStatusBadge, VendorBillStatusBadge } from '@/components/purchases/PurchaseBadges';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -106,7 +106,6 @@ async function BillsView({ params }: { params: Params }) {
         <SelectField label="Status" name="status" options={billStatuses} placeholder="Any status" defaultValue={filters.status} />
         <SelectField label="Show" name="show" options={[{ value: 'removed', label: 'Removed bills' }]} placeholder="Current bills" defaultValue={params.show} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/finance/purchases" variant="ghost">
             Clear
           </ButtonLink>
@@ -180,7 +179,6 @@ async function OrdersView({ params }: { params: Params }) {
         <SelectField label="Vendor" name="vendorId" options={vendors} placeholder="All vendors" defaultValue={vendorId} />
         <SelectField label="Status" name="status" options={orderStatuses.map((value) => ({ value, label: purchaseOrderStatusLabels[value] }))} placeholder="Any status" defaultValue={status} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/finance/purchases?view=orders" variant="ghost">
             Clear
           </ButtonLink>
@@ -247,7 +245,6 @@ async function VendorsView({ params }: { params: Params }) {
         <TextField label="Search" name="search" type="search" placeholder="Name, contact or GSTIN" defaultValue={params.search} />
         <SelectField label="Show" name="show" options={[{ value: 'all', label: 'Including not in use' }]} placeholder="In use" defaultValue={params.show} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/finance/purchases?view=vendors" variant="ghost">
             Clear
           </ButtonLink>

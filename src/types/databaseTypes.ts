@@ -6272,6 +6272,17 @@ export type Database = {
             "p_url": string
             "p_secret": string
           }; Returns: undefined }
+      "correct_attendance_bulk":
+        | { Args: {
+            "p_employees": (string)[]
+            "p_from": string
+            "p_to": string
+            "p_check_in"?: string
+            "p_check_out"?: string
+            "p_work_mode"?: string
+            "p_status"?: string
+            "p_note"?: string
+          }; Returns: Json }
       "count_unsent_task_files":
         | { Args: {
             "p_task": string

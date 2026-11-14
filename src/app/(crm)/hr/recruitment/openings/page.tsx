@@ -2,7 +2,7 @@ import { Briefcase, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { RecruitmentTabs } from '@/components/recruitment/RecruitmentTabs';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -57,7 +57,6 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
           defaultValue={params.sort ?? 'newest'}
         />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/hr/recruitment/openings" variant="ghost">
             Clear
           </ButtonLink>

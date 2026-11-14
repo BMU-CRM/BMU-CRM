@@ -125,5 +125,31 @@ export const attendanceCorrectionSchema = z.object({
   note: optionalText(500),
 });
 
-export const leaveListStatuses = ['pending', 'approved', 'rejected', 'cancelled'] as const;
+// Several people and days at once. Empty means "leave as it is".
+const keepOr = <T extends readonly [string, ...string[]]>(values: T, error: string) =>
+  z
+    .string()
+    .trim()
+    .transform((value) => (value === '' ? null : value))
+    .pipe(z.enum(values, { error }).nullable());
+
+export const bulkAttendanceCorrectionSchema = z
+  .object({
+    employeeIds: z.array(z.uuid()).min(1, 'Choose at least one person.').max(500, 'Choose up to 500 people at a time.'),
+    fromDate: date,
+    toDate: date,
+    checkIn: z.string().trim().regex(/^(\d{2}:\d{2})?$/, 'Enter a time such as 09:30.').transform((value) => value || null),
+    checkOut: z.string().trim().regex(/^(\d{2}:\d{2})?$/, 'Enter a time such as 18:30.').transform((value) => value || null),
+    workMode: keepOr(workModes, 'Choose office or home.'),
+    statusOverride: keepOr(['auto', ...dayStatusOverrides] as const, 'Choose a status.'),
+    note: z.string().trim().min(1, 'Give a reason for the correction.').max(500, 'Up to 500 characters.'),
+  })
+  .refine((value) => value.toDate >= value.fromDate, { path: ['toDate'], message: 'Must be on or after the start date.' })
+  .refine((value) => !value.checkIn || !value.checkOut || value.checkOut >= value.checkIn, { path: ['checkOut'], message: 'Must be after check-in.' })
+  .refine((value) => value.checkIn || value.checkOut || value.workMode || value.statusOverride, {
+    path: ['checkIn'],
+    message: 'Fill in at least one thing to change.',
+  });
+
+export const leaveListStatuses =['pending', 'approved', 'rejected', 'cancelled'] as const;
 export const leaveListSorts = ['start-desc', 'start-asc', 'requested-desc', 'days-desc'] as const;

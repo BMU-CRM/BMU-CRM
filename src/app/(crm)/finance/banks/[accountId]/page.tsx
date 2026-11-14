@@ -4,7 +4,7 @@ import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { StatementImportForm } from '@/components/finance/LedgerForms';
 import { ActionButton } from '@/components/ui/ActionButton';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField } from '@/components/ui/FormFields';
@@ -120,9 +120,6 @@ export default async function BankAccountPage({ params, searchParams }: BankAcco
                 placeholder="Every line"
                 defaultValue={show === 'all' ? '' : show}
               />
-              <div className={filterStyles.actions}>
-                <Button type="submit">Apply</Button>
-              </div>
             </form>
             <Panel flush>
               {lines.length === 0 ? (

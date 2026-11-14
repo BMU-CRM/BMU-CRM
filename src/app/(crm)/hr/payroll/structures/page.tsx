@@ -2,7 +2,7 @@ import { Wallet } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { PayrollTabs } from '@/components/payroll/PayrollTabs';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -76,7 +76,6 @@ export default async function SalaryStructuresPage({ searchParams }: StructuresP
           defaultValue={sort}
         />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/hr/payroll/structures" variant="ghost">
             Clear
           </ButtonLink>

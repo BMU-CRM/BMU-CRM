@@ -1,4 +1,4 @@
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { SelectField, TextField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
 import { periodKeys, periodLabels, type DateRange, type PeriodKey } from '@/lib/finance/financialPeriods';
@@ -29,7 +29,6 @@ export function PeriodFilter({
       <TextField label="From" name="from" type="date" defaultValue={period ? '' : range.from} />
       <TextField label="To" name="to" type="date" defaultValue={period ? '' : range.to} />
       <div className={filterStyles.actions}>
-        <Button type="submit">Apply</Button>
         <ButtonLink href={clearHref} variant="ghost">
           Clear
         </ButtonLink>

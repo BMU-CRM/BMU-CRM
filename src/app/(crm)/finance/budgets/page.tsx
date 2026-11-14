@@ -1,7 +1,7 @@
 import { Pencil, PiggyBank, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
 import { GroupedBarChart } from '@/components/charts/GroupedBarChart';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -83,7 +83,6 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
           )}
           <SelectField label="Department" name="departmentId" options={departments.map((department) => ({ value: department.id, label: department.name }))} placeholder="All departments" defaultValue={departmentId} />
           <div className={filterStyles.actions}>
-            <Button type="submit">Apply</Button>
             <ButtonLink href={kind === 'year' ? '/finance/budgets?kind=year' : '/finance/budgets'} variant="ghost">
               Clear
             </ButtonLink>

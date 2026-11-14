@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { ApprovalHistoryPanel } from '@/components/approvals/ApprovalHistoryPanel';
 import { PayrollStatusBadge } from '@/components/payroll/PayrollTabs';
 import { ActionButton } from '@/components/ui/ActionButton';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -145,7 +145,6 @@ export default async function PayrollRunPage({ params, searchParams }: PayrollRu
           <SelectField label="Show" name="warnings" options={[{ value: 'yes', label: 'Only payslips with warnings' }]} placeholder="Everyone" defaultValue={warningsOnly ? 'yes' : ''} />
           <SelectField label="Sort by" name="sort" options={sorts} defaultValue={sort} />
           <div className={filterStyles.actions}>
-            <Button type="submit">Apply</Button>
             <ButtonLink href={`/hr/payroll/${run.id}`} variant="ghost">
               Clear
             </ButtonLink>

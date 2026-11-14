@@ -1,7 +1,7 @@
 import { ChartColumn } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -107,7 +107,6 @@ export default async function LeaveUtilisationPage({ searchParams }: LeaveUtilis
           />
           <SelectField label="Sort by" name="sort" options={[...sorts]} defaultValue={sort} />
           <div className={filterStyles.actions}>
-            <Button type="submit">Show</Button>
             <ButtonLink href="/hr/leave/utilisation" variant="ghost">
               Clear
             </ButtonLink>

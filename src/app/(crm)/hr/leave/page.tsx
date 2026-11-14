@@ -4,7 +4,7 @@ import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { LeaveDecisionButtons } from '@/components/hr/LeaveDecisionButtons';
 import { LeaveStatusBadge } from '@/components/hr/LeaveStatusBadge';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -116,7 +116,6 @@ export default async function HrLeavePage({ searchParams }: HrLeavePageProps) {
         <TextField label="To" name="to" type="date" defaultValue={filters.to} />
         <SelectField label="Sort by" name="sort" options={sortOptions} defaultValue={sort} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/hr/leave" variant="ghost">
             Clear
           </ButtonLink>

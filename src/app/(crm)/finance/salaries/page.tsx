@@ -2,7 +2,7 @@ import { Download, HandCoins } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { ReimbursementStatusBadge } from '@/components/reimbursements/ReimbursementStatusBadge';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -114,9 +114,6 @@ async function SalariesView({ year, canApprove }: { year: number; canApprove: bo
       </Panel>
       <form method="get" className={filterStyles.filters}>
         <TextField label="Year" name="year" type="number" min={2000} max={2200} defaultValue={year} />
-        <div className={filterStyles.actions}>
-          <Button type="submit">Show</Button>
-        </div>
       </form>
       <StatTiles
         tiles={[
@@ -193,7 +190,6 @@ async function ReimbursementsView({ params }: { params: Record<string, string | 
         <SelectField label="Show" name="status" options={claimViews.map((option) => ({ value: option.value, label: option.label }))} defaultValue={status} />
         <TextField label="Paid in month" name="month" type="month" defaultValue={month} hint="For paid claims." />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/finance/salaries?view=reimbursements" variant="ghost">
             Clear
           </ButtonLink>

@@ -1,4 +1,4 @@
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { SelectField, TextField, type SelectOption } from '@/components/ui/FormFields';
 import styles from './EmployeeDirectoryFilters.module.css';
 
@@ -25,7 +25,6 @@ export function EmployeeDirectoryFilters({ departments, roles, values }: Employe
         ]}
       />
       <div className={styles.actions}>
-        <Button type="submit">Apply</Button>
         <ButtonLink href="/people/employees" variant="ghost">
           Clear
         </ButtonLink>

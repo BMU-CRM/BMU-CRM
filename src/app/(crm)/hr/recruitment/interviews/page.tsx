@@ -7,7 +7,6 @@ import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
-import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PaginationBar } from '@/components/ui/PaginationBar';
 import { Panel } from '@/components/ui/Panel';
@@ -45,7 +44,6 @@ export default async function InterviewsPage({ searchParams }: { searchParams: P
         />
         <SelectField label="Status" name="status" options={Object.entries(interviewStatusLabels).map(([value, label]) => ({ value, label }))} placeholder="Any status" defaultValue={status} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/hr/recruitment/interviews" variant="ghost">
             Clear
           </ButtonLink>

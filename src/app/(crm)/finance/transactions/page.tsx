@@ -1,7 +1,7 @@
 import { ArrowLeftRight, Download } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -84,7 +84,6 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         <SelectField label="Kind" name="kind" options={Object.entries(movementKindLabels).map(([value, label]) => ({ value, label }))} placeholder="Every kind" defaultValue={filters.kind} />
         <SelectField label="Method" name="method" options={paymentMethods.map((method) => ({ value: method, label: paymentMethodLabels[method]! }))} placeholder="Any method" defaultValue={filters.method} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/finance/transactions" variant="ghost">
             Clear
           </ButtonLink>

@@ -4,7 +4,7 @@ import { AppLink as Link } from '@/components/ui/AppLink';
 import taskTabs from '@/components/tasks/TaskViewTabs.module.css';
 import { TicketLiveRefresh } from '@/components/tickets/TicketLiveRefresh';
 import { TicketTable } from '@/components/tickets/TicketTable';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
@@ -99,7 +99,6 @@ export default async function TicketsPage({ searchParams }: TicketsPageProps) {
           defaultValue={status}
         />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href={`/tickets?view=${view}`} variant="ghost">
             Clear
           </ButtonLink>

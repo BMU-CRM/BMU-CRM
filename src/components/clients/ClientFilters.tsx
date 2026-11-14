@@ -1,4 +1,4 @@
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { SelectField, TextField, type SelectOption } from '@/components/ui/FormFields';
 import styles from '@/components/ui/ListFilters.module.css';
 import { clientStatusLabels } from '@/lib/validation/clientSchema';
@@ -25,7 +25,6 @@ export function ClientFilters({ managers, industries, services, subServices, val
       <SelectField label="Sub service" name="serviceId" options={subServices} placeholder="Any sub service" defaultValue={values.serviceId} />
       <SelectField label="Client Manager" name="managerId" options={managers} placeholder="Anyone" defaultValue={values.managerId} />
       <div className={styles.actions}>
-        <Button type="submit">Apply</Button>
         <ButtonLink href="/clients" variant="ghost">
           Clear
         </ButtonLink>

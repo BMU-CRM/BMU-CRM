@@ -2,7 +2,7 @@ import { Plus, Receipt } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { ReimbursementStatusBadge } from '@/components/reimbursements/ReimbursementStatusBadge';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField } from '@/components/ui/FormFields';
@@ -52,7 +52,6 @@ export default async function ReimbursementsPage({ searchParams }: { searchParam
         <form method="get" className={filterStyles.filters}>
           <SelectField label="Status" name="status" options={reimbursementStatuses.map((value) => ({ value, label: reimbursementStatusLabels[value] }))} placeholder="Any status" defaultValue={status} />
           <div className={filterStyles.actions}>
-            <Button type="submit">Apply</Button>
             <ButtonLink href="/reimbursements" variant="ghost">
               Clear
             </ButtonLink>

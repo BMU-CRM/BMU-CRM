@@ -2,7 +2,7 @@ import { BookOpen, Download, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { BarChart } from '@/components/charts/BarChart';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -138,7 +138,6 @@ async function EntriesView({ kind, params, today }: { kind: 'expenses' | 'income
         <SelectField label="Show" name="show" options={[{ value: 'removed', label: 'Removed entries' }]} placeholder="Current entries" defaultValue={params.show} />
         <SelectField label="Sort by" name="sort" options={sorts} defaultValue={filters.sort} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href={`/finance/ledger?view=${kind}`} variant="ghost">
             Clear
           </ButtonLink>
@@ -236,9 +235,6 @@ async function SummaryView({ year }: { year: number }) {
       <form method="get" className={filterStyles.filters}>
         <input type="hidden" name="view" value="summary" />
         <TextField label="Year" name="year" type="number" min={2000} max={2200} defaultValue={year} />
-        <div className={filterStyles.actions}>
-          <Button type="submit">Show</Button>
-        </div>
       </form>
       <StatTiles
         tiles={[

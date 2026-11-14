@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { PayrollStatusBadge, PayrollTabs } from '@/components/payroll/PayrollTabs';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -95,7 +95,6 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
           />
           <TextField label="Year" name="year" type="number" min={2000} max={2200} defaultValue={year} />
           <div className={filterStyles.actions}>
-            <Button type="submit">Apply</Button>
             <ButtonLink href="/hr/payroll" variant="ghost">
               Clear
             </ButtonLink>

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { RecruitmentTabs } from '@/components/recruitment/RecruitmentTabs';
 import { ActionButton } from '@/components/ui/ActionButton';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
@@ -41,7 +41,6 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
         <TextField label="Search" name="search" type="search" placeholder="Name" defaultValue={params.search} />
         <SelectField label="Show" name="show" options={[{ value: 'all', label: 'Everyone, including finished' }]} placeholder="Still in progress" defaultValue={params.show} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/hr/recruitment/onboarding" variant="ghost">
             Clear
           </ButtonLink>

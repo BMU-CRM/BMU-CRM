@@ -2,7 +2,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { HolidayMonth, HolidayYear, monthTitle } from '@/components/hr/HolidayCalendar';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -126,7 +126,6 @@ export default async function HolidaysPage({ searchParams }: HolidaysPageProps) 
             defaultValue={sort}
           />
           <div className={filterStyles.actions}>
-            <Button type="submit">Apply</Button>
             <ButtonLink href={view === 'year' ? `/hr/holidays?view=year&year=${year}` : `/hr/holidays?month=${month}`} variant="ghost">
               Clear
             </ButtonLink>

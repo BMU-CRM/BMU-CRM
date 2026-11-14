@@ -15,6 +15,7 @@ import { parseAttendanceCsv } from '@/lib/attendance/summariseAttendance';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import {
   attendanceCorrectionSchema,
+  bulkAttendanceCorrectionSchema,
   employmentTypeSchema,
   holidaySchema,
   leaveDecisionSchema,
@@ -175,6 +176,49 @@ export async function correctAttendanceAction(_previous: ActionResult, formData:
 
   revalidatePath('/attendance', 'layout');
   return success('Attendance corrected.');
+}
+
+export async function correctAttendanceForManyAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.attendanceManage))) return failure(noPermission);
+
+  const parsed = bulkAttendanceCorrectionSchema.safeParse({
+    employeeIds: [...new Set(formData.getAll('employeeIds').map(String))],
+    fromDate: formData.get('fromDate'),
+    toDate: formData.get('toDate') || formData.get('fromDate'),
+    checkIn: formData.get('checkIn') ?? '',
+    checkOut: formData.get('checkOut') ?? '',
+    workMode: formData.get('workMode') ?? '',
+    statusOverride: formData.get('statusOverride') ?? '',
+    note: formData.get('note') ?? '',
+  });
+  if (!parsed.success) return validationFailure(parsed.error);
+
+  const values = parsed.data;
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('correct_attendance_bulk', {
+    p_employees: values.employeeIds,
+    p_from: values.fromDate,
+    p_to: values.toDate,
+    p_check_in: values.checkIn ?? undefined,
+    p_check_out: values.checkOut ?? undefined,
+    p_work_mode: values.workMode ?? undefined,
+    p_status: values.statusOverride ?? undefined,
+    p_note: values.note,
+  });
+  if (error) return databaseFailure(error);
+
+  const result = data as { changed: number; on_leave: number; days_off: number; people: number };
+  revalidatePath('/attendance', 'layout');
+
+  const days = (count: number) => `${count} ${count === 1 ? 'day' : 'days'}`;
+  const skipped = [
+    result.on_leave > 0 ? `${days(result.on_leave)} on approved leave` : '',
+    result.days_off > 0 ? `${days(result.days_off)} that were holidays or week offs` : '',
+  ].filter(Boolean);
+  const skippedText = skipped.length > 0 ? ` Skipped ${skipped.join(' and ')}.` : '';
+
+  if (result.changed === 0) return failure(`Nothing was changed.${skippedText}`);
+  return success(`Corrected ${days(result.changed)} for ${result.people} ${result.people === 1 ? 'person' : 'people'}.${skippedText}`);
 }
 
 export async function importAttendanceAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {

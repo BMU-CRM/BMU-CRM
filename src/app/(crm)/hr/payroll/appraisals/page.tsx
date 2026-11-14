@@ -2,7 +2,7 @@ import { Plus, Star } from 'lucide-react';
 import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { PayrollTabs } from '@/components/payroll/PayrollTabs';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TextField } from '@/components/ui/FormFields';
@@ -50,7 +50,6 @@ export default async function AppraisalsPage({ searchParams }: { searchParams: P
         <TextField label="Search" name="search" type="search" placeholder="Employee name" defaultValue={params.search} />
         <TextField label="Period ending in" name="year" type="number" min={2000} max={2200} defaultValue={year} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/hr/payroll/appraisals" variant="ghost">
             Clear
           </ButtonLink>

@@ -1,7 +1,7 @@
 import { Plus, SquareKanban } from 'lucide-react';
 import type { Metadata } from 'next';
 import { ProjectTable } from '@/components/projects/ProjectTable';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
@@ -58,7 +58,6 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         <TextField label="Search" name="search" type="search" placeholder="Name or ID" defaultValue={params.search} />
         <SelectField label="Status" name="status" options={statusOptions} placeholder="All statuses" defaultValue={status} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/projects" variant="ghost">
             Clear
           </ButtonLink>

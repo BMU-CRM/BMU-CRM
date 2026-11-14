@@ -1,4 +1,4 @@
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { SelectField, TextField, type SelectOption } from '@/components/ui/FormFields';
 import styles from '@/components/ui/ListFilters.module.css';
 import { priorityLabels, taskStages, taskStatusLabels } from '@/lib/tasks/taskWorkflow';
@@ -68,7 +68,6 @@ placeholder={view === 'mine' || view === 'assigned' ? 'Open tasks' : 'Any status
       <TextField label="Due from" name="dueFrom" type="date" defaultValue={values.dueFrom} />
       <TextField label="Due to" name="dueTo" type="date" defaultValue={values.dueTo} />
       <div className={styles.actions}>
-        <Button type="submit">Apply</Button>
         <ButtonLink href={`/tasks?view=${view}`} variant="ghost">
           Clear
         </ButtonLink>

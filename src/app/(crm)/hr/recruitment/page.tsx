@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react';
 import type { Metadata } from 'next';
 import { CandidateBoard } from '@/components/recruitment/CandidateBoard';
 import { RecruitmentTabs } from '@/components/recruitment/RecruitmentTabs';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -52,7 +52,6 @@ export default async function RecruitmentBoardPage({ searchParams }: { searchPar
             defaultValue={openingId}
           />
           <div className={filterStyles.actions}>
-            <Button type="submit">Show</Button>
             <ButtonLink href="/hr/recruitment" variant="ghost">
               Clear
             </ButtonLink>

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { BarChart } from '@/components/charts/BarChart';
 import { ResignationStatusBadge } from '@/components/exits/ResignationStatusBadge';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import tableStyles from '@/components/ui/DataTable.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -91,7 +91,6 @@ async function ResignationList({ params }: { params: Awaited<ExitsPageProps['sea
           defaultValue={sort}
         />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/hr/exits" variant="ghost">
             Clear
           </ButtonLink>
@@ -152,9 +151,6 @@ async function AttritionView({ year }: { year: number }) {
       <form method="get" className={filterStyles.filters}>
         <input type="hidden" name="view" value="attrition" />
         <TextField label="Year" name="year" type="number" min={2000} max={2200} defaultValue={year} />
-        <div className={filterStyles.actions}>
-          <Button type="submit">Show</Button>
-        </div>
       </form>
       <StatTiles
         tiles={[

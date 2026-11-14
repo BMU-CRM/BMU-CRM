@@ -2,7 +2,7 @@ import { FileText, Plus } from 'lucide-react';
 import type { Metadata } from 'next';
 import { FinanceLiveRefresh } from '@/components/finance/FinanceLiveRefresh';
 import { QuotationTable } from '@/components/finance/QuotationTable';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
@@ -76,7 +76,6 @@ export default async function QuotationsPage({ searchParams }: QuotationsPagePro
           defaultValue={clientId}
         />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/quotations" variant="ghost">
             Clear
           </ButtonLink>

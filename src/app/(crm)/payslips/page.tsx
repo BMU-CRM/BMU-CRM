@@ -8,7 +8,7 @@ import { PaginationBar } from '@/components/ui/PaginationBar';
 import { Panel } from '@/components/ui/Panel';
 import { TextField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { formatRupees } from '@/lib/finance/moneyFormat';
 import { formatDate } from '@/lib/formatDate';
@@ -36,7 +36,6 @@ export default async function MyPayslipsPage({ searchParams }: { searchParams: P
       <form method="get" className={filterStyles.filters}>
         <TextField label="Year" name="year" type="number" min={2000} max={2200} defaultValue={year} />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/payslips" variant="ghost">
             Clear
           </ButtonLink>

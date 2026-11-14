@@ -2,7 +2,7 @@ import { Plus, ReceiptIndianRupee } from 'lucide-react';
 import type { Metadata } from 'next';
 import { FinanceLiveRefresh } from '@/components/finance/FinanceLiveRefresh';
 import { InvoiceTable } from '@/components/finance/InvoiceTable';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField, TextField } from '@/components/ui/FormFields';
 import filterStyles from '@/components/ui/ListFilters.module.css';
@@ -77,7 +77,6 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           defaultValue={clientId}
         />
         <div className={filterStyles.actions}>
-          <Button type="submit">Apply</Button>
           <ButtonLink href="/invoices" variant="ghost">
             Clear
           </ButtonLink>
