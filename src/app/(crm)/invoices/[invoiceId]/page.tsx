@@ -58,6 +58,8 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   const canOpenClient = access.permissions[permissionKeys.clientsView] !== undefined;
   const status = invoice.status;
   const stillDue = balanceDue(invoice);
+  // The receipt for the latest payment, offered at the top once the client has paid.
+  const latestReceipt = [...payments].reverse().find((payment) => payment.receipt_number);
   const place = invoice.place_of_supply;
 
   return (
@@ -90,6 +92,12 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
             )}
             {canManage && status !== 'draft' && status !== 'cancelled' && invoice.sent_at && (
               <ActionButton label="Not sent yet" action={markInvoiceSentAction.bind(null, invoice.id, false)} />
+            )}
+            {latestReceipt && (
+              <ButtonLink href={`/receipts/${latestReceipt.id}/print`} variant="secondary">
+                <Printer size={16} aria-hidden="true" />
+                Receipt
+              </ButtonLink>
             )}
             <ButtonLink href={`/invoices/${invoice.id}/print`}>
               <Printer size={16} aria-hidden="true" />
@@ -155,9 +163,10 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                         </p>
                       </div>
                       {payment.receipt_number && (
-                        <Link href={`/receipts/${payment.id}/print`} className={layout.link}>
+                        <ButtonLink href={`/receipts/${payment.id}/print`} variant="ghost">
+                          <Printer size={16} aria-hidden="true" />
                           Receipt {payment.receipt_number}
-                        </Link>
+                        </ButtonLink>
                       )}
                       {canRecord && (
                         <ConfirmActionButton

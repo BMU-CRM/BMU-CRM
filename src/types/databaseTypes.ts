@@ -2650,6 +2650,7 @@ export type Database = {
           "issue_date": string
           "issued_at": string | null
           "notes": string | null
+          "overview": string | null
           "paid_at": string | null
           "place_of_supply": string | null
           "project_id": string | null
@@ -2686,6 +2687,7 @@ export type Database = {
           "issue_date"?: string
           "issued_at"?: string | null
           "notes"?: string | null
+          "overview"?: string | null
           "paid_at"?: string | null
           "place_of_supply"?: string | null
           "project_id"?: string | null
@@ -2721,6 +2723,7 @@ export type Database = {
           "issue_date"?: string
           "issued_at"?: string | null
           "notes"?: string | null
+          "overview"?: string | null
           "paid_at"?: string | null
           "place_of_supply"?: string | null
           "project_id"?: string | null
@@ -4504,6 +4507,7 @@ export type Database = {
           "is_inter_state": boolean
           "issue_date": string
           "notes": string | null
+          "overview": string | null
           "place_of_supply": string | null
           "project_id": string | null
           "quotation_number": string
@@ -4536,6 +4540,7 @@ export type Database = {
           "is_inter_state"?: boolean
           "issue_date"?: string
           "notes"?: string | null
+          "overview"?: string | null
           "place_of_supply"?: string | null
           "project_id"?: string | null
           "quotation_number"?: string
@@ -4567,6 +4572,7 @@ export type Database = {
           "is_inter_state"?: boolean
           "issue_date"?: string
           "notes"?: string | null
+          "overview"?: string | null
           "place_of_supply"?: string | null
           "project_id"?: string | null
           "quotation_number"?: string

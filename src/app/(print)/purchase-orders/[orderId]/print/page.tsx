@@ -30,6 +30,7 @@ export default async function PrintPurchaseOrderPage({ params }: { params: Promi
         ...(order.expected_date ? [{ label: 'Expected by', value: formatDate(order.expected_date) }] : []),
       ]}
       partyLabel="Vendor"
+      fromLabel="Ordered by"
       billTo={{ name: order.vendor?.name ?? null, address: order.vendor?.address ?? null, gstin: order.vendor?.gstin ?? null }}
       placeOfSupply={order.place_of_supply}
       settings={settings}

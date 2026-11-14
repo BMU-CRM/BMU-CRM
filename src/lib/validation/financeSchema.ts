@@ -85,6 +85,8 @@ export const financeDocumentSchema = z
     placeOfSupply: optionalText(60),
     notes: optionalText(2000),
     terms: optionalText(2000),
+    // Up to three short lines, printed under who it is for.
+    overview: optionalText(400).refine((value) => value === null || value.split(/\r?\n/).length <= 3, 'Keep the overview to three lines.'),
     // Sign with your own signature, keep the one there, or none.
     signature: z.enum(['mine', 'keep', 'none']).catch('keep'),
     showSeal: z.boolean(),
@@ -112,6 +114,7 @@ export function readFinanceDocument(formData: FormData) {
     placeOfSupply: text('placeOfSupply'),
     notes: text('notes'),
     terms: text('terms'),
+    overview: text('overview'),
     signature: text('signature') || 'keep',
     showSeal: formData.get('showSeal') === 'on',
   });

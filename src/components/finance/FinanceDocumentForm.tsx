@@ -44,6 +44,7 @@ export type FinanceDocumentDraft = {
   place_of_supply: string | null;
   notes: string | null;
   terms: string | null;
+  overview?: string | null;
 };
 
 type FinanceDocumentFormProps = {
@@ -326,6 +327,17 @@ export function FinanceDocumentForm({
               error={errors?.endDate}
             />
           </FormGrid>
+          <div className={layout.spaced}>
+            <TextAreaField
+              label="Project overview"
+              name="overview"
+              rows={3}
+              maxLength={400}
+              defaultValue={document?.overview ?? ''}
+              placeholder="Up to three lines on what the project covers. Printed under who it is for."
+              error={errors?.overview}
+            />
+          </div>
         </Panel>
 
         <Panel title="Bill to" description="Filled in from the client. Change them here for this document only.">

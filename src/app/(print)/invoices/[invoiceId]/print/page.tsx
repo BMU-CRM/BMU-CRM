@@ -44,6 +44,9 @@ export default async function PrintInvoicePage({ params }: PrintInvoicePageProps
   return (
     <PrintableDocument
       heading={isDraft ? 'Invoice' : 'Tax invoice'}
+      fromLabel="Invoice from"
+      partyLabel="Invoice to"
+      overview={invoice.overview}
       stamp={stamps[invoice.status]}
       backHref={`/invoices/${invoice.id}`}
       facts={[

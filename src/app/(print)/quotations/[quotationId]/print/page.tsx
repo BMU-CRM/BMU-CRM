@@ -38,6 +38,9 @@ export default async function PrintQuotationPage({ params }: PrintQuotationPageP
   return (
     <PrintableDocument
       heading="Quotation"
+      fromLabel="Quotation from"
+      partyLabel="Quotation to"
+      overview={quotation.overview}
       stamp={quotation.status === 'draft' ? 'Draft' : undefined}
       backHref={`/quotations/${quotation.id}`}
       facts={[

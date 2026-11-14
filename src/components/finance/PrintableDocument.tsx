@@ -31,8 +31,12 @@ type PrintableDocumentProps = {
   // The company's bank account and UPI, for documents the client still has to pay.
   showBankDetails: boolean;
   isTaxInvoice: boolean;
-  // "Bill to" on sales documents; "Vendor" on a purchase order.
+  // Who it is for and who it is from, such as "Quotation to" and "Quotation from"; "Vendor"
+  // on a purchase order.
   partyLabel?: string;
+  fromLabel?: string;
+  // Up to three lines on the project, printed under the parties.
+  overview?: string | null;
   // Who signs it, and whether their seal is printed under the signature.
   signatory?: Signatory | null;
   showSeal?: boolean;
@@ -233,7 +237,9 @@ export function PrintableDocument({
   terms,
   showBankDetails,
   isTaxInvoice,
-  partyLabel = 'Bill to',
+  partyLabel = 'To',
+  fromLabel = 'From',
+  overview,
   signatory,
   showSeal,
   closingLine,
@@ -245,6 +251,10 @@ export function PrintableDocument({
   const paid = money.amount_paid ?? 0;
   const due = sumMoney([money.total, -paid]);
   const paidInFull = paid > 0 && due <= 0;
+  // A short document fills its first page, with the payment details at the foot; the
+  // notes, terms and signatures always start on a new page.
+  const fillsFirstPage = lines.length <= itemsOnFirstPage;
+  const termsOnNewPage = Boolean(notes || terms);
 
   return (
     <div className={styles.screen}>
@@ -260,11 +270,12 @@ export function PrintableDocument({
       </div>
 
       <DocumentSheet settings={settings}>
+        <div className={styles.firstPage} data-fill={fillsFirstPage}>
         <DocumentLetterhead heading={heading} stamp={stamp} facts={facts} />
 
         <section className={styles.parties}>
           <div>
-            <p className={styles.label}>Office address</p>
+            <p className={styles.label}>{fromLabel}</p>
             <p className={styles.partyName}>{companyName}</p>
             {settings?.address && <p className={styles.preserve}>{settings.address}</p>}
             {settings?.phone && <p>{settings.phone}</p>}
@@ -272,7 +283,7 @@ export function PrintableDocument({
             {settings?.pan && <p>PAN: {settings.pan}</p>}
           </div>
           <div>
-            <p className={styles.label}>{partyLabel === 'Bill to' ? 'To' : partyLabel}</p>
+            <p className={styles.label}>{partyLabel}</p>
             <p className={styles.partyName}>{billTo.name}</p>
             {billTo.address && <p className={styles.preserve}>{billTo.address}</p>}
             <p>GSTIN: {billTo.gstin ?? 'Unregistered'}</p>
@@ -282,6 +293,13 @@ export function PrintableDocument({
             {isTaxInvoice && <p>Tax payable on reverse charge: No</p>}
           </div>
         </section>
+
+        {overview && (
+          <section className={styles.overview} aria-label="Project overview">
+            <p className={styles.overviewHeading}>Project overview</p>
+            <p className={styles.preserve}>{overview}</p>
+          </section>
+        )}
 
         <div className={styles.tableScroller}>
           <table className={styles.items}>
@@ -373,16 +391,19 @@ export function PrintableDocument({
         </section>
 
         {showBankDetails && !paidInFull && <PaymentDetails settings={settings} />}
+        </div>
 
-        <DocumentTerms notes={notes} terms={terms} />
+        <div className={styles.closingPart} data-new-page={termsOnNewPage}>
+          <DocumentTerms notes={notes} terms={terms} />
 
-        {closingLine && <p className={styles.thanks}>{closingLine}</p>}
-        <section className={styles.signatures}>
-          {clientAcceptance ? <ClientAcceptance /> : <span />}
-          <SignatureBlock companyName={companyName} signatory={signatory} showSeal={showSeal} />
-        </section>
+          {closingLine && <p className={styles.thanks}>{closingLine}</p>}
+          <section className={styles.signatures}>
+            {clientAcceptance ? <ClientAcceptance /> : <span />}
+            <SignatureBlock companyName={companyName} signatory={signatory} showSeal={showSeal} />
+          </section>
 
-        <DocumentFooter settings={settings} />
+          <DocumentFooter settings={settings} />
+        </div>
       </DocumentSheet>
     </div>
   );

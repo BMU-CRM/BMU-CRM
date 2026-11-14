@@ -173,7 +173,51 @@
   text-align: center;
 }
 
-/* After the sixth item, the rest continue on the next page. The headings repeat. */
+/* The first page. With few items it fills the page: the rows get more room and the
+   payment details sit at the foot, so the terms start cleanly on the next page. */
+.firstPage {
+  display: flex;
+  flex-direction: column;
+}
+
+.firstPage[data-fill='true'] {
+  min-height: 258mm;
+}
+
+.firstPage[data-fill='true'] .items td {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+.firstPage[data-fill='true'] > [aria-label='Payment details'] {
+  margin-top: auto;
+}
+
+/* Notes, terms and the signatures: a page of their own after the items. */
+.closingPart[data-new-page='true'] {
+  break-before: page;
+  padding-top: 8px;
+}
+
+/* The project in up to three lines, under who it is for. */
+.overview {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: #f5f7fa;
+  border-left: 4px solid var(--doc-navy);
+  border-radius: 6px;
+}
+
+.overviewHeading {
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--doc-navy);
+  text-transform: uppercase;
+}
+
+/* After the third item, the rest continue on the next page. The headings repeat. */
 .pageBreakAfter {
   break-after: page;
 }

@@ -49,6 +49,10 @@ async function saveInvoice(boundId: string | null, formData: FormData): Promise<
     p_items: itemsForDatabase(lines.items),
   });
   if (error) return databaseFailure(error);
+
+  // The project overview is saved beside the rest, while it is a draft.
+  const { error: overviewError } = await database.from('invoices').update({ overview: parsed.data.overview }).eq('id', data).select('id');
+  if (overviewError) return databaseFailure(overviewError);
   return { id: data };
 }
 

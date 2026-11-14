@@ -48,7 +48,7 @@ export function ReceiptPrint({ payment, settings, signatory, showSeal, toolbarEx
 
         <section className={styles.parties}>
           <div>
-            <p className={styles.label}>Office address</p>
+            <p className={styles.label}>Receipt from</p>
             <p className={styles.partyName}>{company}</p>
             {settings?.address && <p className={styles.preserve}>{settings.address}</p>}
             {settings?.gstin && <p>GSTIN: {settings.gstin}</p>}
