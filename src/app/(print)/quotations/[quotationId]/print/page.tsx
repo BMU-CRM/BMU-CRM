@@ -9,11 +9,18 @@ import { getFinanceSettings } from '@/server/services/financeService';
 import { getQuotation, listQuotationItems } from '@/server/services/quotationService';
 import { getSignatory } from '@/server/services/signatureService';
 
-export const metadata: Metadata = { title: 'Print quotation' };
-
 type PrintQuotationPageProps = {
   params: Promise<{ quotationId: string }>;
 };
+
+// Named after the document, such as "QUO-0067 - Acme Interiors", so a saved PDF gets
+// that file name.
+export async function generateMetadata({ params }: PrintQuotationPageProps): Promise<Metadata> {
+  const quotationId = parseId((await params).quotationId);
+  const quotation = quotationId ? await getQuotation(quotationId) : null;
+  if (!quotation) return { title: 'Quotation' };
+  return { title: { absolute: [quotation.quotation_number, quotation.client?.company_name].filter(Boolean).join(' - ') } };
+}
 
 export default async function PrintQuotationPage({ params }: PrintQuotationPageProps) {
   await requirePagePermission(permissionKeys.quotationsView);

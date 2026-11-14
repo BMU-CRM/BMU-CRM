@@ -8,6 +8,7 @@ export type PaymentMethod = Database['public']['Enums']['payment_method'];
 
 export const quotationStatusLabels: Record<QuotationStatus, string> = {
   draft: 'Draft',
+  final: 'Final',
   sent: 'Sent',
   accepted: 'Accepted',
   declined: 'Declined',

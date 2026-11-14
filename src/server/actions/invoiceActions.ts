@@ -86,6 +86,16 @@ export async function issueInvoiceAction(invoiceId: string): Promise<ActionResul
   return success(`Issued as ${issued.invoice_number}. It can no longer be changed.`);
 }
 
+// Records that the issued invoice was sent to the client, or takes that back.
+export async function markInvoiceSentAction(invoiceId: string, sent: boolean): Promise<ActionResult> {
+  const database = await createDatabaseClient();
+  const { error } = await database.rpc('mark_invoice_sent', { p_invoice: invoiceId, p_sent: sent });
+  if (error) return databaseFailure(error);
+
+  refreshInvoice(invoiceId);
+  return success(sent ? 'Marked as sent to the client.' : 'No longer marked as sent.');
+}
+
 export async function cancelInvoiceAction(invoiceId: string, reason: string): Promise<ActionResult> {
   const parsed = cancelReasonSchema.safeParse(reason);
   if (!parsed.success) return failure(parsed.error.issues[0]?.message ?? 'Give a reason for cancelling.');

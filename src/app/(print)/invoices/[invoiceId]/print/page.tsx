@@ -9,11 +9,18 @@ import { getFinanceSettings } from '@/server/services/financeService';
 import { getInvoice, listInvoiceItems } from '@/server/services/invoiceService';
 import { getSignatory } from '@/server/services/signatureService';
 
-export const metadata: Metadata = { title: 'Print invoice' };
-
 type PrintInvoicePageProps = {
   params: Promise<{ invoiceId: string }>;
 };
+
+// Named after the document, such as "INV-2026-27-0004 - Acme Interiors", so a saved PDF
+// gets that file name.
+export async function generateMetadata({ params }: PrintInvoicePageProps): Promise<Metadata> {
+  const invoiceId = parseId((await params).invoiceId);
+  const invoice = invoiceId ? await getInvoice(invoiceId) : null;
+  if (!invoice) return { title: 'Invoice' };
+  return { title: { absolute: [invoice.invoice_number ?? 'Draft invoice', invoice.client?.company_name].filter(Boolean).join(' - ') } };
+}
 
 const stamps = {
   draft: 'Draft. Not a tax invoice',

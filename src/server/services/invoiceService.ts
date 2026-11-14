@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { sumMoney } from '@/lib/finance/documentTotals';
 import { cleanSearchTerm } from '@/lib/cleanSearchTerm';
 import { todayInIndia } from '@/lib/formatDate';
@@ -83,7 +84,8 @@ export async function listOverdueInvoices(limit: number) {
   return data;
 }
 
-export async function getInvoice(invoiceId: string) {
+// Once per request: the page and its title both read it.
+export const getInvoice = cache(async function loadInvoice(invoiceId: string) {
   const database = await createDatabaseClient();
   const { data, error } = await database
     .from('invoices')
@@ -98,7 +100,7 @@ export async function getInvoice(invoiceId: string) {
     .maybeSingle();
   if (error) throw error;
   return data;
-}
+});
 
 export type InvoiceDetails = NonNullable<Awaited<ReturnType<typeof getInvoice>>>;
 

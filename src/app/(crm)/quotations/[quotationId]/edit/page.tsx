@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { FinanceDocumentForm } from '@/components/finance/FinanceDocumentForm';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { permissionKeys } from '@/lib/access/permissionKeys';
@@ -38,7 +38,8 @@ export default async function EditQuotationPage({ params }: EditQuotationPagePro
   ]);
   const signing = await getSigningChoice(access.employee.id, quotation);
   if (!quotation || !hasFinanceReach(access, permissionKeys.quotationsManage, quotation)) notFound();
-  if (quotation.status !== 'draft' && quotation.status !== 'sent') notFound();
+  // Final and sent quotations are locked; their page offers Back to draft.
+  if (quotation.status !== 'draft') redirect(`/quotations/${quotation.id}`);
 
   const choices = toClientChoices(clients);
   if (quotation.client && !choices.some((choice) => choice.value === quotation.client_id)) {

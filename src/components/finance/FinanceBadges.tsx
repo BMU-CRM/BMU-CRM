@@ -12,6 +12,7 @@ type Tone = 'neutral' | 'good' | 'warning' | 'critical';
 
 const quotationTones: Record<QuotationStatus, Tone> = {
   draft: 'neutral',
+  final: 'neutral',
   sent: 'warning',
   accepted: 'good',
   declined: 'critical',

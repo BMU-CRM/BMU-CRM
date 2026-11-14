@@ -194,3 +194,13 @@ textarea {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Printing: an empty box in the top margin, and one in the middle of the bottom margin,
+   stop the browser from adding its own date, page title, web address and page count.
+   Documents put their own website and page numbers in the bottom corners. */
+@page {
+  @top-left { content: ""; }
+  @top-center { content: ""; }
+  @top-right { content: ""; }
+  @bottom-center { content: ""; }
+}

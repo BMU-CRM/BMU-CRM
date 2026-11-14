@@ -43,7 +43,8 @@ export default async function QuotationPage({ params }: QuotationPageProps) {
   const canInvoice = hasFinanceReach(access, permissionKeys.invoicesManage, { client: quotation.client });
   const canOpenClient = access.permissions[permissionKeys.clientsView] !== undefined;
   const status = quotation.status;
-  const isEditable = canManage && (status === 'draft' || status === 'sent');
+  // Only drafts are changed. Final and sent quotations are locked until moved back.
+  const isEditable = canManage && status === 'draft';
   const move = (target: typeof status) => changeQuotationStatusAction.bind(null, quotation.id, target);
   const place = quotation.place_of_supply;
 
@@ -55,11 +56,19 @@ export default async function QuotationPage({ params }: QuotationPageProps) {
         description={`${quotation.quotation_number} · ${quotation.client?.company_name ?? 'Unknown client'} · ${formatDate(quotation.issue_date)}`}
         actions={
           <>
-            {canManage && status === 'draft' && <ActionButton label="Mark as sent" variant="primary" action={move('sent')} />}
+            {/* Finalise takes the DRAFT mark off the printed copy; sending is its own step. */}
+            {canManage && status === 'draft' && <ActionButton label="Finalise" variant="primary" action={move('final')} />}
+            {canManage && status === 'final' && (
+              <>
+                <ActionButton label="Mark as sent" variant="primary" action={move('sent')} />
+                <ActionButton label="Back to draft" action={move('draft')} />
+              </>
+            )}
             {canManage && status === 'sent' && (
               <>
                 <ActionButton label="Client accepted" variant="primary" action={move('accepted')} />
                 <ActionButton label="Client declined" variant="secondary" action={move('declined')} />
+                <ActionButton label="Not sent yet" action={move('final')} />
                 <ActionButton label="Back to draft" action={move('draft')} />
               </>
             )}

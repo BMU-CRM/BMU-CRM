@@ -2654,6 +2654,7 @@ export type Database = {
           "place_of_supply": string | null
           "project_id": string | null
           "quotation_id": string | null
+          "sent_at": string | null
           "sgst_total": number
           "show_seal": boolean
           "signed_by": string | null
@@ -2689,6 +2690,7 @@ export type Database = {
           "place_of_supply"?: string | null
           "project_id"?: string | null
           "quotation_id"?: string | null
+          "sent_at"?: string | null
           "sgst_total"?: number
           "show_seal"?: boolean
           "signed_by"?: string | null
@@ -2723,6 +2725,7 @@ export type Database = {
           "place_of_supply"?: string | null
           "project_id"?: string | null
           "quotation_id"?: string | null
+          "sent_at"?: string | null
           "sgst_total"?: number
           "show_seal"?: boolean
           "signed_by"?: string | null
@@ -6848,6 +6851,11 @@ export type Database = {
         | { Args: {
             "p_conversation": string
           }; Returns: undefined }
+      "mark_invoice_sent":
+        | { Args: {
+            "p_invoice": string
+            "p_sent": boolean
+          }; Returns: undefined }
       "mark_payroll_paid":
         | { Args: {
             "p_run": string
@@ -7224,7 +7232,7 @@ export type Database = {
       "permission_scope": "own" | "team" | "department" | "organisation"
       "project_status": "planning" | "active" | "on_hold" | "completed" | "cancelled"
       "purchase_order_status": "draft" | "issued" | "received" | "cancelled"
-      "quotation_status": "draft" | "sent" | "accepted" | "declined"
+      "quotation_status": "draft" | "final" | "sent" | "accepted" | "declined"
       "reimbursement_status": "submitted" | "approved" | "rejected" | "paid" | "cancelled"
       "resignation_status": "submitted" | "approved" | "rejected" | "withdrawn" | "completed"
       "task_recurrence": "none" | "daily" | "weekly" | "monthly"
@@ -7336,7 +7344,7 @@ export const Constants = {
       "permission_scope": ["own", "team", "department", "organisation"],
       "project_status": ["planning", "active", "on_hold", "completed", "cancelled"],
       "purchase_order_status": ["draft", "issued", "received", "cancelled"],
-      "quotation_status": ["draft", "sent", "accepted", "declined"],
+      "quotation_status": ["draft", "final", "sent", "accepted", "declined"],
       "reimbursement_status": ["submitted", "approved", "rejected", "paid", "cancelled"],
       "resignation_status": ["submitted", "approved", "rejected", "withdrawn", "completed"],
       "task_recurrence": ["none", "daily", "weekly", "monthly"],

@@ -132,6 +132,7 @@ describe('document signatures and service details', () => {
     expect(error).toBeNull();
     expect((await admin.from('quotations').select('signed_by').eq('id', quotationId as string).single()).data?.signed_by).toBe(ids.manager!);
 
+    await as.manager!.from('quotations').update({ status: 'final' }).eq('id', quotationId as string).select('id');
     await as.manager!.from('quotations').update({ status: 'sent' }).eq('id', quotationId as string).select('id');
     await as.manager!.from('quotations').update({ status: 'accepted' }).eq('id', quotationId as string).select('id');
     const { data: invoiceId, error: convertError } = await as.manager!.rpc('create_invoice_from_quotation', { p_quotation: quotationId as string });

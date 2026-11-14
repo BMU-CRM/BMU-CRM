@@ -161,12 +161,16 @@ describe('quotations, invoices and payments', () => {
       const early = await as.manager!.rpc('create_invoice_from_quotation', { p_quotation: quotationId });
       expect(early.error?.message).toContain('Only an accepted quotation');
 
-      for (const status of ['sent', 'accepted'] as const) {
+      // Sending is its own step after finalising; a draft cannot be marked as sent.
+      const straightToSent = await as.manager!.from('quotations').update({ status: 'sent' }).eq('id', quotationId);
+      expect(straightToSent.error?.message).toContain('from draft to sent');
+
+      for (const status of ['final', 'sent', 'accepted'] as const) {
         const { error } = await as.manager!.from('quotations').update({ status }).eq('id', quotationId);
         expect(error, status).toBeNull();
       }
       const locked = await as.manager!.from('quotations').update({ title: 'Changed later' }).eq('id', quotationId);
-      expect(locked.error?.message).toContain('Only a draft or sent quotation');
+      expect(locked.error?.message).toContain('Only a draft quotation');
 
       const { data: invoiceId, error } = await as.manager!.rpc('create_invoice_from_quotation', { p_quotation: quotationId });
       expect(error).toBeNull();
@@ -192,13 +196,13 @@ describe('quotations, invoices and payments', () => {
       expect(quotation).toEqual({ subtotal: 133, total: 156.94 });
     });
 
-    it('cannot be sent without an amount', async () => {
+    it('cannot be finalised without an amount', async () => {
       const { data: id } = await as.manager!.rpc('save_quotation', {
         p_quotation: null as unknown as string,
         p_values: values(ownClient),
         p_items: [{ description: 'Free consultation', quantity: 1, unit_price: 0, tax_rate: 18 }],
       });
-      const { error } = await as.manager!.from('quotations').update({ status: 'sent' }).eq('id', id!);
+      const { error } = await as.manager!.from('quotations').update({ status: 'final' }).eq('id', id!);
 
       expect(error?.message).toContain('Add at least one item with an amount');
     });

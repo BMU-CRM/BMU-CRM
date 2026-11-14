@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { cleanSearchTerm } from '@/lib/cleanSearchTerm';
 import { todayInIndia } from '@/lib/formatDate';
 import type { QuotationStatus } from '@/lib/validation/financeSchema';
@@ -65,7 +66,8 @@ export async function listAwaitingQuotations(limit: number) {
   return data;
 }
 
-export async function getQuotation(quotationId: string) {
+// Once per request: the page and its title both read it.
+export const getQuotation = cache(async function loadQuotation(quotationId: string) {
   const database = await createDatabaseClient();
   const { data, error } = await database
     .from('quotations')
@@ -80,7 +82,7 @@ export async function getQuotation(quotationId: string) {
     .maybeSingle();
   if (error) throw error;
   return data;
-}
+});
 
 export type QuotationDetails = NonNullable<Awaited<ReturnType<typeof getQuotation>>>;
 

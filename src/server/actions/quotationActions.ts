@@ -70,6 +70,7 @@ export async function autosaveQuotationAction(quotationId: string | null, formDa
 
 const statusMessages: Record<QuotationStatus, string> = {
   draft: 'Back to draft. You can change it now.',
+  final: 'Finalised. The printed copy no longer says draft, and it is locked.',
   sent: 'Marked as sent to the client.',
   accepted: 'Marked as accepted. You can now turn it into an invoice.',
   declined: 'Marked as declined.',

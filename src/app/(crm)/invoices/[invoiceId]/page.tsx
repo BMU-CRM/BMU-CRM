@@ -6,6 +6,7 @@ import { CancelInvoiceButton } from '@/components/finance/CancelInvoiceButton';
 import { DocumentLines } from '@/components/finance/DocumentLines';
 import { InvoiceStatusBadge } from '@/components/finance/FinanceBadges';
 import { FinanceLiveRefresh } from '@/components/finance/FinanceLiveRefresh';
+import { ActionButton } from '@/components/ui/ActionButton';
 import { ButtonLink } from '@/components/ui/Button';
 import { ConfirmActionButton } from '@/components/ui/ConfirmActionButton';
 import { SelectField, TextField } from '@/components/ui/FormFields';
@@ -23,6 +24,7 @@ import { paymentMethodLabels } from '@/lib/validation/financeSchema';
 import {
   deleteInvoiceAction,
   issueInvoiceAction,
+  markInvoiceSentAction,
   recordPaymentAction,
   removePaymentAction,
 } from '@/server/actions/invoiceActions';
@@ -81,6 +83,13 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                   Edit
                 </ButtonLink>
               </>
+            )}
+            {/* Sending is recorded on its own, after the invoice is issued. */}
+            {canManage && status !== 'draft' && status !== 'cancelled' && !invoice.sent_at && (
+              <ActionButton label="Mark as sent" variant="secondary" action={markInvoiceSentAction.bind(null, invoice.id, true)} />
+            )}
+            {canManage && status !== 'draft' && status !== 'cancelled' && invoice.sent_at && (
+              <ActionButton label="Not sent yet" action={markInvoiceSentAction.bind(null, invoice.id, false)} />
             )}
             <ButtonLink href={`/invoices/${invoice.id}/print`}>
               <Printer size={16} aria-hidden="true" />
@@ -246,6 +255,12 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                 <div>
                   <dt>Issued</dt>
                   <dd>{formatDateTime(invoice.issued_at)}</dd>
+                </div>
+              )}
+              {invoice.sent_at && (
+                <div>
+                  <dt>Sent to the client</dt>
+                  <dd>{formatDateTime(invoice.sent_at)}</dd>
                 </div>
               )}
               {invoice.paid_at && (
