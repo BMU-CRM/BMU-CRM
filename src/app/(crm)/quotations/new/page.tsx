@@ -5,7 +5,7 @@ import { permissionKeys } from '@/lib/access/permissionKeys';
 import { todayInIndia } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
-import { listPricedServices } from '@/server/services/catalogService';
+import { listClientServiceItems, listPricedServices } from '@/server/services/catalogService';
 import { getSigningChoice } from '@/server/services/signatureService';
 import { getFinanceSettings, listBillingClients, toClientChoices } from '@/server/services/financeService';
 import { listProjectOptions } from '@/server/services/projectService';
@@ -27,6 +27,7 @@ export default async function NewQuotationPage({ searchParams }: NewQuotationPag
     listPricedServices(),
     getSigningChoice(access.employee.id),
   ]);
+  const clientServiceItems = await listClientServiceItems(clients.map((client) => client.id));
 
   return (
     <>
@@ -43,6 +44,7 @@ export default async function NewQuotationPage({ searchParams }: NewQuotationPag
         today={todayInIndia()}
         services={services}
         signing={signing}
+        clientServiceItems={clientServiceItems}
       />
     </>
   );

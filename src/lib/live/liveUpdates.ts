@@ -2,7 +2,7 @@
 
 import type { RealtimeChannel, RealtimeClient } from '@supabase/realtime-js';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { changeMatches, type LiveChangeMessage, type LiveConfig, type LiveTopic } from './liveConfig';
 
 // One live connection per browser tab, shared by every component that wants to know
@@ -95,7 +95,12 @@ type RealtimeState = {
   client: RealtimeClient;
   userId: string;
   changesTopic: string;
+  // The name shown to others while this person types.
+  name: string;
   joined: boolean;
+  // Joined at least once. Only joining again after a drop counts as "ready": the page
+  // was just loaded from the server when it first joins, so it has nothing to catch up.
+  everJoined: boolean;
   // Components already told the connection is ready.
   announced: WeakSet<Entry>;
   typing: Map<string, RealtimeChannel>;
@@ -124,6 +129,8 @@ function announceReady(state: RealtimeState, everyone: boolean) {
   });
 }
 
+let activeRealtime: RealtimeState | null = null;
+
 async function startRealtime(config: Extract<LiveConfig, { mode: 'realtime' }>): Promise<RealtimeState> {
   const { RealtimeClient } = await import('@supabase/realtime-js');
   const client = new RealtimeClient(`${config.url.replace(/^http/i, 'ws')}/realtime/v1`, {
@@ -133,7 +140,9 @@ async function startRealtime(config: Extract<LiveConfig, { mode: 'realtime' }>):
     client,
     userId: config.userId,
     changesTopic: config.changesTopic,
+    name: config.name,
     joined: false,
+    everJoined: false,
     announced: new WeakSet(),
     typing: new Map(),
   };
@@ -146,11 +155,14 @@ async function startRealtime(config: Extract<LiveConfig, { mode: 'realtime' }>):
         if (changeMatches(entry.topics, change)) entry.onChange?.({ table: change.table, event: change.event });
       });
     })
-    // Joining again after a dropped connection counts as ready too, so pages reload
-    // anything they missed while it was down.
+    // Joining again after a dropped connection counts as ready, so pages reload
+    // anything they missed while it was down. The first join does not: the page was
+    // just loaded, and reloading it would only cost another request.
     .subscribe((status) => {
       state.joined = status === 'SUBSCRIBED';
-      announceReady(state, true);
+      if (!state.joined) return;
+      if (state.everJoined) announceReady(state, true);
+      state.everJoined = true;
     });
 
   return state;
@@ -186,10 +198,8 @@ async function connectRealtime(config: Extract<LiveConfig, { mode: 'realtime' }>
 
   realtime ??= startRealtime(config);
   const state = await realtime;
+  activeRealtime = state;
   syncTypingChannels(state, config.typingTopics);
-  // Components added after the channel joined hear "ready" once, as they would from
-  // a newly opened stream.
-  announceReady(state, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -239,6 +249,17 @@ export function subscribeLive(entry: Entry) {
 }
 
 export function sendTyping(conversationId: string) {
+  // On Supabase the signal goes straight to the conversation's channel, which only its
+  // members were told the name of. Nothing reaches the website.
+  const channel = activeRealtime?.typing.get(conversationId);
+  if (activeRealtime && channel) {
+    void channel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { conversationId, name: activeRealtime.name, userId: activeRealtime.userId },
+    });
+    return;
+  }
   void fetch('/api/live/typing', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -246,27 +267,47 @@ export function sendTyping(conversationId: string) {
   }).catch(() => {});
 }
 
-// Reloads the page's server data shortly after a watched change, and once when the
-// connection opens, to catch anything that changed while it was not connected.
+// Reloading the page's server data. Every reload is a request to the website, so:
+// - changes close together lead to one reload, whichever parts of the page asked;
+// - while the page is out of sight (another tab, the window minimised, the phone
+//   locked), nothing reloads; it reloads once when it is looked at again.
+let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+let staleWhileHidden = false;
+let refreshPage: (() => void) | null = null;
+
+export function requestPageRefresh(refresh: () => void, delayMs = 250) {
+  refreshPage = refresh;
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+    staleWhileHidden = true;
+    return;
+  }
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => refreshPage?.(), delayMs);
+}
+
+if (typeof window !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && staleWhileHidden) {
+      staleWhileHidden = false;
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => refreshPage?.(), 100);
+    }
+  });
+}
+
+// Reloads the page's server data shortly after a watched change, and after the
+// connection comes back from a drop, to catch anything missed meanwhile.
 export function useLiveRefresh(topics: LiveTopic[], options: { delayMs?: number; refreshOnConnect?: boolean } = {}) {
   const router = useRouter();
   const key = JSON.stringify(topics);
   const { delayMs = 250, refreshOnConnect = true } = options;
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
-    const scheduleRefresh = () => {
-      clearTimeout(timer.current);
-      timer.current = setTimeout(() => router.refresh(), delayMs);
-    };
-    const unsubscribe = subscribeLive({
+    const scheduleRefresh = () => requestPageRefresh(() => router.refresh(), delayMs);
+    return subscribeLive({
       topics: JSON.parse(key) as LiveTopic[],
       onReady: refreshOnConnect ? scheduleRefresh : undefined,
       onChange: scheduleRefresh,
     });
-    return () => {
-      clearTimeout(timer.current);
-      unsubscribe();
-    };
   }, [key, delayMs, refreshOnConnect, router]);
 }

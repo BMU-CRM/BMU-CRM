@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { z } from 'zod';
 import {
   databaseFailure,
   failure,
@@ -28,19 +29,19 @@ function refreshInvoice(invoiceId: string) {
   revalidatePath('/invoices');
 }
 
-export async function saveInvoiceAction(
-  invoiceId: string | null,
-  _previous: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
+// Saves the form: a new invoice is created as a draft, an existing one updated. The
+// id comes from the page, or from the form once autosave has created the draft.
+async function saveInvoice(boundId: string | null, formData: FormData): Promise<{ id: string } | ActionResult> {
   if (!(await getActionAccess(permissionKeys.invoicesManage))) return failure(noPermission);
+  const savedId = z.uuid().safeParse(formData.get('documentId'));
+  const invoiceId = boundId ?? (savedId.success ? savedId.data : null);
 
   const parsed = readFinanceDocument(formData);
   if (!parsed.success) return validationFailure(parsed.error);
   const lines = parseLineItems(formData);
   if (!lines.ok) return { status: 'error', message: lines.message, fieldErrors: { items: lines.message } };
 
-  // The database works out every amount from the items, and checks who may bill.
+  // The database works out every amount from the items, and checks who may do this.
   const database = await createDatabaseClient();
   const { data, error } = await database.rpc('save_invoice', {
     p_invoice: invoiceId as string,
@@ -48,9 +49,24 @@ export async function saveInvoiceAction(
     p_items: itemsForDatabase(lines.items),
   });
   if (error) return databaseFailure(error);
+  return { id: data };
+}
 
-  refreshInvoice(data);
-  redirect(`/invoices/${data}`);
+export async function saveInvoiceAction(
+  invoiceId: string | null,
+  _previous: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const saved = await saveInvoice(invoiceId, formData);
+  if (!('id' in saved)) return saved;
+  refreshInvoice(saved.id);
+  redirect(`/invoices/${saved.id}`);
+}
+
+// Saves the draft while it is being written, without leaving the page. Returns the id,
+// so later saves update the same draft.
+export async function autosaveInvoiceAction(invoiceId: string | null, formData: FormData): Promise<{ id: string } | ActionResult> {
+  return saveInvoice(invoiceId, formData);
 }
 
 // Issuing gives the invoice its number and locks it.

@@ -14,7 +14,11 @@ export function proxy(request: NextRequest) {
 // - live updates (api/live), which check the session themselves;
 // - server actions and link prefetches, which run inside a page already open. Every
 //   server action checks who is calling (getActionAccess), and every page checks again
-//   when it is opened.
+//   when it is opened;
+// - every request carrying a session cookie (crm_session, see sessionCookieName). The
+//   guard only acts when there is none: signed-in people's pages check the session
+//   themselves (requireAccess), and the sign-in pages send them on to the app. So the
+//   guard runs only for people who are not signed in, and costs nothing otherwise.
 export const config = {
   matcher: [
     {
@@ -24,6 +28,7 @@ export const config = {
         { type: 'header', key: 'next-action' },
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },
+        { type: 'cookie', key: 'crm_session' },
       ],
     },
   ],

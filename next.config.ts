@@ -28,6 +28,13 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         ],
       },
+      {
+        // The logo and icons rarely change. Browsers reuse them for a day instead of
+        // asking again on every page, which each counts as a request on the live site,
+        // then check for a new one in the background. A changed image shows within a day.
+        source: '/images/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
+      },
     ];
   },
 };

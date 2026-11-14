@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { notFound } from 'next/navigation';
 import { ChatHeaderActions } from '@/components/messages/ChatHeaderActions';
+import { ChatTitleButton } from '@/components/messages/ChatTitleButton';
 import { MessageComposer } from '@/components/messages/MessageComposer';
 import { formatDate } from '@/lib/formatDate';
 import { MessagesShell } from '@/components/messages/MessagesShell';
@@ -80,7 +81,13 @@ export default async function ConversationPage({ params, searchParams }: Convers
           <Link href="/messages" className={styles.back}>
             ‹ All conversations
           </Link>
-          <h1 className={styles.title}>{conversation.displayTitle}</h1>
+          {conversation.kind === 'group' || otherPerson ? (
+            <ChatTitleButton label={`${conversation.displayTitle}: ${conversation.kind === 'group' ? 'group' : 'contact'} info`}>
+              <h1 className={styles.title}>{conversation.displayTitle}</h1>
+            </ChatTitleButton>
+          ) : (
+            <h1 className={styles.title}>{conversation.displayTitle}</h1>
+          )}
           <p className={styles.subtitle}>
             {conversationKindLabels[conversation.kind]}
             {otherPerson && <PresenceDot employeeId={otherPerson.id} withLabel prefix="·" />}

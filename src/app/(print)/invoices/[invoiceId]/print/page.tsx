@@ -56,6 +56,7 @@ export default async function PrintInvoicePage({ params }: PrintInvoicePageProps
       signatory={signatory}
       showSeal={invoice.show_seal}
       closingLine="Thank you for your business"
+      clientAcceptance
     />
   );
 }

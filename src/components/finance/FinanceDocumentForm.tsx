@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { ButtonLink } from '@/components/ui/Button';
 import formStyles from '@/components/ui/FormFields.module.css';
@@ -21,8 +21,9 @@ import { idleResult } from '@/lib/actionResult';
 import type { PricedService } from '@/lib/catalog/servicePricing';
 import { isInterStateSupply } from '@/lib/finance/documentTotals';
 import { stateOptionsWith } from '@/lib/finance/indianStates';
-import { saveInvoiceAction } from '@/server/actions/invoiceActions';
-import { saveQuotationAction } from '@/server/actions/quotationActions';
+import { autosaveInvoiceAction, saveInvoiceAction } from '@/server/actions/invoiceActions';
+import { autosaveQuotationAction, saveQuotationAction } from '@/server/actions/quotationActions';
+import type { ClientServiceItem } from '@/server/services/catalogService';
 import type { SigningChoice } from '@/server/services/signatureService';
 import { DocumentItemsEditor, type ItemDraft } from './DocumentItemsEditor';
 
@@ -58,6 +59,8 @@ type FinanceDocumentFormProps = {
   today: string;
   services: PricedService[];
   signing: SigningChoice;
+  // On a new document: the services each client takes, added as items when it is chosen.
+  clientServiceItems?: Record<string, ClientServiceItem[]>;
 };
 
 // Sign with your own signature, keep whoever signed it, or leave it to sign by hand.
@@ -79,7 +82,7 @@ function SigningFields({ signing }: { signing: SigningChoice }) {
       </FormGrid>
       {choice !== 'none' && (
         <label className={layout.spaced}>
-          <input type="checkbox" name="showSeal" defaultChecked={signing.showSeal ?? hasSeal} /> Add the company seal beside the signature
+          <input type="checkbox" name="showSeal" defaultChecked={signing.showSeal ?? hasSeal} /> Add the company seal under the signature
         </label>
       )}
       {!hasSignature && (
@@ -91,8 +94,29 @@ function SigningFields({ signing }: { signing: SigningChoice }) {
   );
 }
 
-// One form for quotations and invoices. Bill-to details left empty are filled in from
-// the client when it is saved.
+function itemFromClientService(item: ClientServiceItem, taxRate: number): ItemDraft {
+  return {
+    description: item.description,
+    hsnSac: '',
+    quantity: '1',
+    unitPrice: item.unitPrice,
+    taxRate: String(taxRate),
+    serviceGroup: item.serviceGroup,
+    serviceName: item.serviceName,
+    billing: item.billing,
+  };
+}
+
+type AutosaveState = { state: 'idle' | 'saving' | 'saved' | 'problem'; message?: string };
+
+const timeFormat = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit' });
+
+// One form for quotations and invoices.
+// - Choosing the client fills in its name, address and GSTIN, and, on a new document,
+//   adds the services the client takes as items (until the items are changed by hand).
+// - The draft saves itself a few seconds after each change, once the required fields
+//   are filled, and when the page is left. A new one then opens as an edit, so a reload
+//   carries on with the same draft.
 export function FinanceDocumentForm({
   kind,
   document,
@@ -107,22 +131,128 @@ export function FinanceDocumentForm({
   today,
   services,
   signing,
+  clientServiceItems = {},
 }: FinanceDocumentFormProps) {
   const save = kind === 'quotation' ? saveQuotationAction : saveInvoiceAction;
+  const autosave = kind === 'quotation' ? autosaveQuotationAction : autosaveInvoiceAction;
   const [result, formAction] = useActionState(save.bind(null, document?.id ?? null), idleResult);
   const errors = result.fieldErrors;
+  const noun = kind === 'quotation' ? 'quotation' : 'invoice';
 
   const [clientId, setClientId] = useState(document?.client_id ?? defaultClientId ?? '');
+
+  // The client's name, address and GSTIN, until they are changed by hand.
+  const detailsOf = (id: string) => {
+    const chosen = clients.find((option) => option.value === id);
+    return { name: chosen?.label ?? '', address: chosen?.address ?? '', gstin: chosen?.gstin ?? '' };
+  };
+  const [billTo, setBillTo] = useState(() =>
+    document
+      ? { name: document.bill_to_name ?? '', address: document.bill_to_address ?? '', gstin: document.client_gstin ?? '' }
+      : detailsOf(defaultClientId ?? ''),
+  );
+  const billToEdited = useRef(false);
+  const editBillTo = (field: 'name' | 'address' | 'gstin') => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    billToEdited.current = true;
+    const value = event.target.value;
+    setBillTo((current) => ({ ...current, [field]: value }));
+  };
+
+  // The items: on a new document, the client's services until the items are changed.
+  const servicesOf = (id: string) => (clientServiceItems[id] ?? []).map((item) => itemFromClientService(item, defaultTaxRate));
+  const [itemsSeed, setItemsSeed] = useState(() => ({
+    key: 0,
+    items: items.length > 0 || document ? items : servicesOf(defaultClientId ?? ''),
+  }));
+  const itemsEdited = useRef(false);
+
+  function chooseClient(id: string) {
+    setClientId(id);
+    if (!billToEdited.current) setBillTo(detailsOf(id));
+    if (!document && !itemsEdited.current) setItemsSeed((current) => ({ key: current.key + 1, items: servicesOf(id) }));
+  }
+
+  // Autosave.
+  const [documentId, setDocumentId] = useState(document?.id ?? '');
+  const [autosaved, setAutosaved] = useState<AutosaveState>({ state: 'idle' });
+  const anchor = useRef<HTMLInputElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const dirty = useRef(false);
+  const saving = useRef(false);
+  const submitted = useRef(false);
+  const autosaveLater = useRef<() => void>(() => undefined);
+
+  const runAutosave = useCallback(async () => {
+    clearTimeout(timer.current);
+    const form = anchor.current?.form;
+    if (!form || !dirty.current || submitted.current) return;
+    if (saving.current) {
+      timer.current = setTimeout(() => autosaveLater.current(), 2000);
+      return;
+    }
+    // Waits until the client, what it is for and each item are filled in.
+    if (!form.checkValidity()) return;
+    dirty.current = false;
+    saving.current = true;
+    setAutosaved({ state: 'saving' });
+    try {
+      const outcome = await autosave(document?.id ?? null, new FormData(form));
+      if ('id' in outcome) {
+        setDocumentId(outcome.id);
+        if (!document) window.history.replaceState(window.history.state, '', `/${noun}s/${outcome.id}/edit`);
+        setAutosaved({ state: 'saved', message: `Draft saved at ${timeFormat.format(new Date())}` });
+      } else {
+        setAutosaved({ state: 'problem', message: `Not saved yet: ${outcome.message ?? 'check the form.'}` });
+      }
+    } catch {
+      dirty.current = true;
+      setAutosaved({ state: 'problem', message: 'Could not save just now. Your changes are still here.' });
+    } finally {
+      saving.current = false;
+    }
+  }, [autosave, document, noun]);
+
+  function changed(event: React.FormEvent<HTMLFormElement>) {
+    if (submitted.current) return;
+    if ((event.target as HTMLElement).closest('[data-items]')) itemsEdited.current = true;
+    dirty.current = true;
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => autosaveLater.current(), 4000);
+  }
+
+  useEffect(() => {
+    autosaveLater.current = () => void runAutosave();
+  }, [runAutosave]);
+
+  // Leaving the page (another tab, the app in the background) saves straight away.
+  useEffect(() => {
+    const leaving = () => {
+      if (window.document.visibilityState === 'hidden') void runAutosave();
+    };
+    window.document.addEventListener('visibilitychange', leaving);
+    return () => {
+      window.document.removeEventListener('visibilitychange', leaving);
+      clearTimeout(timer.current);
+    };
+  }, [runAutosave]);
   const [placeOfSupply, setPlaceOfSupply] = useState(document?.place_of_supply ?? '');
   const client = clients.find((option) => option.value === clientId);
   const effectivePlace = placeOfSupply || client?.billingState || '';
   const clientProjects = projects.filter((project) => project.clientId === clientId);
 
-  const noun = kind === 'quotation' ? 'quotation' : 'invoice';
-  const cancelHref = document ? `/${noun}s/${document.id}` : `/${noun}s`;
+  const cancelHref = documentId ? `/${noun}s/${documentId}` : `/${noun}s`;
 
   return (
-    <KeepValuesForm action={formAction}>
+    <KeepValuesForm
+      action={formAction}
+      onInput={changed}
+      onChange={changed}
+      onSubmit={() => {
+        submitted.current = true;
+        clearTimeout(timer.current);
+      }}
+    >
+      <input ref={anchor} type="hidden" name="documentId" value={documentId} />
       <div className={layout.stack}>
         <FormMessage result={result} />
         <Panel title="Details">
@@ -133,7 +263,7 @@ export function FinanceDocumentForm({
               options={clients}
               placeholder="Choose a client"
               value={clientId}
-              onChange={(event) => setClientId(event.target.value)}
+              onChange={(event) => chooseClient(event.target.value)}
               required
               error={errors?.clientId}
             />
@@ -174,19 +304,21 @@ export function FinanceDocumentForm({
           </FormGrid>
         </Panel>
 
-        <Panel title="Bill to" description="Leave a field empty to use the client's details.">
+        <Panel title="Bill to" description="Filled in from the client. Change them here for this document only.">
           <FormGrid>
             <TextField
               label="Name"
               name="billToName"
-              defaultValue={document?.bill_to_name ?? ''}
+              value={billTo.name}
+              onChange={editBillTo('name')}
               placeholder={client?.label}
               error={errors?.billToName}
             />
             <TextField
               label="Client GSTIN"
               name="clientGstin"
-              defaultValue={document?.client_gstin ?? ''}
+              value={billTo.gstin}
+              onChange={editBillTo('gstin')}
               placeholder={client?.gstin ?? '15 characters, if registered'}
               maxLength={15}
               error={errors?.clientGstin}
@@ -211,22 +343,29 @@ export function FinanceDocumentForm({
               label="Address"
               name="billToAddress"
               rows={2}
-              defaultValue={document?.bill_to_address ?? ''}
-              placeholder={client?.address ?? undefined}
+              value={billTo.address}
+              onChange={editBillTo('address')}
+              placeholder={client ? 'No address saved for this client' : undefined}
               error={errors?.billToAddress}
             />
           </div>
         </Panel>
 
-        <Panel title="Items">
-          <DocumentItemsEditor
-            initialItems={items}
+        <Panel
+          title="Items"
+          description={!document && clientId && (clientServiceItems[clientId]?.length ?? 0) > 0 ? 'The client’s services are added for you. Check the rates and quantities.' : undefined}
+        >
+          <div data-items>
+            <DocumentItemsEditor
+              key={itemsSeed.key}
+              initialItems={itemsSeed.items}
             defaultTaxRate={defaultTaxRate}
             isInterState={isInterStateSupply(companyState, effectivePlace)}
             error={errors?.items}
             services={services}
             withServiceDetails
           />
+          </div>
         </Panel>
 
         <Panel title="Signature and seal" description="Printed at the bottom, with your name and title under the signature.">
@@ -249,8 +388,11 @@ export function FinanceDocumentForm({
       <FormActions>
         <SubmitButton label={document ? 'Save changes' : `Save ${noun} as draft`} pendingLabel="Saving…" />
         <ButtonLink href={cancelHref} variant="ghost">
-          Cancel
+          {documentId ? 'Close' : 'Cancel'}
         </ButtonLink>
+        <span className={formStyles.hint} role="status" aria-live="polite" data-autosave={autosaved.state}>
+          {autosaved.state === 'saving' ? 'Saving draft…' : (autosaved.message ?? 'Saves as a draft automatically while you work.')}
+        </span>
       </FormActions>
     </KeepValuesForm>
   );

@@ -262,6 +262,31 @@ export const financeSettingsSchema = z.object({
   paymentTermsDays: z.coerce.number({ error: 'Enter a number of days.' }).int('Enter whole days.').min(0, 'Use 0 or more days.').max(365, 'Use 365 days or fewer.'),
   quotationValidityDays: z.coerce.number({ error: 'Enter a number of days.' }).int('Enter whole days.').min(1, 'Use at least 1 day.').max(365, 'Use 365 days or fewer.'),
   bankDetails: optionalText(1000),
+  // The account printed under "Payment details" on quotations and invoices.
+  bankAccountName: optionalText(120),
+  bankAccountNumber: z
+    .string()
+    .transform((value) => value.replace(/\s/g, ''))
+    .transform((value) => (value === '' ? null : value))
+    .pipe(z.string().regex(/^[0-9A-Za-z]{6,20}$/, 'Enter the account number, 6 to 20 letters or digits.').nullable()),
+  bankIfsc: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .transform((value) => (value === '' ? null : value))
+    .pipe(z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Enter an 11-character IFSC, such as IDFB0080156.').nullable()),
+  bankSwift: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .transform((value) => (value === '' ? null : value))
+    .pipe(z.string().regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, 'Enter an 8 or 11-character SWIFT code.').nullable()),
+  bankName: optionalText(120),
+  upiId: z
+    .string()
+    .trim()
+    .transform((value) => (value === '' ? null : value))
+    .pipe(z.string().regex(/^[A-Za-z0-9._-]{2,64}@[A-Za-z0-9.-]{2,64}$/, 'Enter a UPI ID such as name@bank.').nullable()),
   invoiceTerms: optionalText(2000),
   quotationTerms: optionalText(2000),
 });

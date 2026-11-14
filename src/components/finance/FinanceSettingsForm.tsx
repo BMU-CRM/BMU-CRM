@@ -1,7 +1,8 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { FormActions, FormGrid, SelectField, TextAreaField, TextField } from '@/components/ui/FormFields';
+import formStyles from '@/components/ui/FormFields.module.css';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
 import { Panel } from '@/components/ui/Panel';
@@ -11,6 +12,50 @@ import { idleResult } from '@/lib/actionResult';
 import { stateOptionsWith } from '@/lib/finance/indianStates';
 import { saveFinanceSettingsAction } from '@/server/actions/financeActions';
 import type { FinanceSettings } from '@/server/services/financeService';
+import styles from './FinanceSettingsForm.module.css';
+
+// The UPI QR code printed beside the payment details, with a preview of a newly
+// chosen image before it is saved.
+function UpiQrField({ saved, error }: { saved: string | null; error?: string }) {
+  const [chosen, setChosen] = useState<string | null>(null);
+  useEffect(() => () => (chosen ? URL.revokeObjectURL(chosen) : undefined), [chosen]);
+  const shown = chosen ?? saved;
+  return (
+    <div className={styles.qrField}>
+      <div className={formStyles.field}>
+        <label htmlFor="upi-qr" className={formStyles.label}>
+          UPI QR code
+        </label>
+        <input
+          id="upi-qr"
+          name="upiQr"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className={formStyles.control}
+          aria-invalid={Boolean(error)}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            setChosen(file ? URL.createObjectURL(file) : null);
+          }}
+        />
+        <p className={formStyles.hint}>The QR code from your bank or UPI app. Printed with &ldquo;Scan to pay via UPI&rdquo;.</p>
+        {error && <p className={formStyles.error}>{error}</p>}
+        {saved && (
+          <label className={formStyles.hint}>
+            <input type="checkbox" name="removeUpiQr" /> Remove the saved QR code
+          </label>
+        )}
+      </div>
+      {shown && (
+        <figure className={styles.qrPreview}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- a local preview of the chosen file */}
+          <img src={shown} alt="UPI QR code" width={120} height={120} />
+          <figcaption>{chosen ? 'Not saved yet' : 'Saved'}</figcaption>
+        </figure>
+      )}
+    </div>
+  );
+}
 
 export function FinanceSettingsForm({ settings }: { settings: FinanceSettings }) {
   const [result, formAction] = useActionState(saveFinanceSettingsAction, idleResult);
@@ -105,17 +150,32 @@ export function FinanceSettingsForm({ settings }: { settings: FinanceSettings })
           </FormGrid>
         </Panel>
 
-        <Panel title="Payment and terms" description="Printed on documents. Changes apply to new quotations and invoices only.">
-          <TextAreaField
-            label="Bank details"
-            name="bankDetails"
-            rows={4}
-            defaultValue={settings.bank_details ?? ''}
-            placeholder={'Account name\nBank and branch\nAccount number\nIFSC\nUPI ID'}
-            hint="Shown on invoices that still have money due."
-            error={errors?.bankDetails}
-          />
+        <Panel title="Payment details" description="Printed in a box on quotations, and on invoices that still have money due.">
+          <FormGrid>
+            <TextField label="Account name" name="bankAccountName" defaultValue={settings.bank_account_name ?? ''} error={errors?.bankAccountName} />
+            <TextField label="Account number" name="bankAccountNumber" defaultValue={settings.bank_account_number ?? ''} error={errors?.bankAccountNumber} />
+            <TextField label="IFSC" name="bankIfsc" defaultValue={settings.bank_ifsc ?? ''} maxLength={11} error={errors?.bankIfsc} />
+            <TextField label="SWIFT code" name="bankSwift" defaultValue={settings.bank_swift ?? ''} maxLength={11} hint="For payments from abroad." error={errors?.bankSwift} />
+            <TextField label="Bank and branch" name="bankName" defaultValue={settings.bank_name ?? ''} error={errors?.bankName} />
+            <TextField label="UPI ID" name="upiId" defaultValue={settings.upi_id ?? ''} placeholder="name@bank" error={errors?.upiId} />
+          </FormGrid>
           <div className={layout.spaced}>
+            <UpiQrField saved={settings.upi_qr_image} error={errors?.upiQr} />
+          </div>
+          <div className={layout.spaced}>
+            <TextAreaField
+              label="Other payment notes"
+              name="bankDetails"
+              rows={2}
+              defaultValue={settings.bank_details ?? ''}
+              hint="Printed under the account, for example: Please quote the invoice number."
+              error={errors?.bankDetails}
+            />
+          </div>
+        </Panel>
+
+        <Panel title="Terms" description="Printed on documents. Changes apply to new quotations and invoices only.">
+          <div>
             <TextAreaField label="Invoice terms" name="invoiceTerms" rows={3} defaultValue={settings.invoice_terms ?? ''} error={errors?.invoiceTerms} />
           </div>
           <div className={layout.spaced}>

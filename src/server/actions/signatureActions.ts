@@ -1,42 +1,17 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import sharp from 'sharp';
 import { z } from 'zod';
 import { databaseFailure, failure, success, validationFailure, type ActionResult } from '@/lib/actionResult';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import { getActionAccess } from '@/server/services/accessService';
+import { chosenFile, toStoredImage } from '@/server/services/documentImages';
 
 const noPermission = 'You do not have permission to do this.';
-const acceptedTypes = ['image/png', 'image/jpeg', 'image/webp'];
-
 const titleSchema = z.object({
   title: z.string().trim().max(80, 'Use 80 characters or fewer.').refine((value) => value === '' || value.length >= 2, 'Use at least 2 characters.'),
 });
-
-// Shrinks an uploaded image to the size it prints at and keeps any transparency, so
-// it can be stored with the signature and printed the same everywhere.
-async function toStoredImage(file: File, box: { width: number; height: number }): Promise<{ error: string } | { image: string }> {
-  if (!acceptedTypes.includes(file.type)) return { error: 'Use a PNG, JPG or WebP image.' };
-  if (file.size > 5 * 1024 * 1024) return { error: 'The image can be up to 5 MB.' };
-  try {
-    const output = await sharp(Buffer.from(await file.arrayBuffer()))
-      .rotate()
-      .trim({ threshold: 10 })
-      .resize({ width: box.width, height: box.height, fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 90, alphaQuality: 100 })
-      .toBuffer();
-    return { image: `data:image/webp;base64,${output.toString('base64')}` };
-  } catch {
-    return { error: 'This image could not be read. Try another file.' };
-  }
-}
-
-function chosenFile(formData: FormData, name: string) {
-  const file = formData.get(name);
-  return file instanceof File && file.size > 0 ? file : null;
-}
 
 // Saves your signature, the company seal and the title printed under your name. An
 // image left empty keeps the one already saved, unless its "remove" box is ticked.

@@ -25,7 +25,7 @@ export default async function CrmLayout({ children }: { children: ReactNode }) {
         roles,
       }}
     >
-      {pushPublicKey && <PushPrompt publicKey={pushPublicKey} />}
+      {pushPublicKey && <PushPrompt publicKey={pushPublicKey} employeeId={access.employee.id} />}
       {children}
     </AppShell>
   );

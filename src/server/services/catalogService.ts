@@ -76,6 +76,45 @@ export async function listPricedServices(): Promise<PricedService[]> {
     );
 }
 
+export type ClientServiceItem = {
+  description: string;
+  serviceGroup: string;
+  serviceName: string;
+  billing: string;
+  unitPrice: string;
+};
+
+// The services each client takes (not ended), as quotation and invoice items: the sub
+// service, its service, how it is billed, its description and its Starter price (or
+// the lowest plan priced) to start from.
+export async function listClientServiceItems(clientIds: string[]): Promise<Record<string, ClientServiceItem[]>> {
+  if (clientIds.length === 0) return {};
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('client_services')
+    .select(
+      'client_id, service_name, status, created_at, service:services(name, billing, description, starter_price, growth_price, premium_price, group:service_groups(name))',
+    )
+    .in('client_id', clientIds)
+    .neq('status', 'ended')
+    .order('created_at');
+  if (error) throw error;
+
+  const items: Record<string, ClientServiceItem[]> = {};
+  for (const row of data) {
+    const service = row.service;
+    const price = [service?.starter_price, service?.growth_price, service?.premium_price].find((value) => value !== null && value !== undefined);
+    (items[row.client_id] ??= []).push({
+      description: service?.description ?? service?.name ?? row.service_name,
+      serviceGroup: service?.group?.name ?? '',
+      serviceName: service?.name ?? row.service_name,
+      billing: service && isServiceBilling(service.billing) ? service.billing : '',
+      unitPrice: price === undefined || price === null ? '' : String(Number(price)),
+    });
+  }
+  return items;
+}
+
 // Industries for a picker, alphabetical. A hidden industry stays if the client has it.
 export async function listIndustryOptions(keepId?: string | null) {
   const { industries } = await getCatalog();

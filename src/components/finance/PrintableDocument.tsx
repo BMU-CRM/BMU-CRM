@@ -13,6 +13,9 @@ import styles from './PrintableDocument.module.css';
 
 type PrintLine = DocumentLine & { service_group?: string | null; service_name?: string | null; billing?: string | null };
 
+// The first page holds this many items; the rest continue on the next page.
+export const itemsOnFirstPage = 6;
+
 type PrintableDocumentProps = {
   heading: string;
   stamp?: string;
@@ -25,15 +28,18 @@ type PrintableDocumentProps = {
   money: DocumentMoney;
   notes: string | null;
   terms: string | null;
+  // The company's bank account and UPI, for documents the client still has to pay.
   showBankDetails: boolean;
   isTaxInvoice: boolean;
   // "Bill to" on sales documents; "Vendor" on a purchase order.
   partyLabel?: string;
-  // Who signs it, and whether their seal is printed beside the signature.
+  // Who signs it, and whether their seal is printed under the signature.
   signatory?: Signatory | null;
   showSeal?: boolean;
-  // Printed above the footer, such as "Thank you for your business".
+  // Printed in the middle of the page, such as "Thank you for your business".
   closingLine?: string;
+  // A space for the client to sign, beside the company's signature.
+  clientAcceptance?: boolean;
   // Extra controls for the toolbar, which is not printed.
   toolbarExtra?: ReactNode;
 };
@@ -41,6 +47,18 @@ type PrintableDocumentProps = {
 // The website without https:// and a trailing slash, as printed.
 export function websiteLabel(website: string | null | undefined) {
   return website ? website.replace(/^https?:\/\//, '').replace(/\/$/, '') : null;
+}
+
+// The paper itself: an A4 sheet on screen, and the page settings when printed. The
+// website and the page number ("Page 1 of 2") go in the bottom margin of every page.
+export function DocumentSheet({ settings, children }: { settings: FinanceSettings | null; children: ReactNode }) {
+  const website = websiteLabel(settings?.website) ?? '';
+  return (
+    <>
+      <style>{`@page { size: A4; margin: 14mm 12mm 16mm; @bottom-left { content: ${JSON.stringify(website)}; font: 9pt sans-serif; color: #6b7280; } @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9pt sans-serif; color: #6b7280; } }`}</style>
+      <article className={styles.sheet}>{children}</article>
+    </>
+  );
 }
 
 // The company's letterhead: the logo for light backgrounds, the document's name and
@@ -69,7 +87,8 @@ export function DocumentLetterhead({ heading, stamp, facts }: { heading: string;
   );
 }
 
-// "For BMU Marketing", the seal and signature, the line, and the signer's name and title.
+// "For BMU Marketing", the signature over the seal, the line, and the signer's name
+// and title.
 export function SignatureBlock({ companyName, signatory, showSeal }: { companyName: string; signatory?: Signatory | null; showSeal?: boolean }) {
   return (
     <div className={styles.signature}>
@@ -88,8 +107,57 @@ export function SignatureBlock({ companyName, signatory, showSeal }: { companyNa
   );
 }
 
-// Questions, payment details and terms, along the bottom of the page.
-export function DocumentFooter({ settings, paymentDetails, terms }: { settings: FinanceSettings | null; paymentDetails: string | null; terms: string | null }) {
+// Where the client signs to accept.
+export function ClientAcceptance() {
+  return (
+    <div className={styles.signature}>
+      <p className={styles.forCompany}>Accepted by client</p>
+      <div className={styles.marks} />
+      <span className={styles.signatureLine} />
+      <p className={styles.signer}>Name, signature &amp; date</p>
+    </div>
+  );
+}
+
+// The company's bank account and UPI, with the QR code to scan.
+export function PaymentDetails({ settings }: { settings: FinanceSettings | null }) {
+  if (!settings) return null;
+  const rows = [
+    { label: 'Account name', value: settings.bank_account_name },
+    { label: 'Account number', value: settings.bank_account_number },
+    { label: 'IFSC', value: settings.bank_ifsc },
+    { label: 'SWIFT code', value: settings.bank_swift },
+    { label: 'Bank', value: settings.bank_name },
+    { label: 'UPI ID', value: settings.upi_id },
+  ].filter((row): row is { label: string; value: string } => Boolean(row.value));
+  if (rows.length === 0 && !settings.bank_details && !settings.upi_qr_image) return null;
+
+  return (
+    <section className={styles.payment} aria-label="Payment details">
+      <div className={styles.paymentText}>
+        <p className={styles.paymentHeading}>Payment details</p>
+        <dl className={styles.paymentRows}>
+          {rows.map((row) => (
+            <Fragment key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+            </Fragment>
+          ))}
+        </dl>
+        {settings.bank_details && <p className={`${styles.preserve} ${styles.paymentNote}`}>{settings.bank_details}</p>}
+      </div>
+      {settings.upi_qr_image && (
+        <figure className={styles.qr}>
+          <Image src={settings.upi_qr_image} alt="UPI QR code" width={120} height={120} unoptimized />
+          <figcaption>Scan to pay via UPI</figcaption>
+        </figure>
+      )}
+    </section>
+  );
+}
+
+// Questions and terms, along the bottom of the last page.
+export function DocumentFooter({ settings, terms }: { settings: FinanceSettings | null; terms: string | null }) {
   const website = websiteLabel(settings?.website);
   return (
     <footer className={styles.footer}>
@@ -116,12 +184,6 @@ export function DocumentFooter({ settings, paymentDetails, terms }: { settings: 
           )}
         </dl>
       </div>
-      {paymentDetails && (
-        <div>
-          <p className={styles.footerHeading}>Payment info</p>
-          <p className={styles.preserve}>{paymentDetails}</p>
-        </div>
-      )}
       {terms && (
         <div>
           <p className={styles.footerHeading}>Terms and conditions</p>
@@ -134,7 +196,8 @@ export function DocumentFooter({ settings, paymentDetails, terms }: { settings: 
 
 // A quotation, invoice or purchase order laid out for paper, in the company's style. It
 // carries what a GST invoice must show: both parties' GSTINs, the place of supply, HSN
-// or SAC codes where saved, the tax split and the amount in words.
+// or SAC codes where saved, the tax split (CGST and SGST, or IGST) and the amount in
+// words. The first six items are on the first page; the rest continue on the next.
 export function PrintableDocument({
   heading,
   stamp,
@@ -153,12 +216,14 @@ export function PrintableDocument({
   signatory,
   showSeal,
   closingLine,
+  clientAcceptance,
   toolbarExtra,
 }: PrintableDocumentProps) {
   const companyName = settings?.legal_name ?? 'Your company name';
   const code = stateCode(placeOfSupply);
   const paid = money.amount_paid ?? 0;
   const due = sumMoney([money.total, -paid]);
+  const paidInFull = paid > 0 && due <= 0;
 
   return (
     <div className={styles.screen}>
@@ -173,7 +238,7 @@ export function PrintableDocument({
         </span>
       </div>
 
-      <article className={styles.sheet}>
+      <DocumentSheet settings={settings}>
         <DocumentLetterhead heading={heading} stamp={stamp} facts={facts} />
 
         <section className={styles.parties}>
@@ -201,6 +266,9 @@ export function PrintableDocument({
           <table className={styles.items}>
             <thead>
               <tr>
+                <th scope="col" className={styles.serial}>
+                  S.no
+                </th>
                 <th scope="col">Items description</th>
                 <th scope="col" className={styles.number}>
                   Qty
@@ -209,21 +277,20 @@ export function PrintableDocument({
                   Rate
                 </th>
                 <th scope="col" className={styles.number}>
-                  GST
-                </th>
-                <th scope="col" className={styles.number}>
-                  Total
+                  Amount
                 </th>
               </tr>
             </thead>
             <tbody>
-              {lines.map((line) => {
+              {lines.map((line, index) => {
                 const billing = line.billing && isServiceBilling(line.billing) ? itemBillingLabels[line.billing] : null;
                 // The sub service as the item's name, under its service; else the description.
                 const name = line.service_name || line.service_group;
                 const group = line.service_name ? line.service_group : null;
+                const breaksAfter = index === itemsOnFirstPage - 1 && lines.length > itemsOnFirstPage;
                 return (
-                  <tr key={line.id}>
+                  <tr key={line.id} className={breaksAfter ? styles.pageBreakAfter : undefined}>
+                    <td className={styles.serial}>{index + 1}</td>
                     <td>
                       {name && <p className={styles.itemName}>{name}</p>}
                       {(group || billing) && (
@@ -238,12 +305,7 @@ export function PrintableDocument({
                     </td>
                     <td className={styles.number}>{formatQuantity(line.quantity)}</td>
                     <td className={styles.number}>{formatAmount(line.unit_price)}</td>
-                    <td className={styles.number}>
-                      {formatQuantity(line.tax_rate)}%
-                      <br />
-                      <span className={styles.muted}>{formatAmount(line.tax_amount)}</span>
-                    </td>
-                    <td className={styles.number}>{formatAmount(sumMoney([line.taxable_amount, line.tax_amount]))}</td>
+                    <td className={styles.number}>{formatAmount(line.taxable_amount)}</td>
                   </tr>
                 );
               })}
@@ -295,17 +357,16 @@ export function PrintableDocument({
           </div>
         </section>
 
-        <section className={styles.closing}>
-          {closingLine ? <p className={styles.thanks}>{closingLine}</p> : <span />}
+        {showBankDetails && !paidInFull && <PaymentDetails settings={settings} />}
+
+        {closingLine && <p className={styles.thanks}>{closingLine}</p>}
+        <section className={styles.signatures}>
+          {clientAcceptance ? <ClientAcceptance /> : <span />}
           <SignatureBlock companyName={companyName} signatory={signatory} showSeal={showSeal} />
         </section>
 
-        <DocumentFooter
-          settings={settings}
-          paymentDetails={paid > 0 && due <= 0 ? 'Paid in full. Thank you.' : showBankDetails ? (settings?.bank_details ?? null) : null}
-          terms={terms}
-        />
-      </article>
+        <DocumentFooter settings={settings} terms={terms} />
+      </DocumentSheet>
     </div>
   );
 }

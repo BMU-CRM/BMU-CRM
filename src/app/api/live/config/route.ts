@@ -24,6 +24,13 @@ export async function GET(request: NextRequest) {
   if (!url || !key) return NextResponse.json({ error: 'Live updates are not configured' }, { status: 503 });
 
   const db = await getAppDatabase();
+  const name = await runAs(db, { role: 'authenticated', userId: user.userId }, async (tx) => {
+    const { rows } = await tx.query<{ name: string | null }>(
+      'select (select full_name from public.employees where id = public.current_employee_id()) as name',
+    );
+    return rows[0]?.name ?? null;
+  });
+  if (!name) return NextResponse.json({ error: 'Not allowed' }, { status: 403 });
   const requested = (request.nextUrl.searchParams.get('typing') ?? '')
     .split(',')
     .filter((id) => uuidPattern.test(id))
@@ -45,6 +52,7 @@ export async function GET(request: NextRequest) {
       key,
       changesTopic: await getChangesTopic(db),
       userId: user.userId,
+      name,
       typingTopics,
     } satisfies LiveConfig,
     { headers },

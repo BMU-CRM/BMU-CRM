@@ -168,8 +168,18 @@
   border-bottom: 1px solid var(--doc-ink);
 }
 
-.items td:first-child {
-  width: 52%;
+.items .serial {
+  width: 44px;
+  text-align: center;
+}
+
+/* After the sixth item, the rest continue on the next page. The headings repeat. */
+.pageBreakAfter {
+  break-after: page;
+}
+
+.items thead {
+  display: table-header-group;
 }
 
 .itemName {
@@ -266,23 +276,93 @@
   font-variant-numeric: tabular-nums;
 }
 
-.closing {
+/* The bank account and UPI, in a card with a green edge, the QR code on the right. */
+.payment {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 12px 0 4px;
+  padding: 16px 20px;
+  border: 1px solid var(--doc-rule);
+  border-left: 4px solid var(--doc-green);
+  border-radius: 10px;
+  break-inside: avoid;
+}
+
+.paymentText {
+  flex: 1 1 280px;
+}
+
+.paymentHeading {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--doc-green);
+  text-transform: uppercase;
+}
+
+.paymentRows {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 4px 12px;
+}
+
+.paymentRows dt {
+  color: var(--doc-muted);
+}
+
+.paymentRows dd {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.paymentNote {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--doc-muted);
+}
+
+.qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--doc-muted);
+}
+
+.qr img {
+  width: 116px;
+  height: 116px;
+  object-fit: contain;
+}
+
+/* The closing line, in the middle of the page. */
+.thanks {
+  padding: 20px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--doc-navy);
+  text-align: center;
+}
+
+/* The client's acceptance on the left, the company's signature on the right. */
+.signatures {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 24px;
-  padding: 24px 0;
-}
-
-.thanks {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--doc-navy);
+  gap: 32px;
+  padding: 16px 0 24px;
+  break-inside: avoid;
 }
 
 .signature {
-  min-width: 260px;
+  width: 280px;
+  max-width: 100%;
 }
 
 .forCompany {
@@ -293,28 +373,33 @@
   text-transform: uppercase;
 }
 
+/* The signature is written over the seal, as on a stamped paper. */
 .marks {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  min-height: 72px;
-  padding-top: 6px;
+  position: relative;
+  height: 96px;
+  margin-top: 6px;
 }
 
 .seal {
-  flex-shrink: 0;
-  width: 84px;
+  position: absolute;
+  bottom: 0;
+  left: 24px;
+  width: 92px;
   height: auto;
+  opacity: 0.85;
 }
 
 .signatureImage {
-  min-width: 0;
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  z-index: 1;
   width: auto;
-  max-width: 200px;
-  object-position: left bottom;
+  max-width: 220px;
   height: auto;
-  max-height: 76px;
+  max-height: 80px;
   object-fit: contain;
+  object-position: left bottom;
 }
 
 .signatureLine {
@@ -359,7 +444,14 @@
 }
 
 @media print {
+  /* Plain white paper: not the app's page colour around the sheet. */
+  :global(html),
+  :global(body) {
+    background: #fff !important;
+  }
+
   .screen {
+    min-height: 0;
     padding: 0;
     background: #fff;
   }
@@ -375,7 +467,7 @@
   }
 
   .items tr,
-  .closing,
+  .summary,
   .footer {
     break-inside: avoid;
   }
@@ -401,7 +493,7 @@
     justify-self: start;
   }
 
-  .items td:first-child {
+  .items td:nth-child(2) {
     width: auto;
     min-width: 150px;
   }
@@ -411,8 +503,7 @@
     padding: 8px;
   }
 
-  .totalsColumn,
-  .signature {
+  .totalsColumn {
     min-width: 0;
     width: 100%;
   }

@@ -21,6 +21,7 @@ import {
   setConversationPinnedAction,
 } from '@/server/actions/messageActions';
 import { ChatDialog } from './ChatDialogs';
+import { openChatInfoEvent } from './ChatTitleButton';
 import styles from './ChatHeaderActions.module.css';
 
 export type ChatPerson = {
@@ -165,6 +166,19 @@ export function ChatHeaderActions(props: ChatHeaderActionsProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const isGroup = kind === 'group';
   const other = kind === 'direct' ? people.find((person) => person.id !== myEmployeeId) : undefined;
+  const hasInfo = isGroup || Boolean(other);
+
+  // Clicking the chat's name in the header opens its info.
+  useEffect(() => {
+    if (!hasInfo) return;
+    const open = () => {
+      setMenuOpen(false);
+      setResult({ status: 'idle' });
+      setDialog('info');
+    };
+    window.addEventListener(openChatInfoEvent, open);
+    return () => window.removeEventListener(openChatInfoEvent, open);
+  }, [hasInfo]);
 
   useEffect(() => {
     if (!menuOpen) return;

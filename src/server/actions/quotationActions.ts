@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { z } from 'zod';
 import {
   databaseFailure,
   failure,
@@ -27,19 +28,19 @@ function refreshQuotation(quotationId: string) {
   revalidatePath('/quotations');
 }
 
-export async function saveQuotationAction(
-  quotationId: string | null,
-  _previous: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
+// Saves the form: a new quotation is created as a draft, an existing one updated. The
+// id comes from the page, or from the form once autosave has created the draft.
+async function saveQuotation(boundId: string | null, formData: FormData): Promise<{ id: string } | ActionResult> {
   if (!(await getActionAccess(permissionKeys.quotationsManage))) return failure(noPermission);
+  const savedId = z.uuid().safeParse(formData.get('documentId'));
+  const quotationId = boundId ?? (savedId.success ? savedId.data : null);
 
   const parsed = readFinanceDocument(formData);
   if (!parsed.success) return validationFailure(parsed.error);
   const lines = parseLineItems(formData);
   if (!lines.ok) return { status: 'error', message: lines.message, fieldErrors: { items: lines.message } };
 
-  // The database works out every amount from the items, and checks who may quote.
+  // The database works out every amount from the items, and checks who may do this.
   const database = await createDatabaseClient();
   const { data, error } = await database.rpc('save_quotation', {
     p_quotation: quotationId as string,
@@ -47,9 +48,24 @@ export async function saveQuotationAction(
     p_items: itemsForDatabase(lines.items),
   });
   if (error) return databaseFailure(error);
+  return { id: data };
+}
 
-  refreshQuotation(data);
-  redirect(`/quotations/${data}`);
+export async function saveQuotationAction(
+  quotationId: string | null,
+  _previous: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const saved = await saveQuotation(quotationId, formData);
+  if (!('id' in saved)) return saved;
+  refreshQuotation(saved.id);
+  redirect(`/quotations/${saved.id}`);
+}
+
+// Saves the draft while it is being written, without leaving the page. Returns the id,
+// so later saves update the same draft.
+export async function autosaveQuotationAction(quotationId: string | null, formData: FormData): Promise<{ id: string } | ActionResult> {
+  return saveQuotation(quotationId, formData);
 }
 
 const statusMessages: Record<QuotationStatus, string> = {

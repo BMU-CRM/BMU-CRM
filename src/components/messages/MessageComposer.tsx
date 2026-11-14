@@ -9,7 +9,7 @@ import { FormMessage } from '@/components/ui/FormMessage';
 import type { ActionResult } from '@/lib/actionResult';
 import { checkUploadable, fileTypeOf } from '@/lib/files/fileTypes';
 import { ChatAttachMenu } from './ChatAttachMenu';
-import { sendTyping, subscribeLive } from '@/lib/live/liveUpdates';
+import { requestPageRefresh, sendTyping, subscribeLive } from '@/lib/live/liveUpdates';
 import { abandonUploadAction, finishUploadAction, startUploadAction } from '@/server/actions/fileActions';
 import { sendMessageAction } from '@/server/actions/messageActions';
 import styles from './MessageComposer.module.css';
@@ -71,11 +71,8 @@ export function MessageComposer({
 
   useEffect(() => {
     const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
-    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
-
     function scheduleRefresh() {
-      clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(() => router.refresh(), 200);
+      requestPageRefresh(() => router.refresh(), 200);
     }
 
     const unsubscribe = subscribeLive({
@@ -100,7 +97,6 @@ export function MessageComposer({
     });
 
     return () => {
-      clearTimeout(refreshTimer);
       typingTimers.forEach((timer) => clearTimeout(timer));
       unsubscribe();
     };

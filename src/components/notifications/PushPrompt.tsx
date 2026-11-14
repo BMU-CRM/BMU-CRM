@@ -28,9 +28,30 @@ function rememberDismissed() {
   }
 }
 
+const refreshedKey = 'crm.pushDeviceRefreshedAt';
+const refreshEveryMs = 24 * 60 * 60 * 1000;
+
+// Due once a day, and straight away when someone else signs in on this device.
+function refreshDue(employeeId: string) {
+  try {
+    const [who, at] = (window.localStorage.getItem(refreshedKey) ?? '').split('|');
+    return who !== employeeId || !(Date.now() - Number(at) < refreshEveryMs);
+  } catch {
+    return true;
+  }
+}
+
+function rememberRefreshed(employeeId: string) {
+  try {
+    window.localStorage.setItem(refreshedKey, `${employeeId}|${Date.now()}`);
+  } catch {
+    // Checks again next time.
+  }
+}
+
 // Shown at the top of every page until desktop notifications are on for this browser,
 // so people hear about new tasks, messages and deadlines while the CRM is closed.
-export function PushPrompt({ publicKey }: { publicKey: string }) {
+export function PushPrompt({ publicKey, employeeId }: { publicKey: string; employeeId: string }) {
   const [state, setState] = useState<PushDeviceState>('checking');
   const [hidden, setHidden] = useState(true);
   const [isPending, setIsPending] = useState(false);
@@ -41,12 +62,13 @@ export function PushPrompt({ publicKey }: { publicKey: string }) {
       (current) => {
         setState(current);
         setHidden(wasDismissedRecently());
-        // Already on: make sure the server still has this device, for whoever is signed in.
-        if (current === 'on') refreshPushDevice(publicKey).catch(() => undefined);
+        // Already on: make sure the server still has this device, for whoever is signed
+        // in. Once a day is enough, as each check is a request to the website.
+        if (current === 'on' && refreshDue(employeeId)) refreshPushDevice(publicKey).then(() => rememberRefreshed(employeeId), () => undefined);
       },
       () => setState('unsupported'),
     );
-  }, []);
+  }, [employeeId, publicKey]);
 
   if (hidden || (state !== 'off' && state !== 'blocked')) return null;
 

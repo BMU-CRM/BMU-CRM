@@ -7,6 +7,8 @@ export type LiveConfig =
       key: string;
       changesTopic: string;
       userId: string;
+      // This person's name, sent with their typing signal.
+      name: string;
       // Channel names for the requested conversations this person may read.
       typingTopics: Record<string, string>;
     };

@@ -3,20 +3,26 @@
 // Availability in the browser: telling the server this person has the CRM open, and one
 // shared copy of colleagues' statuses for every status dot on the page.
 //
-// Both go in one small request (a "pulse"), so an open app costs one request a minute:
-// - in the foreground, a pulse every minute: it checks in and fetches the statuses shown;
-// - in the background (another tab in front, the window minimised, the phone screen
-//   off), only a check-in every 4 minutes, so the person still shows as away rather than
-//   offline. Nothing on screen needs fresh statuses then;
-// - coming back to the app pulses straight away, so statuses are current at once.
+// Both go in one small request (a "pulse"). Every pulse is a request to the website, so
+// they are kept few:
+// - while the person is using the app, a pulse every 2 minutes: it checks in and
+//   fetches the statuses shown;
+// - while it is open but untouched, or in the background (another tab in front, the
+//   window minimised, the phone screen off), every 5 minutes, so they show as away
+//   rather than offline (offline is 6 minutes without a check-in);
+// - after 30 minutes untouched or in the background, none at all: they show as offline,
+//   which they are. A tab left open overnight costs nothing;
+// - coming back, clicking or typing pulses straight away, so statuses are current.
 import { useEffect, useSyncExternalStore } from 'react';
 import { presencePulseAction, type PresenceSnapshot } from '@/server/actions/presenceActions';
 import type { PresenceStatus } from './presenceStatus';
 
-const foregroundEveryMs = 60_000;
-const backgroundEveryMs = 4 * 60_000;
+const activeEveryMs = 2 * 60_000;
+const quietEveryMs = 5 * 60_000;
 // Without a click, key press or scroll for this long, the person shows as away.
 const idleAfterMs = 5 * 60_000;
+// Untouched or in the background for this long, pulses stop until they come back.
+const stopAfterMs = 30 * 60_000;
 
 const watched = new Map<string, number>();
 const listeners = new Set<() => void>();
@@ -28,6 +34,7 @@ let inFlight = false;
 let checkingIn = false;
 let lastInput = Date.now();
 let lastCheckIn = 0;
+let hiddenSince = 0;
 
 function emit() {
   listeners.forEach((listener) => listener());
@@ -37,11 +44,21 @@ function isVisible() {
   return typeof document === 'undefined' || document.visibilityState === 'visible';
 }
 
+// How long until the next pulse, or null to stop until the person comes back.
+function nextDelay() {
+  const now = Date.now();
+  if (!isVisible()) return now - hiddenSince < stopAfterMs ? quietEveryMs : null;
+  const idle = now - lastInput;
+  if (idle < idleAfterMs) return activeEveryMs;
+  return idle < stopAfterMs ? quietEveryMs : null;
+}
+
 function scheduleNext() {
   clearTimeout(pulseTimer);
   pulseTimer = undefined;
   if (!checkingIn && watched.size === 0) return;
-  pulseTimer = setTimeout(pulse, isVisible() ? foregroundEveryMs : backgroundEveryMs);
+  const delay = nextDelay();
+  if (delay !== null) pulseTimer = setTimeout(pulse, delay);
 }
 
 async function pulse() {
@@ -76,6 +93,7 @@ function pulseSoon() {
 }
 
 function onVisibilityChange() {
+  if (!isVisible()) hiddenSince = Date.now();
   if (isVisible()) {
     lastInput = Date.now();
     pulseSoon();
@@ -92,7 +110,10 @@ if (typeof window !== 'undefined') {
 }
 
 function markActive() {
+  const wasIdle = Date.now() - lastInput >= idleAfterMs;
   lastInput = Date.now();
+  // Back after a while: check in as active now rather than at the slower rhythm.
+  if (wasIdle && !inFlight) pulseSoon();
 }
 
 // Called by the app shell: this person checks in while the CRM is open.

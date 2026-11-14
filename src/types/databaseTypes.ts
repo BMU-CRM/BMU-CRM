@@ -2173,7 +2173,12 @@ export type Database = {
       "finance_settings": {
         Row: {
           "address": string | null
+          "bank_account_name": string | null
+          "bank_account_number": string | null
           "bank_details": string | null
+          "bank_ifsc": string | null
+          "bank_name": string | null
+          "bank_swift": string | null
           "default_tax_rate": number
           "email": string | null
           "gstin": string | null
@@ -2190,12 +2195,19 @@ export type Database = {
           "receipt_prefix": string
           "state": string | null
           "updated_at": string
+          "upi_id": string | null
+          "upi_qr_image": string | null
           "website": string | null
         }
         ComputedFields: never
         Insert: {
           "address"?: string | null
+          "bank_account_name"?: string | null
+          "bank_account_number"?: string | null
           "bank_details"?: string | null
+          "bank_ifsc"?: string | null
+          "bank_name"?: string | null
+          "bank_swift"?: string | null
           "default_tax_rate"?: number
           "email"?: string | null
           "gstin"?: string | null
@@ -2212,11 +2224,18 @@ export type Database = {
           "receipt_prefix"?: string
           "state"?: string | null
           "updated_at"?: string
+          "upi_id"?: string | null
+          "upi_qr_image"?: string | null
           "website"?: string | null
         }
         Update: {
           "address"?: string | null
+          "bank_account_name"?: string | null
+          "bank_account_number"?: string | null
           "bank_details"?: string | null
+          "bank_ifsc"?: string | null
+          "bank_name"?: string | null
+          "bank_swift"?: string | null
           "default_tax_rate"?: number
           "email"?: string | null
           "gstin"?: string | null
@@ -2233,6 +2252,8 @@ export type Database = {
           "receipt_prefix"?: string
           "state"?: string | null
           "updated_at"?: string
+          "upi_id"?: string | null
+          "upi_qr_image"?: string | null
           "website"?: string | null
         }
         Relationships: []

@@ -8,7 +8,7 @@ import type { FinanceSettings } from '@/server/services/financeService';
 import type { getPaymentReceipt } from '@/server/services/followUpService';
 import type { Signatory } from '@/server/services/signatureService';
 import { PrintButton } from './PrintButton';
-import { DocumentFooter, DocumentLetterhead, SignatureBlock } from './PrintableDocument';
+import { DocumentFooter, DocumentLetterhead, DocumentSheet, SignatureBlock } from './PrintableDocument';
 import styles from './PrintableDocument.module.css';
 
 type Payment = NonNullable<Awaited<ReturnType<typeof getPaymentReceipt>>>;
@@ -37,7 +37,7 @@ export function ReceiptPrint({ payment, settings, signatory, showSeal, toolbarEx
           <PrintButton />
         </span>
       </div>
-      <article className={styles.sheet}>
+      <DocumentSheet settings={settings}>
         <DocumentLetterhead
           heading="Receipt"
           facts={[
@@ -110,13 +110,14 @@ export function ReceiptPrint({ payment, settings, signatory, showSeal, toolbarEx
           </div>
         </section>
 
-        <section className={styles.closing}>
-          <p className={styles.thanks}>Thank you for your payment</p>
+        <p className={styles.thanks}>Thank you for your payment</p>
+        <section className={styles.signatures}>
+          <span />
           <SignatureBlock companyName={company} signatory={signatory} showSeal={showSeal} />
         </section>
 
-        <DocumentFooter settings={settings} paymentDetails={null} terms={null} />
-      </article>
+        <DocumentFooter settings={settings} terms={null} />
+      </DocumentSheet>
     </div>
   );
 }

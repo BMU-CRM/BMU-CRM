@@ -50,6 +50,7 @@ export default async function PrintQuotationPage({ params }: PrintQuotationPageP
       signatory={signatory}
       showSeal={quotation.show_seal}
       closingLine="We look forward to working with you"
+      clientAcceptance
     />
   );
 }
