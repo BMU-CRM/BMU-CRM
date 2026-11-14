@@ -42,7 +42,7 @@ export function FileTable({ files, myEmployeeId, canDeleteAny = false }: { files
               Size
             </th>
             <th scope="col">Added</th>
-            {showActions && <th scope="col" aria-label="Actions" />}
+            {showActions && <th scope="col">Delete</th>}
           </tr>
         </thead>
         <tbody>

@@ -212,7 +212,7 @@ async function ReimbursementsView({ params }: { params: Record<string, string | 
                     <th scope="col">Claim</th>
                     <th scope="col">Status</th>
                     <th scope="col" className={tableStyles.numeric}>Amount</th>
-                    <th scope="col" aria-label="Actions" />
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -7,10 +7,10 @@ import { useEffect, useRef, useState, useTransition, type KeyboardEvent } from '
 import type { SelectOption } from '@/components/ui/FormFields';
 import { FormMessage } from '@/components/ui/FormMessage';
 import type { ActionResult } from '@/lib/actionResult';
-import { checkUploadable, fileTypeOf } from '@/lib/files/fileTypes';
+import { checkUploadable } from '@/lib/files/fileTypes';
+import { uploadFromDevice } from '@/lib/files/uploadFromDevice';
 import { ChatAttachMenu } from './ChatAttachMenu';
 import { requestPageRefresh, sendTyping, subscribeLive } from '@/lib/live/liveUpdates';
-import { abandonUploadAction, finishUploadAction, startUploadAction } from '@/server/actions/fileActions';
 import { sendMessageAction } from '@/server/actions/messageActions';
 import styles from './MessageComposer.module.css';
 
@@ -27,27 +27,7 @@ type MessageComposerProps = {
 
 const typingTimeoutMs = 4000;
 
-async function uploadAttachment(file: File) {
-  const problem = checkUploadable(file);
-  if (problem) throw new Error(problem);
 
-  const started = await startUploadAction({ name: file.name, size: file.size });
-  if (started.status === 'error') throw new Error(started.message);
-
-  const response = await fetch(started.ticket.uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': fileTypeOf(file.name)?.mime ?? 'application/octet-stream', 'x-upsert': 'false' },
-    body: file,
-  });
-  if (!response.ok) {
-    await abandonUploadAction(started.ticket.fileId);
-    throw new Error(`${file.name}: the upload failed. Please try again.`);
-  }
-
-  const finished = await finishUploadAction(started.ticket.versionId);
-  if (finished.status === 'error') throw new Error(finished.message);
-  return started.ticket.fileId;
-}
 
 // The composer, typing indicator and live updates. The server only sends this
 // conversation's changes and typing signals to people who are in it.
@@ -114,7 +94,7 @@ export function MessageComposer({
 
     startTransition(async () => {
       try {
-        const fileId = attachment ? await uploadAttachment(attachment) : null;
+        const fileId = attachment ? await uploadFromDevice(attachment) : null;
         const outcome = await sendMessageAction(conversationId, { body, replyToId: replyTo?.id ?? null, fileId });
         setResult(outcome);
         if (outcome.status === 'success') {

@@ -1,0 +1,85 @@
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.device {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  font-weight: 500;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.device:hover {
+  background: var(--color-surface-muted);
+}
+
+.device[data-busy='true'] {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+/* The file input is opened by its label, which looks like a button. */
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.device:focus-within {
+  outline: 2px solid var(--color-focus, currentColor);
+}
+
+.or {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+/* The Files list, with its label kept for screen readers only. */
+.fromFiles {
+  flex: 1 1 220px;
+}
+
+.fromFiles label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.attached {
+  display: inline-flex;
+  align-self: flex-start;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface-muted);
+}
+
+.fileName {
+  overflow-wrap: anywhere;
+}
+
+.remove {
+  display: inline-flex;
+  padding: 2px;
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}

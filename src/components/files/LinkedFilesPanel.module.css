@@ -17,5 +17,5 @@
 }
 
 .linkForm summary:hover {
-  text-decoration: underline;
+  color: var(--color-primary);
 }

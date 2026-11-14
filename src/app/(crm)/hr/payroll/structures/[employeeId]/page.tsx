@@ -83,7 +83,7 @@ export default async function EmployeeSalaryPage({ params }: { params: Promise<{
                     <th scope="col" className={tableStyles.numeric}>Gross</th>
                     <th scope="col" className={tableStyles.numeric}>Yearly CTC</th>
                     <th scope="col">Deductions</th>
-                    <th scope="col" aria-label="Actions" />
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

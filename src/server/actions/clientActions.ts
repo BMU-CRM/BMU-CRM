@@ -97,7 +97,7 @@ export async function saveClientAction(
   if (clientId) {
     // Services first: the update may hand the client to another manager, after which
     // this person could no longer change them.
-    const services = await database.rpc('set_client_services', { p_client: clientId, p_services: values.serviceIds });
+    const services = await database.rpc('set_client_services', { p_client: clientId, p_services: values.serviceIds, p_plans: plansFrom(formData) });
     if (services.error) return databaseFailure(services.error);
 
     const { data, error } = await database.from('clients').update(row).eq('id', clientId).select('id');
@@ -115,7 +115,7 @@ export async function saveClientAction(
 
     // The services were checked above, so this only fails if something changed in the
     // meantime. The client is saved either way, so open it to finish there.
-    const services = await database.rpc('set_client_services', { p_client: data.id, p_services: values.serviceIds });
+    const services = await database.rpc('set_client_services', { p_client: data.id, p_services: values.serviceIds, p_plans: plansFrom(formData) });
     if (services.error) console.error('Could not set the services of a new client', services.error);
   }
 
@@ -187,6 +187,16 @@ export async function deleteClientRecordAction(clientId: string, recordId: strin
   return success('Removed.');
 }
 
+// The plan chosen for each sub service, sent as "servicePlan" fields like "<id>:growth".
+function plansFrom(formData: FormData) {
+  const plans: Record<string, string> = {};
+  for (const value of formData.getAll('servicePlan').map(String)) {
+    const [serviceId, plan] = value.split(':');
+    if (serviceId && (plan === 'starter' || plan === 'growth' || plan === 'premium')) plans[serviceId] = plan;
+  }
+  return plans;
+}
+
 export async function addClientServiceAction(
   clientId: string,
   _previous: ActionResult,
@@ -199,6 +209,7 @@ export async function addClientServiceAction(
     status: formData.get('status'),
     startDate: formData.get('startDate') ?? '',
     endDate: formData.get('endDate') ?? '',
+    plan: formData.get('plan') ?? '',
   });
   if (!parsed.success) return validationFailure(parsed.error);
 
@@ -216,6 +227,7 @@ export async function addClientServiceAction(
     client_id: clientId,
     service_id: parsed.data.serviceId,
     service_name: '',
+    plan: parsed.data.plan,
     status: parsed.data.status,
     start_date: parsed.data.startDate,
     end_date: parsed.data.endDate,

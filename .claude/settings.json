@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Read(//c/Users/dhanu/Downloads/BMU Mobile App/**)",
-      "Bash(grep -n -v \"^\\\\s*$\")"
+      "Bash(grep -n -v \"^\\\\s*$\")",
+      "Bash(node dbPeek.mjs)",
+      "Bash(sed -i \"s/await page.selectOption\\('select\\\\[name=categoryId\\\\]', { index: 1 }\\);/await page.locator\\('#categoryId'\\).click\\(\\); await page.locator\\('[role=option]'\\).first\\(\\).click\\(\\);/\" claimDebug.mjs)",
+      "Bash(node claimDebug.mjs)",
+      "Bash(sed -i \"s/await page.locator\\('#categoryId'\\).click\\(\\); await page.locator\\('\\\\[role=option\\\\]'\\).first\\(\\).click\\(\\);/await page.locator\\('#categoryId'\\).click\\(\\); await page.locator\\('#categoryId'\\).press\\('ArrowDown'\\); await page.locator\\('#categoryId'\\).press\\('Enter'\\); console.log\\('chosen', await page.locator\\('select[name=categoryId]'\\).inputValue\\(\\)\\);/\" claimDebug.mjs)",
+      "Bash(node plansUiCheck.mjs \"$\\(pwd\\)/shots-plans\")",
+      "Bash(node docs2Check.mjs \"$\\(pwd\\)/shots-docs2\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\dhanu\\.claude\\projects\\e--CRM-2-0\\versions"

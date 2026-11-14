@@ -45,6 +45,9 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
         <ClientForm
           client={client}
           serviceIds={serviceIds}
+          servicePlans={Object.fromEntries(
+            clientServices.flatMap((service) => (service.status !== 'ended' && service.service_id && service.plan ? [[service.service_id, service.plan]] : [])),
+          )}
           industries={industries}
           serviceGroups={serviceGroups}
           services={services}

@@ -1,11 +1,13 @@
 'use client';
 
 import { useActionState } from 'react';
+import { AttachFileField } from '@/components/files/AttachFileField';
 import { ButtonLink } from '@/components/ui/Button';
 import { FormActions, FormGrid, SelectField, TextAreaField, TextField, type SelectOption } from '@/components/ui/FormFields';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { idleResult } from '@/lib/actionResult';
 import { paymentMethodLabels, paymentMethods } from '@/lib/validation/payrollSchema';
 import { payClaimAction, submitClaimAction } from '@/server/actions/reimbursementActions';
@@ -20,16 +22,19 @@ export function ClaimForm({ categories, files, today }: { categories: SelectOpti
         <SelectField label="What it was for" name="categoryId" options={categories} placeholder="Choose a category" required error={errors?.categoryId} />
         <TextField label="Amount (₹)" name="amount" inputMode="decimal" required error={errors?.amount} />
         <TextField label="Date spent" name="expenseDate" type="date" max={today} defaultValue={today} required error={errors?.expenseDate} />
-        <SelectField
-          label="Receipt"
+      </FormGrid>
+      <div className={layout.spaced}>
+        <AttachFileField
           name="receiptFileId"
-          options={files}
-          placeholder="None"
-          hint="Upload the receipt in Files first, then choose it here."
+          label="Receipt or bill"
+          files={files}
+          hint="A photo or PDF of the bill. It is kept in your Files."
           error={errors?.receiptFileId}
         />
-      </FormGrid>
-      <TextAreaField label="Details" name="description" rows={3} required placeholder="For example: cab to the client meeting at Anna Nagar" error={errors?.description} />
+      </div>
+      <div className={layout.spaced}>
+        <TextAreaField label="Details" name="description" rows={3} required placeholder="For example: cab to the client meeting at Anna Nagar" error={errors?.description} />
+      </div>
       <FormActions>
         <SubmitButton label="Submit claim" pendingLabel="Submitting…" />
         <ButtonLink href="/reimbursements" variant="ghost">

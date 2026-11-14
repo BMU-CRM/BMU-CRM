@@ -636,6 +636,7 @@ export type Database = {
           "created_by": string | null
           "end_date": string | null
           "id": string
+          "plan": string | null
           "service_id": string | null
           "service_name": string
           "start_date": string | null
@@ -649,6 +650,7 @@ export type Database = {
           "created_by"?: string | null
           "end_date"?: string | null
           "id"?: string
+          "plan"?: string | null
           "service_id"?: string | null
           "service_name": string
           "start_date"?: string | null
@@ -661,6 +663,7 @@ export type Database = {
           "created_by"?: string | null
           "end_date"?: string | null
           "id"?: string
+          "plan"?: string | null
           "service_id"?: string | null
           "service_name"?: string
           "start_date"?: string | null
@@ -7082,6 +7085,7 @@ export type Database = {
         | { Args: {
             "p_client": string
             "p_services": (string)[]
+            "p_plans"?: Json
           }; Returns: undefined }
       "set_employee_extra_roles":
         | { Args: {

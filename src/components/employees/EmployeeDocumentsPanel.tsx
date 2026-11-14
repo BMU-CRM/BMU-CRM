@@ -40,7 +40,7 @@ export function EmployeeDocumentsPanel({ employeeId, documents, canAdd, viewerId
                 <th scope="col">Document</th>
                 <th scope="col">Type</th>
                 <th scope="col">Added</th>
-                <th scope="col" aria-label="Actions" />
+                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>

@@ -135,7 +135,7 @@ export default async function CandidatePage({ params }: { params: Promise<{ cand
                       <th scope="col">Round</th>
                       <th scope="col">Interviewer</th>
                       <th scope="col">Outcome</th>
-                      <th scope="col" aria-label="Actions" />
+                      <th scope="col">Actions</th>
                     </tr>
                   </thead>
                   <tbody>

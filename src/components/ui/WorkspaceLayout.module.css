@@ -58,7 +58,7 @@
 }
 
 .link:hover {
-  text-decoration: underline;
+  color: var(--color-primary);
 }
 
 .emptyText {
@@ -76,6 +76,28 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
+}
+
+/* Lists where the whole row opens the item, such as on the overview. Other links and
+   buttons in the row stay clickable above it. */
+.clickableRows .row:has(.link) {
+  position: relative;
+  cursor: pointer;
+}
+
+.clickableRows .row:has(.link):hover {
+  background: var(--color-surface-muted);
+}
+
+.clickableRows .row .link::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+}
+
+.clickableRows .row :is(button, a:not(.link)) {
+  position: relative;
+  z-index: 1;
 }
 
 .rowMain {

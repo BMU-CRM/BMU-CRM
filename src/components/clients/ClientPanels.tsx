@@ -123,6 +123,7 @@ export function ClientServicesPanel({ clientId, services, serviceOptions, canUpd
                   {service.service?.group?.name ? `${service.service.group.name} › ${service.service_name}` : service.service_name}
                 </p>
                 <p className={layout.muted}>
+                  {service.plan ? `${service.plan.charAt(0).toUpperCase()}${service.plan.slice(1)} plan · ` : ''}
                   {service.status === 'active' ? 'Active' : service.status === 'paused' ? 'Paused' : 'Ended'}
                   {service.start_date ? ` · From ${formatDate(service.start_date)}` : ''}
                 </p>
@@ -144,6 +145,16 @@ export function ClientServicesPanel({ clientId, services, serviceOptions, canUpd
               options={serviceOptions}
               placeholder="Type to search, grouped by service"
               required
+            />
+            <SelectField
+              label="Plan"
+              name="plan"
+              options={[
+                { value: 'starter', label: 'Starter' },
+                { value: 'growth', label: 'Growth' },
+                { value: 'premium', label: 'Premium' },
+              ]}
+              placeholder="Not chosen"
             />
             <SelectField label="Status" name="status" options={serviceStatusOptions} defaultValue="active" />
             <TextField label="Start date" name="startDate" type="date" />

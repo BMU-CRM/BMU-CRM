@@ -54,7 +54,7 @@ export default async function LeavePage() {
                       <th scope="col">Dates</th>
                       <th scope="col">Type</th>
                       <th scope="col">Status</th>
-                      <th scope="col" aria-label="Actions" />
+                      <th scope="col">Actions</th>
                     </tr>
                   </thead>
                   <tbody>

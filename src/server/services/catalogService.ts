@@ -1,5 +1,5 @@
 import 'server-only';
-import { isServiceBilling, type PricedService } from '@/lib/catalog/servicePricing';
+import { isServiceBilling, servicePlans, type PricedService } from '@/lib/catalog/servicePricing';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 
 // The services (in groups) and industries clients choose from.
@@ -49,7 +49,14 @@ export async function listServiceOptions(keepIds: string[] = []) {
   return [...groups].sort(byName).flatMap((group) =>
     group.services
       .filter((service) => (service.is_active && group.is_active) || keepIds.includes(service.id))
-      .map((service) => ({ value: service.id, label: service.name, group: group.name, groupId: group.id })),
+      .map((service) => ({
+        value: service.id,
+        label: service.name,
+        group: group.name,
+        groupId: group.id,
+        billing: isServiceBilling(service.billing) ? service.billing : 'monthly',
+        prices: { starter: toPrice(service.starter_price), growth: toPrice(service.growth_price), premium: toPrice(service.premium_price) },
+      })),
   );
 }
 
@@ -85,15 +92,15 @@ export type ClientServiceItem = {
 };
 
 // The services each client takes (not ended), as quotation and invoice items: the sub
-// service, its service, how it is billed, its description and its Starter price (or
-// the lowest plan priced) to start from.
+// service with the client's plan, its service, how it is billed, its description and
+// the plan's price (or, with no plan chosen, the lowest plan priced) to start from.
 export async function listClientServiceItems(clientIds: string[]): Promise<Record<string, ClientServiceItem[]>> {
   if (clientIds.length === 0) return {};
   const database = await createDatabaseClient();
   const { data, error } = await database
     .from('client_services')
     .select(
-      'client_id, service_name, status, created_at, service:services(name, billing, description, starter_price, growth_price, premium_price, group:service_groups(name))',
+      'client_id, service_name, status, plan, created_at, service:services(name, billing, description, starter_price, growth_price, premium_price, group:service_groups(name))',
     )
     .in('client_id', clientIds)
     .neq('status', 'ended')
@@ -103,11 +110,16 @@ export async function listClientServiceItems(clientIds: string[]): Promise<Recor
   const items: Record<string, ClientServiceItem[]> = {};
   for (const row of data) {
     const service = row.service;
-    const price = [service?.starter_price, service?.growth_price, service?.premium_price].find((value) => value !== null && value !== undefined);
+    const prices = { starter: service?.starter_price, growth: service?.growth_price, premium: service?.premium_price };
+    const plan = row.plan === 'starter' || row.plan === 'growth' || row.plan === 'premium' ? row.plan : null;
+    // The client's plan, else the lowest plan that has a price.
+    const price = plan && prices[plan] !== null && prices[plan] !== undefined ? prices[plan] : Object.values(prices).find((value) => value !== null && value !== undefined);
+    const planLabel = plan ? servicePlans.find((option) => option.key === plan)?.label : null;
+    const name = service?.name ?? row.service_name;
     (items[row.client_id] ??= []).push({
-      description: service?.description ?? service?.name ?? row.service_name,
+      description: service?.description ?? name,
       serviceGroup: service?.group?.name ?? '',
-      serviceName: service?.name ?? row.service_name,
+      serviceName: planLabel ? `${name} (${planLabel} plan)` : name,
       billing: service && isServiceBilling(service.billing) ? service.billing : '',
       unitPrice: price === undefined || price === null ? '' : String(Number(price)),
     });

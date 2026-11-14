@@ -77,7 +77,7 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
                     <th scope="col" className={tableStyles.numeric}>Positions</th>
                     <th scope="col" className={tableStyles.numeric}>Candidates</th>
                     <th scope="col" className={tableStyles.numeric}>Joined</th>
-                    <th scope="col" aria-label="Actions" />
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

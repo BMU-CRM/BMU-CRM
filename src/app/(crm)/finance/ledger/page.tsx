@@ -163,7 +163,7 @@ async function EntriesView({ kind, params, today }: { kind: 'expenses' | 'income
                     <th scope="col">{isIncome ? 'Category and client' : 'Category and payee'}</th>
                     <th scope="col">Account</th>
                     <th scope="col" className={tableStyles.numeric}>Amount</th>
-                    <th scope="col" aria-label="Actions" />
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

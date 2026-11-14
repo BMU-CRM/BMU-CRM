@@ -64,7 +64,7 @@ export default async function InterviewsPage({ searchParams }: { searchParams: P
                     <th scope="col">Candidate</th>
                     <th scope="col">Interviewer</th>
                     <th scope="col">Status</th>
-                    <th scope="col" aria-label="Actions" />
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -148,7 +148,7 @@ export default async function HolidaysPage({ searchParams }: HolidaysPageProps) 
                     <th scope="col">Date</th>
                     <th scope="col">Holiday</th>
                     <th scope="col">Type</th>
-                    <th scope="col" aria-label="Actions" />
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

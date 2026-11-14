@@ -22,6 +22,7 @@ import { OrganisationStatsWidget } from './OrganisationStatsWidget';
 import { RecentActivityWidget } from './RecentActivityWidget';
 import { TaskStatsWidget } from './TaskStatsWidget';
 import { TeamWorkloadWidget } from './TeamWorkloadWidget';
+import layout from '@/components/ui/WorkspaceLayout.module.css';
 import styles from './DashboardGrid.module.css';
 
 const widgetComponents: Record<DashboardWidgetKey, (access: CurrentAccess) => ReactNode> = {
@@ -67,7 +68,7 @@ export function DashboardGrid({ access }: { access: CurrentAccess }) {
   const side = widgets.filter((widget) => widget.size === 'side');
 
   return (
-    <div className={styles.dashboard}>
+    <div className={`${styles.dashboard} ${layout.clickableRows}`}>
       <WidgetStack widgets={full} access={access} />
       <div className={styles.columns} data-single={main.length === 0}>
         {main.length > 0 && (

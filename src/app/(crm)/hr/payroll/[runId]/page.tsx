@@ -170,7 +170,7 @@ export default async function PayrollRunPage({ params, searchParams }: PayrollRu
                       <th scope="col" className={tableStyles.numeric}>Gross</th>
                       <th scope="col" className={tableStyles.numeric}>Deductions</th>
                       <th scope="col" className={tableStyles.numeric}>Net pay</th>
-                      <th scope="col" aria-label="Actions" />
+                      <th scope="col">Actions</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -64,7 +64,7 @@
 }
 
 a.holiday:hover {
-  text-decoration: underline;
+  color: var(--color-primary);
 }
 
 .kind,

@@ -1,0 +1,26 @@
+.plans {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.planRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.planName {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .planRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}

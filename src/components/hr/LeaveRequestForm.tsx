@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
+import { AttachFileField } from '@/components/files/AttachFileField';
 import { FormActions, FormGrid, SelectField, TextAreaField, TextField, type SelectOption } from '@/components/ui/FormFields';
 import formStyles from '@/components/ui/FormFields.module.css';
 import { FormMessage } from '@/components/ui/FormMessage';
@@ -36,18 +37,15 @@ export function LeaveRequestForm({ leaveTypes, files }: LeaveRequestFormProps) {
       <div className={layout.spaced}>
         <TextAreaField label="Reason" name="reason" required error={errors?.reason} />
       </div>
-      {files.length > 0 && (
-        <div className={layout.spaced}>
-          <SelectField
-            label="Supporting document"
-            name="attachmentFileId"
-            options={files}
-            placeholder="None"
-            hint="Upload it in Files first, then choose it here."
-            error={errors?.attachmentFileId}
-          />
-        </div>
-      )}
+      <div className={layout.spaced}>
+        <AttachFileField
+          name="attachmentFileId"
+          label="Supporting document"
+          files={files}
+          hint="Such as a medical certificate. Optional. It is kept in your Files."
+          error={errors?.attachmentFileId}
+        />
+      </div>
       <FormActions>
         <SubmitButton label="Send request" pendingLabel="Sending…" />
       </FormActions>

@@ -180,8 +180,7 @@
 
 .titleButton:hover h1,
 .titleButton:focus-visible h1 {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--color-primary);
 }
 
 /* A group member you can tap to open your chat with them. */

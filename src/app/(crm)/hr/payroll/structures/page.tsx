@@ -94,7 +94,7 @@ export default async function SalaryStructuresPage({ searchParams }: StructuresP
                     <th scope="col">Employee</th>
                     <th scope="col">In force since</th>
                     <th scope="col" className={tableStyles.numeric}>Monthly gross</th>
-                    <th scope="col" aria-label="Actions" />
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

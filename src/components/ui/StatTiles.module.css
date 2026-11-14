@@ -5,6 +5,7 @@
 }
 
 .tile {
+  position: relative;
   padding: var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -17,9 +18,31 @@
   color: var(--color-text-muted);
 }
 
-.link:hover {
+/* The whole card opens the link, not only its label. */
+.link::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: '';
+}
+
+.tile:has(.link) {
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.tile:has(.link):hover,
+.tile:has(.link:focus-visible) {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-medium, var(--shadow-small));
+}
+
+.tile:has(.link):hover .link {
   color: var(--color-primary);
-  text-decoration: underline;
+}
+
+.link:focus-visible {
+  outline: none;
 }
 
 .value {

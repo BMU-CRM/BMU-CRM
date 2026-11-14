@@ -26,8 +26,9 @@ const statusOptions = Object.entries(clientStatusLabels).map(([value, label]) =>
 
 type ClientFormProps = {
   client?: ClientDetails;
-  // The client's current sub services, when editing.
+  // The client's current sub services, when editing, and the plan of each.
   serviceIds?: string[];
+  servicePlans?: Record<string, string>;
   managers: SelectOption[];
   departments: SelectOption[];
   industries: PickerOption[];
@@ -35,7 +36,7 @@ type ClientFormProps = {
   services: SubServicePickerOption[];
 };
 
-export function ClientForm({ client, serviceIds = [], managers, departments, industries, serviceGroups, services }: ClientFormProps) {
+export function ClientForm({ client, serviceIds = [], servicePlans = {}, managers, departments, industries, serviceGroups, services }: ClientFormProps) {
   const [result, formAction] = useActionState(saveClientAction.bind(null, client?.id ?? null), idleResult);
   const errors = result.fieldErrors;
 
@@ -100,6 +101,7 @@ export function ClientForm({ client, serviceIds = [], managers, departments, ind
           services={serviceGroups}
           subServices={services}
           defaultSubServiceIds={serviceIds}
+          defaultPlans={servicePlans}
           serviceError={errors?.serviceGroupIds}
           subServiceError={errors?.serviceIds}
         />

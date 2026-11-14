@@ -107,4 +107,7 @@ export const clientServiceSchema = z.object({
   status: z.enum(clientServiceStatuses, { error: 'Choose a status.' }),
   startDate: optionalDate,
   endDate: optionalDate,
+  plan: z
+    .enum(['', 'starter', 'growth', 'premium'], 'Choose Starter, Growth or Premium.')
+    .transform((value) => (value === '' ? null : value)),
 });

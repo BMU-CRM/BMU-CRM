@@ -140,6 +140,29 @@ describe('services and industries', () => {
     expect(await currentServices(clientId)).toEqual(['Old typed service', 'SEO']);
   });
 
+  it('keeps the plan chosen for each service, and leaves it when none is given', async () => {
+    const { error } = await as.manager!.rpc('set_client_services', {
+      p_client: clientId,
+      p_services: [seo, videoEditing],
+      p_plans: { [seo]: 'growth', [videoEditing]: 'premium' },
+    });
+    expect(error).toBeNull();
+    const plans = async () =>
+      Object.fromEntries(
+        ((await admin.from('client_services').select('service_id, plan').eq('client_id', clientId).neq('status', 'ended').not('service_id', 'is', null)).data ?? []).map(
+          (row) => [row.service_id, row.plan],
+        ),
+      );
+    expect(await plans()).toEqual({ [seo]: 'growth', [videoEditing]: 'premium' });
+
+    // Saved again without plans (as the services panel does): the plans stay.
+    await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [seo, videoEditing] });
+    expect(await plans()).toEqual({ [seo]: 'growth', [videoEditing]: 'premium' });
+
+    const wrong = await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [seo], p_plans: { [seo]: 'gold' } });
+    expect(wrong.error?.message).toContain('Starter, Growth or Premium');
+  });
+
   it('requires at least one service from the list', async () => {
     const none = await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [] });
     const unknown = await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: ['00000000-0000-0000-0000-000000000000'] });

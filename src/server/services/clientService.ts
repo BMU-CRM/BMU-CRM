@@ -112,7 +112,7 @@ export async function listClientServices(clientId: string) {
 
   const { data, error } = await database
     .from('client_services')
-    .select('id, service_id, service_name, status, start_date, end_date, service:services(group:service_groups(name))')
+    .select('id, service_id, service_name, status, plan, start_date, end_date, service:services(group:service_groups(name))')
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
 

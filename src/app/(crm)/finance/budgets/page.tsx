@@ -126,7 +126,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
                       <th scope="col" className={tableStyles.numeric}>Spent</th>
                       <th scope="col" className={tableStyles.numeric}>Remaining</th>
                       <th scope="col">Used</th>
-                      <th scope="col" aria-label="Actions" />
+                      <th scope="col">Actions</th>
                     </tr>
                   </thead>
                   <tbody>

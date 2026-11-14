@@ -45,7 +45,7 @@ export default async function RolesPage() {
                   <th scope="col" className={tableStyles.numeric}>
                     Employees
                   </th>
-                  <th scope="col" aria-label="Actions" />
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
