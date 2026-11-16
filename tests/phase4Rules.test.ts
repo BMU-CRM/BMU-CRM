@@ -160,12 +160,14 @@ describe('leave, attendance, meetings and tickets', () => {
       expect(error).toBeNull();
     });
 
-    it('shows approved leave to the department, without the reason', async () => {
+    it('keeps approved leave from colleagues, and its reason from others', async () => {
+      // Colleagues in the same department no longer see each other's leave (managers,
+      // the department head and HR do; see leaveVisibilityTaskNotices.test.ts).
       const team = await as.developer!.rpc('get_team_leave', { p_from: '2027-05-01', p_to: '2027-05-31' });
       const other = await as.marketer!.rpc('get_team_leave', { p_from: '2027-05-01', p_to: '2027-05-31' });
       const reasons = await as.developer!.from('leave_requests').select('reason').eq('employee_id', ids.designer!);
 
-      expect(team.data?.some((row) => row.full_name === 'Test designer')).toBe(true);
+      expect(team.data?.some((row) => row.full_name === 'Test designer')).toBe(false);
       expect(other.data?.some((row) => row.full_name === 'Test designer')).toBe(false);
       expect(reasons.data).toEqual([]);
     });

@@ -76,7 +76,8 @@ export const financeDocumentSchema = z
   .object({
     clientId: z.uuid('Choose a client.'),
     projectId: optionalId,
-    title: z.string().trim().min(2, 'Enter what this is for.').max(200, 'Use 200 characters or fewer.'),
+    // Written from the services when left empty; see writeTitle.
+    title: z.string().trim().max(200, 'Use 200 characters or fewer.'),
     issueDate: z.iso.date('Enter a valid date.'),
     endDate: optionalDate,
     billToName: optionalText(160),

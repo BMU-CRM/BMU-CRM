@@ -18,6 +18,7 @@ import {
   readFinanceDocument,
   type QuotationStatus,
 } from '@/lib/validation/financeSchema';
+import { lineToOverviewItem, writeTitle } from '@/lib/finance/documentOverview';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import { getActionAccess } from '@/server/services/accessService';
 
@@ -44,7 +45,7 @@ async function saveQuotation(boundId: string | null, formData: FormData): Promis
   const database = await createDatabaseClient();
   const { data, error } = await database.rpc('save_quotation', {
     p_quotation: quotationId as string,
-    p_values: documentForDatabase(parsed.data, 'valid_until'),
+    p_values: documentForDatabase({ ...parsed.data, title: parsed.data.title || writeTitle('quotation', parsed.data.billToName, lines.items.map(lineToOverviewItem)) }, 'valid_until'),
     p_items: itemsForDatabase(lines.items),
   });
   if (error) return databaseFailure(error);

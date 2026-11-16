@@ -21,6 +21,7 @@ import { idleResult } from '@/lib/actionResult';
 import type { PricedService } from '@/lib/catalog/servicePricing';
 import { isInterStateSupply } from '@/lib/finance/documentTotals';
 import { stateOptionsWith } from '@/lib/finance/indianStates';
+import { writeOverview } from '@/lib/finance/documentOverview';
 import { formatLongDate, validUntilDate, withValidUntil, writtenValidUntil } from '@/lib/finance/quotationTerms';
 import { autosaveInvoiceAction, saveInvoiceAction } from '@/server/actions/invoiceActions';
 import { autosaveQuotationAction, saveQuotationAction } from '@/server/actions/quotationActions';
@@ -59,6 +60,8 @@ type FinanceDocumentFormProps = {
   endDays: number;
   defaultTerms: string | null;
   today: string;
+  // The company's name, for the overview written from the services.
+  companyName?: string | null;
   services: PricedService[];
   signing: SigningChoice;
   // On a new document: the services each client takes, added as items when it is chosen.
@@ -131,6 +134,7 @@ export function FinanceDocumentForm({
   endDays,
   defaultTerms,
   today,
+  companyName = null,
   services,
   signing,
   clientServiceItems = {},
@@ -235,9 +239,41 @@ export function FinanceDocumentForm({
     shownValidUntil.current = next;
   }
 
+  // The project overview is written from the client and the services, and rewritten as
+  // they change, until it is typed in by hand. Emptying the box lets it be written again.
+  const overviewTyped = useRef(Boolean(document?.overview));
+  const [overviewKey, setOverviewKey] = useState(0);
+  const writeOverviewNow = useCallback(() => {
+    const form = anchor.current?.form;
+    const box = form?.elements.namedItem('overview') as HTMLTextAreaElement | null;
+    if (!form || !box || overviewTyped.current) return;
+    const data = new FormData(form);
+    const names = data.getAll('itemServiceName').map(String);
+    const billings = data.getAll('itemBilling').map(String);
+    const clientName = String(data.get('billToName') ?? '') || clients.find((option) => option.value === data.get('clientId'))?.label || '';
+    const written = writeOverview({
+      kind,
+      companyName,
+      clientName,
+      items: names.map((serviceName, index) => ({ serviceName, billing: billings[index] ?? '' })),
+    });
+    if (written && written !== box.value) {
+      box.value = written;
+      dirty.current = true;
+    }
+  }, [clients, companyName, kind]);
+
+  // After the client or the items change, once the page shows them.
+  useEffect(() => {
+    const timeout = setTimeout(writeOverviewNow, 0);
+    return () => clearTimeout(timeout);
+  }, [clientId, itemsSeed.key, billTo.name, overviewKey, writeOverviewNow]);
+
   function changed(event: React.FormEvent<HTMLFormElement>) {
     if (submitted.current) return;
     const name = (event.target as HTMLInputElement).name;
+    if (name === 'overview') overviewTyped.current = (event.target as HTMLTextAreaElement).value.trim() !== '';
+    else if ((event.target as HTMLElement).closest('[data-items]')) setTimeout(writeOverviewNow, 0);
     if (kind === 'quotation' && (name === 'issueDate' || name === 'endDate')) followValidUntil(event.currentTarget);
     if ((event.target as HTMLElement).closest('[data-items]')) itemsEdited.current = true;
     dirty.current = true;
@@ -302,14 +338,6 @@ export function FinanceDocumentForm({
               error={errors?.projectId}
             />
             <TextField
-              label="What it is for"
-              name="title"
-              defaultValue={document?.title}
-              placeholder="For example: Website redesign, phase 1"
-              required
-              error={errors?.title}
-            />
-            <TextField
               label={kind === 'quotation' ? 'Quotation date' : 'Invoice date'}
               name="issueDate"
               type="date"
@@ -334,9 +362,20 @@ export function FinanceDocumentForm({
               rows={3}
               maxLength={400}
               defaultValue={document?.overview ?? ''}
-              placeholder="Up to three lines on what the project covers. Printed under who it is for."
+              placeholder="Written for you from the client and the services. Change it as you like."
+              hint="Up to three lines, printed under who it is for."
               error={errors?.overview}
             />
+            <button
+              type="button"
+              className={formStyles.linkButton}
+              onClick={() => {
+                overviewTyped.current = false;
+                setOverviewKey((current) => current + 1);
+              }}
+            >
+              Write it again from the services
+            </button>
           </div>
         </Panel>
 

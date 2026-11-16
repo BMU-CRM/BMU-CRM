@@ -41,6 +41,7 @@ export default async function NewQuotationPage({ searchParams }: NewQuotationPag
         defaultTaxRate={settings?.default_tax_rate ?? 18}
         endDays={settings?.quotation_validity_days ?? 30}
         defaultTerms={settings?.quotation_terms ?? null}
+        companyName={settings?.legal_name ?? null}
         today={todayInIndia()}
         services={services}
         signing={signing}

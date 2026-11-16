@@ -19,6 +19,7 @@ import {
   paymentSchema,
   readFinanceDocument,
 } from '@/lib/validation/financeSchema';
+import { lineToOverviewItem, writeTitle } from '@/lib/finance/documentOverview';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import { getActionAccess } from '@/server/services/accessService';
 
@@ -45,7 +46,7 @@ async function saveInvoice(boundId: string | null, formData: FormData): Promise<
   const database = await createDatabaseClient();
   const { data, error } = await database.rpc('save_invoice', {
     p_invoice: invoiceId as string,
-    p_values: documentForDatabase(parsed.data, 'due_date'),
+    p_values: documentForDatabase({ ...parsed.data, title: parsed.data.title || writeTitle('invoice', parsed.data.billToName, lines.items.map(lineToOverviewItem)) }, 'due_date'),
     p_items: itemsForDatabase(lines.items),
   });
   if (error) return databaseFailure(error);

@@ -67,6 +67,7 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
         defaultTaxRate={settings?.default_tax_rate ?? 18}
         endDays={settings?.payment_terms_days ?? 15}
         defaultTerms={settings?.invoice_terms ?? null}
+        companyName={settings?.legal_name ?? null}
         today={todayInIndia()}
         services={services}
         signing={signing}

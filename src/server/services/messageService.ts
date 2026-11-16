@@ -201,23 +201,6 @@ export async function markConversationRead(conversationId: string) {
   await database.rpc('mark_conversation_read', { p_conversation: conversationId });
 }
 
-export async function searchMessages(search: string) {
-  const term = cleanSearchTerm(search);
-  if (!term) return [];
-
-  const database = await createDatabaseClient();
-  const { data, error } = await database
-    .from('messages')
-    .select('id, body, created_at, conversation_id, author:employees!messages_author_id_fkey(full_name)')
-    .is('deleted_at', null)
-    .ilike('body', `%${term}%`)
-    .order('created_at', { ascending: false })
-    .limit(30);
-
-  if (error) throw error;
-  return data;
-}
-
 export async function findLinkedConversationId(link: { projectId?: string; clientId?: string }) {
   const database = await createDatabaseClient();
 

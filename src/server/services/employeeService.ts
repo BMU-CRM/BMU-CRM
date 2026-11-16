@@ -123,7 +123,8 @@ export async function listDirectReports(employeeId: string) {
   return data;
 }
 
-export async function listEmployeeOptions() {
+// Once per request, however many parts of the page ask.
+export const listEmployeeOptions = cache(async function loadEmployeeOptions() {
   const database = await createDatabaseClient();
 
   const { data, error } = await database
@@ -134,7 +135,7 @@ export async function listEmployeeOptions() {
 
   if (error) throw error;
   return data;
-}
+});
 
 // The people a new or moved employee may report to. Team scope keeps it inside the
 // person's own team, as the database does.

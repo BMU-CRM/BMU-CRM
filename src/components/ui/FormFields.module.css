@@ -62,3 +62,20 @@ textarea.control {
   gap: var(--space-2);
   margin-top: var(--space-5);
 }
+
+/* A small text button under a field, such as "Write it again". */
+.linkButton {
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-small);
+  color: var(--color-primary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.linkButton:hover {
+  color: var(--color-primary-hover, var(--color-primary));
+}
