@@ -145,6 +145,7 @@ export async function saveRoleAction(
     ...parsed.data,
     private_records: formData.get('privateRecords') === 'on',
     tracks_attendance: formData.get('tracksAttendance') === 'on',
+    tracks_workload: formData.get('tracksWorkload') === 'on',
   };
 
   if (roleId) {

@@ -74,6 +74,13 @@ export const getFinanceSettings = cache(async function loadFinanceSettings() {
 
 export type FinanceSettings = NonNullable<Awaited<ReturnType<typeof getFinanceSettings>>>;
 
+// The number the next quotation gets, or null for someone who cannot change it.
+export async function getNextQuotationNumber() {
+  const database = await createDatabaseClient();
+  const { data, error } = await database.rpc('get_next_quotation_number');
+  return error ? null : (data as number | null);
+}
+
 // Row level security limits every query to the invoices this person may see.
 export async function getFinanceReport(range: DateRange) {
   const database = await createDatabaseClient();

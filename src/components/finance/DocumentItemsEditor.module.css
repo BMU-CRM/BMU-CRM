@@ -10,7 +10,28 @@
   flex-direction: column;
   gap: var(--space-1);
   max-width: 640px;
-  margin-bottom: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+}
+
+.pickerHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.pickerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.pickerActions button {
+  margin-top: 0;
 }
 
 .header,

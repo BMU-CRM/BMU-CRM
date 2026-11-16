@@ -30,6 +30,8 @@ export type SearchableSelectProps = {
   'aria-label'?: string;
   'aria-invalid'?: boolean;
   'aria-describedby'?: string;
+  // Starts with the list open and the box focused, for a picker shown on request.
+  autoOpen?: boolean;
 };
 
 function normalise(text: string) {
@@ -53,6 +55,7 @@ export function SearchableSelect({
   'aria-label': ariaLabel,
   'aria-invalid': ariaInvalid,
   'aria-describedby': ariaDescribedBy,
+  autoOpen = false,
 }: SearchableSelectProps) {
   const generatedId = useId();
   const inputId = id ?? `select-${generatedId}`;
@@ -77,12 +80,18 @@ export function SearchableSelect({
   const current = choices.some((choice) => choice.value === wanted) ? wanted : (choices[0]?.value ?? '');
   const selected = choices.find((choice) => choice.value === current);
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen && !disabled);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const selectRef = useRef<HTMLSelectElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    if (autoOpen) inputRef.current?.focus();
+    // Only when it first appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const matches = useMemo(() => {
     const term = normalise(query.trim());

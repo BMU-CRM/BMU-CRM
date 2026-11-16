@@ -2193,6 +2193,7 @@ export type Database = {
           "payment_terms_days": number
           "phone": string | null
           "po_prefix": string
+          "quotation_prefix": string
           "quotation_terms": string | null
           "quotation_validity_days": number
           "receipt_prefix": string
@@ -2222,6 +2223,7 @@ export type Database = {
           "payment_terms_days"?: number
           "phone"?: string | null
           "po_prefix"?: string
+          "quotation_prefix"?: string
           "quotation_terms"?: string | null
           "quotation_validity_days"?: number
           "receipt_prefix"?: string
@@ -2250,6 +2252,7 @@ export type Database = {
           "payment_terms_days"?: number
           "phone"?: string | null
           "po_prefix"?: string
+          "quotation_prefix"?: string
           "quotation_terms"?: string | null
           "quotation_validity_days"?: number
           "receipt_prefix"?: string
@@ -4491,6 +4494,22 @@ export type Database = {
           },
         ]
       }
+      "quotation_number_counter": {
+        Row: {
+          "id": boolean
+          "next_number": number
+        }
+        ComputedFields: never
+        Insert: {
+          "id"?: boolean
+          "next_number": number
+        }
+        Update: {
+          "id"?: boolean
+          "next_number"?: number
+        }
+        Relationships: []
+      }
       "quotations": {
         Row: {
           "bill_to_address": string | null
@@ -4543,7 +4562,7 @@ export type Database = {
           "overview"?: string | null
           "place_of_supply"?: string | null
           "project_id"?: string | null
-          "quotation_number"?: string
+          "quotation_number": string
           "sent_at"?: string | null
           "sgst_total"?: number
           "show_seal"?: boolean
@@ -4881,6 +4900,7 @@ export type Database = {
           "name": string
           "private_records": boolean
           "tracks_attendance": boolean
+          "tracks_workload": boolean
           "updated_at": string
         }
         ComputedFields: never
@@ -4894,6 +4914,7 @@ export type Database = {
           "name": string
           "private_records"?: boolean
           "tracks_attendance"?: boolean
+          "tracks_workload"?: boolean
           "updated_at"?: string
         }
         Update: {
@@ -4906,6 +4927,7 @@ export type Database = {
           "name"?: string
           "private_records"?: boolean
           "tracks_attendance"?: boolean
+          "tracks_workload"?: boolean
           "updated_at"?: string
         }
         Relationships: []
@@ -6656,6 +6678,8 @@ export type Database = {
             "due_date": string
             "completed_at": string
           }[] }
+      "get_next_quotation_number":
+        | { Args: Record<PropertyKey, never>; Returns: number }
       "get_or_create_direct_conversation":
         | { Args: {
             "p_other": string
@@ -7156,6 +7180,10 @@ export type Database = {
         | { Args: {
             "p_status": string
           }; Returns: string }
+      "set_next_quotation_number":
+        | { Args: {
+            "p_next": number
+          }; Returns: undefined }
       "set_onboarding_task":
         | { Args: {
             "p_task": string

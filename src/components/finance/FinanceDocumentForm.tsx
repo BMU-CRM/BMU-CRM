@@ -152,11 +152,17 @@ export function FinanceDocumentForm({
     const chosen = clients.find((option) => option.value === id);
     return { name: chosen?.label ?? '', address: chosen?.address ?? '', gstin: chosen?.gstin ?? '' };
   };
-  const [billTo, setBillTo] = useState(() =>
-    document
-      ? { name: document.bill_to_name ?? '', address: document.bill_to_address ?? '', gstin: document.client_gstin ?? '' }
-      : detailsOf(defaultClientId ?? ''),
-  );
+  // A saved draft keeps what it has; anything left empty is filled from the client.
+  const [billTo, setBillTo] = useState(() => {
+    const fromClient = detailsOf(document?.client_id ?? defaultClientId ?? '');
+    return document
+      ? {
+          name: document.bill_to_name || fromClient.name,
+          address: document.bill_to_address || fromClient.address,
+          gstin: document.client_gstin || fromClient.gstin,
+        }
+      : fromClient;
+  });
   const billToEdited = useRef(false);
   const editBillTo = (field: 'name' | 'address' | 'gstin') => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     billToEdited.current = true;

@@ -83,6 +83,13 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
   });
   const [lines, setLines] = useState<Line[]>(() => (initialItems.length > 0 ? initialItems : [blank()]).map(withKey));
   const priceOptions = priceListOptions(services);
+  // "Add item" opens the price list under the items; a blank item is one click away.
+  const [picking, setPicking] = useState(false);
+
+  function addBlank() {
+    setPicking(false);
+    setLines((current) => (current.length >= 100 ? current : [...current, withKey(blank())]));
+  }
 
   // Adds the picked sub service and plan as an item, filling in its description and
   // rate. An empty last item is used instead of adding another.
@@ -122,22 +129,6 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
         <p className={formStyles.error} role="alert">
           {error}
         </p>
-      )}
-      {priceOptions.length > 0 && (
-        <div className={styles.priceList}>
-          <label htmlFor="price-list" className={formStyles.label}>
-            Add from the price list
-          </label>
-          <SearchableSelect
-            id="price-list"
-            name="priceListChoice"
-            placeholder="Choose a sub service and plan"
-            value=""
-            options={priceOptions}
-            onChange={(event) => addFromPriceList(event.target.value)}
-          />
-          <p className={formStyles.hint}>Fills in the description and rate, before GST. For a monthly service, set Qty to the number of months.</p>
-        </div>
       )}
       <div className={styles.header} aria-hidden="true">
         <span>Description</span>
@@ -259,8 +250,43 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
           </div>
         );
       })}
+      {picking && (
+        <div className={styles.priceList}>
+          {/* Above the dropdown, so its open list never covers them. */}
+          <div className={styles.pickerHeader}>
+            <label htmlFor="price-list" className={formStyles.label}>
+              Add from the price list
+            </label>
+            <span className={styles.pickerActions}>
+              <button type="button" className={formStyles.linkButton} onClick={addBlank}>
+                Add a blank item instead
+              </button>
+              <button type="button" className={formStyles.linkButton} onClick={() => setPicking(false)}>
+                Cancel
+              </button>
+            </span>
+          </div>
+          <SearchableSelect
+            id="price-list"
+            name="priceListChoice"
+            placeholder="Choose a sub service and plan"
+            value=""
+            options={priceOptions}
+            autoOpen
+            onChange={(event) => {
+              addFromPriceList(event.target.value);
+              setPicking(false);
+            }}
+          />
+          <p className={formStyles.hint}>Fills in the description and rate, before GST. For a monthly service, set Qty to the number of months.</p>
+        </div>
+      )}
       <div className={styles.actions}>
-        <Button onClick={() => setLines((current) => [...current, withKey(blank())])} disabled={lines.length >= 100}>
+        <Button
+          onClick={() => (priceOptions.length > 0 ? setPicking(true) : addBlank())}
+          disabled={lines.length >= 100 || picking}
+          aria-expanded={priceOptions.length > 0 ? picking : undefined}
+        >
           Add item
         </Button>
         <dl className={styles.totals} aria-live="polite">

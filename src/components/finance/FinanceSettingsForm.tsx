@@ -57,7 +57,7 @@ function UpiQrField({ saved, error }: { saved: string | null; error?: string }) 
   );
 }
 
-export function FinanceSettingsForm({ settings }: { settings: FinanceSettings }) {
+export function FinanceSettingsForm({ settings, nextQuotationNumber }: { settings: FinanceSettings; nextQuotationNumber: number | null }) {
   const [result, formAction] = useActionState(saveFinanceSettingsAction, idleResult);
   const errors = result.fieldErrors;
 
@@ -89,7 +89,30 @@ export function FinanceSettingsForm({ settings }: { settings: FinanceSettings })
         </Panel>
 
         <Panel title="Numbering and defaults">
+          {nextQuotationNumber !== null && <input type="hidden" name="quotationNextNumberWas" value={String(nextQuotationNumber)} />}
           <FormGrid>
+            <TextField
+              label="Quotation number prefix"
+              name="quotationPrefix"
+              defaultValue={settings.quotation_prefix}
+              maxLength={8}
+              required
+              hint="Quotations are numbered PREFIX-0001. Numbers already given stay as they are."
+              error={errors?.quotationPrefix}
+            />
+            {nextQuotationNumber !== null && (
+              <TextField
+                label="Next quotation number"
+                name="quotationNextNumber"
+                type="number"
+                min={1}
+                max={999999}
+                defaultValue={String(nextQuotationNumber)}
+                required
+                hint={`The next quotation will be ${settings.quotation_prefix}-${String(nextQuotationNumber).padStart(4, '0')}. A number already used is skipped.`}
+                error={errors?.quotationNextNumber}
+              />
+            )}
             <TextField
               label="Invoice number prefix"
               name="invoicePrefix"

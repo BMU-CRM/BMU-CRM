@@ -263,6 +263,18 @@ export const financeSettingsSchema = z.object({
     .trim()
     .toUpperCase()
     .regex(/^[A-Z0-9]{1,5}$/, 'Use 1 to 5 letters or digits.'),
+  quotationPrefix: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9]{1,8}$/, 'Use 1 to 8 letters or digits.'),
+  // Empty leaves the next quotation number as it is.
+  quotationNextNumber: z
+    .string()
+    .trim()
+    .refine((value) => value === '' || /^\d{1,6}$/.test(value), 'Enter a whole number from 1 to 999999.')
+    .transform((value) => (value === '' ? null : Number(value)))
+    .refine((value) => value === null || value >= 1, 'Use 1 or more.'),
   defaultTaxRate: decimal('Enter a rate such as 18.').refine((value) => value <= 40, 'GST cannot be above 40%.'),
   paymentTermsDays: z.coerce.number({ error: 'Enter a number of days.' }).int('Enter whole days.').min(0, 'Use 0 or more days.').max(365, 'Use 365 days or fewer.'),
   quotationValidityDays: z.coerce.number({ error: 'Enter a number of days.' }).int('Enter whole days.').min(1, 'Use at least 1 day.').max(365, 'Use 365 days or fewer.'),

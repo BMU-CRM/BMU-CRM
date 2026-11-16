@@ -34,6 +34,7 @@ type RoleFormProps = {
     description: string | null;
     private_records: boolean;
     tracks_attendance: boolean;
+    tracks_workload: boolean;
     role_permissions: { permission_key: string; scope: PermissionScope }[];
   };
   permissions: RolePermissionOption[];
@@ -71,6 +72,16 @@ export function RoleForm({ role, permissions }: RoleFormProps) {
             <span className={styles.permissionLabel}>Records attendance</span>
             <span className={styles.permissionDescription}>
               They check in and out and appear in attendance reports. Turn off for people who do not record attendance.
+            </span>
+          </span>
+        </label>
+        <label className={styles.setting}>
+          <input type="checkbox" name="tracksWorkload" defaultChecked={role?.tracks_workload ?? true} />
+          <span>
+            <span className={styles.permissionLabel}>Workload tracked</span>
+            <span className={styles.permissionDescription}>
+              They appear on the Workload page with their capacity. Turn off for people who are not given tasks, such as the
+              Founder.
             </span>
           </span>
         </label>

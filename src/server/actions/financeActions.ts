@@ -32,6 +32,8 @@ export async function saveFinanceSettingsAction(_previous: ActionResult, formDat
     invoicePrefix: text('invoicePrefix'),
     receiptPrefix: text('receiptPrefix'),
     poPrefix: text('poPrefix'),
+    quotationPrefix: text('quotationPrefix'),
+    quotationNextNumber: text('quotationNextNumber'),
     defaultTaxRate: text('defaultTaxRate'),
     paymentTermsDays: text('paymentTermsDays'),
     quotationValidityDays: text('quotationValidityDays'),
@@ -75,6 +77,7 @@ export async function saveFinanceSettingsAction(_previous: ActionResult, formDat
       invoice_prefix: values.invoicePrefix,
       receipt_prefix: values.receiptPrefix,
       po_prefix: values.poPrefix,
+      quotation_prefix: values.quotationPrefix,
       default_tax_rate: values.defaultTaxRate,
       payment_terms_days: values.paymentTermsDays,
       quotation_validity_days: values.quotationValidityDays,
@@ -94,6 +97,13 @@ export async function saveFinanceSettingsAction(_previous: ActionResult, formDat
 
   if (error) return databaseFailure(error);
   if (data.length === 0) return failure(noPermission);
+
+  // Only when it was changed here, so a quotation made meanwhile does not get its number
+  // given out again.
+  if (values.quotationNextNumber !== null && String(values.quotationNextNumber) !== String(formData.get('quotationNextNumberWas') ?? '')) {
+    const { error: numberError } = await database.rpc('set_next_quotation_number', { p_next: values.quotationNextNumber });
+    if (numberError) return databaseFailure(numberError);
+  }
 
   revalidatePath('/settings/finance');
   return success('Finance settings saved.');
