@@ -34,10 +34,13 @@
   gap: var(--space-2);
 }
 
+/* On screen the sheet is an A4 page with the printed margins, so text wraps as it will
+   on paper and the page breaks can be worked out before printing. */
 .sheet {
-  max-width: 820px;
+  width: 210mm;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 48px;
+  padding: 14mm 12mm 16mm;
   color: var(--doc-ink);
   background: #fff;
   border: 1px solid #ddd;
@@ -173,30 +176,26 @@
   text-align: center;
 }
 
-/* The first page. With few items it fills the page: the rows get more room and the
-   payment details sit at the foot, so the terms start cleanly on the next page. */
-.firstPage {
-  display: flex;
-  flex-direction: column;
-}
-
-.firstPage[data-fill='true'] {
-  min-height: 258mm;
-}
-
-.firstPage[data-fill='true'] .items td {
-  padding-top: 18px;
-  padding-bottom: 18px;
-}
-
-.firstPage[data-fill='true'] > [aria-label='Payment details'] {
-  margin-top: auto;
-}
-
-/* Notes, terms and the signatures: a page of their own after the items. */
-.closingPart[data-new-page='true'] {
+/* Where the pages break, chosen by PrintLayoutFit:
+   - payment-first: the payment details fit on page 1; the terms start page 2.
+   - payment-next: they do not fit; they start page 2, with the terms after them.
+   - flow: the items already run onto page 2; everything follows them. */
+.sheet[data-layout='payment-first'] .closingPart[data-has-terms='true'] {
   break-before: page;
-  padding-top: 8px;
+}
+
+.sheet[data-layout='payment-next'] .paymentBlock {
+  break-before: page;
+}
+
+.sheet[data-layout='payment-next'] .closingPart[data-after-payment='false'][data-has-terms='true'] {
+  break-before: page;
+}
+
+.paymentBlock,
+.terms,
+.signOff {
+  break-inside: avoid;
 }
 
 /* The project in up to three lines, under who it is for. */
@@ -522,6 +521,7 @@
   }
 
   .sheet {
+    width: auto;
     max-width: none;
     padding: 0;
     border: 0;

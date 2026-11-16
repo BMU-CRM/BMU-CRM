@@ -9,6 +9,7 @@ import type { FinanceSettings } from '@/server/services/financeService';
 import type { Signatory } from '@/server/services/signatureService';
 import type { DocumentLine, DocumentMoney } from './DocumentLines';
 import { PrintButton } from './PrintButton';
+import { PrintLayoutFit, type PrintLayout } from './PrintLayoutFit';
 import styles from './PrintableDocument.module.css';
 
 type PrintLine = DocumentLine & { service_group?: string | null; service_name?: string | null; billing?: string | null };
@@ -55,12 +56,14 @@ export function websiteLabel(website: string | null | undefined) {
 
 // The paper itself: an A4 sheet on screen, and the page settings when printed. The
 // website and the page number ("Page 1 of 2") go in the bottom margin of every page.
-export function DocumentSheet({ settings, children }: { settings: FinanceSettings | null; children: ReactNode }) {
+export function DocumentSheet({ settings, layout, children }: { settings: FinanceSettings | null; layout?: PrintLayout; children: ReactNode }) {
   const website = websiteLabel(settings?.website) ?? '';
   return (
     <>
       <style>{`@page { size: A4; margin: 14mm 12mm 16mm; @bottom-left { content: ${JSON.stringify(website)}; font: 9pt sans-serif; color: #6b7280; } @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9pt sans-serif; color: #6b7280; } }`}</style>
-      <article className={styles.sheet}>{children}</article>
+      <article className={styles.sheet} data-layout={layout}>
+        {children}
+      </article>
     </>
   );
 }
@@ -251,10 +254,13 @@ export function PrintableDocument({
   const paid = money.amount_paid ?? 0;
   const due = sumMoney([money.total, -paid]);
   const paidInFull = paid > 0 && due <= 0;
-  // A short document fills its first page, with the payment details at the foot; the
-  // notes, terms and signatures always start on a new page.
-  const fillsFirstPage = lines.length <= itemsOnFirstPage;
-  const termsOnNewPage = Boolean(notes || terms);
+  // Page breaks: up to two items, the payment details usually fit on page 1 and the terms
+  // start page 2; with three, the payment details go to page 2 with the terms. More than
+  // three run onto page 2 anyway, and everything follows them. PrintLayoutFit measures
+  // the page and corrects the first two cases.
+  const showPayment = showBankDetails && !paidInFull;
+  const layout: PrintLayout = lines.length > itemsOnFirstPage ? 'flow' : lines.length <= 2 ? 'payment-first' : 'payment-next';
+  const hasTerms = Boolean(notes || terms);
 
   return (
     <div className={styles.screen}>
@@ -269,8 +275,9 @@ export function PrintableDocument({
         </span>
       </div>
 
-      <DocumentSheet settings={settings}>
-        <div className={styles.firstPage} data-fill={fillsFirstPage}>
+      <DocumentSheet settings={settings} layout={layout}>
+        <PrintLayoutFit initial={layout} />
+        <div data-part="first-page">
         <DocumentLetterhead heading={heading} stamp={stamp} facts={facts} />
 
         <section className={styles.parties}>
@@ -390,19 +397,27 @@ export function PrintableDocument({
           </div>
         </section>
 
-        {showBankDetails && !paidInFull && <PaymentDetails settings={settings} />}
         </div>
 
-        <div className={styles.closingPart} data-new-page={termsOnNewPage}>
+        {showPayment && (
+          <div className={styles.paymentBlock} data-part="payment">
+            <PaymentDetails settings={settings} />
+          </div>
+        )}
+
+        <div className={styles.closingPart} data-has-terms={hasTerms} data-after-payment={showPayment}>
           <DocumentTerms notes={notes} terms={terms} />
 
-          {closingLine && <p className={styles.thanks}>{closingLine}</p>}
-          <section className={styles.signatures}>
-            {clientAcceptance ? <ClientAcceptance /> : <span />}
-            <SignatureBlock companyName={companyName} signatory={signatory} showSeal={showSeal} />
-          </section>
+          {/* The closing line, the signatures and the contact details stay together. */}
+          <div className={styles.signOff}>
+            {closingLine && <p className={styles.thanks}>{closingLine}</p>}
+            <section className={styles.signatures}>
+              {clientAcceptance ? <ClientAcceptance /> : <span />}
+              <SignatureBlock companyName={companyName} signatory={signatory} showSeal={showSeal} />
+            </section>
 
-          <DocumentFooter settings={settings} />
+            <DocumentFooter settings={settings} />
+          </div>
         </div>
       </DocumentSheet>
     </div>
