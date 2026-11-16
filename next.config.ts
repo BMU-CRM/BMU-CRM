@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // The embedded database loads its engine files from its own package folder.
   serverExternalPackages: ['@electric-sql/pglite'],
+  experimental: {
+    // Going back to a page opened in the last 30 seconds shows it again without asking
+    // the server, which on the live site is a request Vercel counts. Saving anything
+    // (revalidatePath) and live updates (router.refresh) still load fresh data.
+    staleTimes: { dynamic: 30 },
+  },
   images: {
     formats: ['image/webp'],
   },

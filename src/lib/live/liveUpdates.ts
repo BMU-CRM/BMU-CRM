@@ -33,13 +33,24 @@ function typingIds() {
 
 // ---------------------------------------------------------------------------
 // How to listen. The answer for the app's own stream never changes, so it is kept.
+// The app's pages bring the answer with them (seedLiveConfig), so only a chat, which
+// also needs its typing channel, asks /api/live/config.
 // ---------------------------------------------------------------------------
 
 let knownToBeStream = false;
+let seededConfig: LiveConfig | null = null;
 let configRequest: { key: string; config: Promise<LiveConfig | null> } | null = null;
+
+// Called by the app shell with the settings the page was built with.
+export function seedLiveConfig(config: LiveConfig | null) {
+  if (!config) return;
+  if (config.mode === 'stream') knownToBeStream = true;
+  else seededConfig = config;
+}
 
 function loadConfig(typing: string[]) {
   const key = typing.join(',');
+  if (!key && seededConfig) return Promise.resolve<LiveConfig | null>(seededConfig);
   if (configRequest?.key !== key) {
     const query = key ? `?${new URLSearchParams({ typing: key }).toString()}` : '';
     configRequest = {
@@ -71,7 +82,13 @@ function connectStream() {
   if (typing.length) query.set('typing', typing.join(','));
 
   const next = new EventSource(`/api/live?${query.toString()}`);
-  next.addEventListener('ready', () => entries.forEach((entry) => entry.onReady?.()));
+  // Only reconnecting after a drop counts as ready, as on Supabase: the page was just
+  // loaded when the stream first opens.
+  let opened = false;
+  next.addEventListener('ready', () => {
+    if (opened) entries.forEach((entry) => entry.onReady?.());
+    opened = true;
+  });
   next.addEventListener('change', (event) => {
     const change = JSON.parse((event as MessageEvent<string>).data) as { table: string; event: string };
     entries.forEach((entry) => {
@@ -104,7 +121,18 @@ type RealtimeState = {
   // Components already told the connection is ready.
   announced: WeakSet<Entry>;
   typing: Map<string, RealtimeChannel>;
+  // When the connection was seen to drop, and when the page was first out of sight
+  // since it last joined (a phone may cut the connection without saying so).
+  droppedAt: number | null;
+  hiddenSinceJoin: number | null;
 };
+
+// A drop shorter than this, with the page in view, reloads nothing: little can change.
+const shortDropMs = 30_000;
+
+function isHidden() {
+  return typeof document !== 'undefined' && document.visibilityState === 'hidden';
+}
 
 let realtime: Promise<RealtimeState> | null = null;
 
@@ -145,6 +173,8 @@ async function startRealtime(config: Extract<LiveConfig, { mode: 'realtime' }>):
     everJoined: false,
     announced: new WeakSet(),
     typing: new Map(),
+    droppedAt: null,
+    hiddenSinceJoin: null,
   };
 
   client
@@ -157,12 +187,22 @@ async function startRealtime(config: Extract<LiveConfig, { mode: 'realtime' }>):
     })
     // Joining again after a dropped connection counts as ready, so pages reload
     // anything they missed while it was down. The first join does not: the page was
-    // just loaded, and reloading it would only cost another request.
+    // just loaded, and reloading it would only cost another request. Nor does a short
+    // drop while the page was in view, such as a phone switching networks.
     .subscribe((status) => {
+      const wasJoined = state.joined;
       state.joined = status === 'SUBSCRIBED';
-      if (!state.joined) return;
-      if (state.everJoined) announceReady(state, true);
+      if (!state.joined) {
+        if (wasJoined) state.droppedAt ??= Date.now();
+        return;
+      }
+      if (state.everJoined) {
+        const gapStart = Math.min(state.droppedAt ?? Infinity, state.hiddenSinceJoin ?? Infinity);
+        if (gapStart === Infinity || Date.now() - gapStart > shortDropMs) announceReady(state, true);
+      }
       state.everJoined = true;
+      state.droppedAt = null;
+      state.hiddenSinceJoin = isHidden() ? Date.now() : null;
     });
 
   return state;
@@ -269,45 +309,71 @@ export function sendTyping(conversationId: string) {
 
 // Reloading the page's server data. Every reload is a request to the website, so:
 // - changes close together lead to one reload, whichever parts of the page asked;
+// - a list asks for a gap (minGapMs) since the last reload, so a busy list reloads
+//   now and then rather than after every change;
 // - while the page is out of sight (another tab, the window minimised, the phone
 //   locked), nothing reloads; it reloads once when it is looked at again.
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+let refreshDueAt = 0;
+let lastRefreshAt = 0;
 let staleWhileHidden = false;
 let refreshPage: (() => void) | null = null;
 
-export function requestPageRefresh(refresh: () => void, delayMs = 250) {
+// How often at most a list page reloads for changes.
+export const listRefreshGapMs = 10_000;
+
+function runRefresh() {
+  refreshTimer = undefined;
+  lastRefreshAt = Date.now();
+  refreshPage?.();
+}
+
+function scheduleRefreshAt(due: number) {
+  // A reload already coming sooner covers this one too.
+  if (refreshTimer !== undefined && refreshDueAt <= due) return;
+  clearTimeout(refreshTimer);
+  refreshDueAt = due;
+  refreshTimer = setTimeout(runRefresh, Math.max(0, due - Date.now()));
+}
+
+export function requestPageRefresh(refresh: () => void, delayMs = 250, minGapMs = 0) {
   refreshPage = refresh;
-  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+  if (isHidden()) {
     staleWhileHidden = true;
     return;
   }
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(() => refreshPage?.(), delayMs);
+  scheduleRefreshAt(Math.max(Date.now() + delayMs, lastRefreshAt + minGapMs));
 }
 
 if (typeof window !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && staleWhileHidden) {
+    if (isHidden()) {
+      if (activeRealtime) activeRealtime.hiddenSinceJoin ??= Date.now();
+      return;
+    }
+    if (staleWhileHidden) {
       staleWhileHidden = false;
-      clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(() => refreshPage?.(), 100);
+      scheduleRefreshAt(Date.now() + 100);
     }
   });
 }
 
 // Reloads the page's server data shortly after a watched change, and after the
 // connection comes back from a drop, to catch anything missed meanwhile.
-export function useLiveRefresh(topics: LiveTopic[], options: { delayMs?: number; refreshOnConnect?: boolean } = {}) {
+export function useLiveRefresh(
+  topics: LiveTopic[],
+  options: { delayMs?: number; minGapMs?: number; refreshOnConnect?: boolean } = {},
+) {
   const router = useRouter();
   const key = JSON.stringify(topics);
-  const { delayMs = 250, refreshOnConnect = true } = options;
+  const { delayMs = 250, minGapMs = 0, refreshOnConnect = true } = options;
 
   useEffect(() => {
-    const scheduleRefresh = () => requestPageRefresh(() => router.refresh(), delayMs);
+    const scheduleRefresh = () => requestPageRefresh(() => router.refresh(), delayMs, minGapMs);
     return subscribeLive({
       topics: JSON.parse(key) as LiveTopic[],
       onReady: refreshOnConnect ? scheduleRefresh : undefined,
       onChange: scheduleRefresh,
     });
-  }, [key, delayMs, refreshOnConnect, router]);
+  }, [key, delayMs, minGapMs, refreshOnConnect, router]);
 }

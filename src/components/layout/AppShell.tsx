@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { PresenceHeartbeat } from '@/components/presence/PresenceHeartbeat';
 import { ListInteractions } from '@/components/ui/ListInteractions';
 import type { PermissionMap } from '@/lib/access/permissionKeys';
+import type { LiveConfig } from '@/lib/live/liveConfig';
+import { seedLiveConfig } from '@/lib/live/liveUpdates';
 import { AppSidebar } from './AppSidebar';
 import { AppTopbar, type TopbarNotifications, type TopbarUser } from './AppTopbar';
 import styles from './AppShell.module.css';
@@ -13,10 +15,14 @@ type AppShellProps = {
   notifications: TopbarNotifications;
   permissions: PermissionMap;
   initiallyCollapsed: boolean;
+  // How the page receives live updates; null asks /api/live/config instead.
+  liveConfig: LiveConfig | null;
   children: ReactNode;
 };
 
-export function AppShell({ user, notifications, permissions, initiallyCollapsed, children }: AppShellProps) {
+export function AppShell({ user, notifications, permissions, initiallyCollapsed, liveConfig, children }: AppShellProps) {
+  // Before any live connection opens, which waits a moment after the page starts.
+  useEffect(() => seedLiveConfig(liveConfig), [liveConfig]);
   const [isCollapsed, setIsCollapsed] = useState(initiallyCollapsed);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -28,7 +34,7 @@ export function AppShell({ user, notifications, permissions, initiallyCollapsed,
 
   return (
     <div className={styles.shell} data-collapsed={isCollapsed}>
-      <PresenceHeartbeat />
+      <PresenceHeartbeat employeeId={user.employeeId} />
       <ListInteractions />
       <AppSidebar
         permissions={permissions}
