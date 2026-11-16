@@ -69,12 +69,13 @@ export type ConversationDetails = NonNullable<Awaited<ReturnType<typeof getConve
 const messageFields = `
   id, body, created_at, edited_at, deleted_at, pinned_at, author_id, reply_to_id, file_id, forwarded,
   contact_employee_id, meeting_id, poll_question, poll_options, poll_allows_multiple,
+  gif_kind, gif_url, gif_title, gif_width, gif_height,
   author:employees!messages_author_id_fkey(id, full_name),
   file:files(id, name, kind, size_bytes, status, external_url),
   contact:employees!messages_contact_employee_id_fkey(id, full_name, work_email, phone,
     designation:designations(title), department:departments!employees_department_id_fkey(name)),
   meeting:meetings(id, title, starts_at, ends_at, status, meeting_link),
-  reply:reply_to_id(id, body, deleted_at, poll_question, author:employees!messages_author_id_fkey(id, full_name),
+  reply:reply_to_id(id, body, deleted_at, poll_question, gif_kind, author:employees!messages_author_id_fkey(id, full_name),
     file:files(name, kind))
 `;
 
@@ -147,7 +148,7 @@ export async function listPinnedMessages(conversationId: string) {
 
   const { data, error } = await database
     .from('messages')
-    .select('id, body, author:employees!messages_author_id_fkey(full_name)')
+    .select('id, body, gif_kind, author:employees!messages_author_id_fkey(full_name)')
     .eq('conversation_id', conversationId)
     .not('pinned_at', 'is', null)
     .order('pinned_at', { ascending: false })
@@ -195,6 +196,21 @@ export async function listPollVotes(conversationId: string) {
 }
 
 export type PollVote = Awaited<ReturnType<typeof listPollVotes>>[number];
+
+// Everyone's emoji reactions in the conversation, oldest first, so each emoji keeps
+// its place under the message.
+export async function listMessageReactions(conversationId: string) {
+  const database = await createDatabaseClient();
+  const { data, error } = await database
+    .from('message_reactions')
+    .select('message_id, emoji, employee_id, reactor:employees(full_name)')
+    .eq('conversation_id', conversationId)
+    .order('created_at');
+  if (error) throw error;
+  return data;
+}
+
+export type MessageReaction = Awaited<ReturnType<typeof listMessageReactions>>[number];
 
 export async function markConversationRead(conversationId: string) {
   const database = await createDatabaseClient();

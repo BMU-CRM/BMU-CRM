@@ -3349,6 +3349,53 @@ export type Database = {
           },
         ]
       }
+      "message_reactions": {
+        Row: {
+          "conversation_id": string
+          "created_at": string
+          "emoji": string
+          "employee_id": string
+          "message_id": string
+        }
+        ComputedFields: never
+        Insert: {
+          "conversation_id": string
+          "created_at"?: string
+          "emoji": string
+          "employee_id": string
+          "message_id": string
+        }
+        Update: {
+          "conversation_id"?: string
+          "created_at"?: string
+          "emoji"?: string
+          "employee_id"?: string
+          "message_id"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reactions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "message_reads": {
         Row: {
           "employee_id": string
@@ -3429,6 +3476,11 @@ export type Database = {
           "edited_at": string | null
           "file_id": string | null
           "forwarded": boolean
+          "gif_height": number | null
+          "gif_kind": string | null
+          "gif_title": string | null
+          "gif_url": string | null
+          "gif_width": number | null
           "id": string
           "meeting_id": string | null
           "pinned_at": string | null
@@ -3450,6 +3502,11 @@ export type Database = {
           "edited_at"?: string | null
           "file_id"?: string | null
           "forwarded"?: boolean
+          "gif_height"?: number | null
+          "gif_kind"?: string | null
+          "gif_title"?: string | null
+          "gif_url"?: string | null
+          "gif_width"?: number | null
           "id"?: string
           "meeting_id"?: string | null
           "pinned_at"?: string | null
@@ -3470,6 +3527,11 @@ export type Database = {
           "edited_at"?: string | null
           "file_id"?: string | null
           "forwarded"?: boolean
+          "gif_height"?: number | null
+          "gif_kind"?: string | null
+          "gif_title"?: string | null
+          "gif_url"?: string | null
+          "gif_width"?: number | null
           "id"?: string
           "meeting_id"?: string | null
           "pinned_at"?: string | null
@@ -6994,6 +7056,11 @@ export type Database = {
         | { Args: Record<PropertyKey, never>; Returns: number }
       "process_task_deadlines":
         | { Args: Record<PropertyKey, never>; Returns: undefined }
+      "react_to_message":
+        | { Args: {
+            "p_message": string
+            "p_emoji": string
+          }; Returns: undefined }
       "recalculate_payroll_run":
         | { Args: {
             "p_run": string

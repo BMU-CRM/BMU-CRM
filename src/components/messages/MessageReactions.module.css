@@ -1,0 +1,71 @@
+/* Sits just under the bubble, overlapping its edge, as in WhatsApp. */
+.reactions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: -6px 8px 0;
+}
+
+.reactions[data-mine='true'] {
+  justify-content: flex-end;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--chat-bg, var(--color-border));
+  border-radius: 12px;
+  background: var(--chip, var(--color-surface));
+  box-shadow: 0 1px 0.5px rgb(11 20 26 / 0.13);
+  color: var(--bubble-meta, var(--color-text-secondary));
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform var(--motion-quick);
+}
+
+.chip:hover {
+  transform: scale(1.06);
+}
+
+.chip:disabled {
+  cursor: wait;
+}
+
+/* Your own reaction is outlined in the brand colour. */
+.chip[aria-pressed='true'] {
+  border-color: var(--color-primary);
+}
+
+.emoji {
+  font-size: 0.9375rem;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+.error {
+  padding: 2px 8px;
+  border-radius: var(--radius-small);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-overlay);
+  color: var(--color-critical);
+  font-size: var(--text-small);
+  animation: fade 3s forwards;
+}
+
+@keyframes fade {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

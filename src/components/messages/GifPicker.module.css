@@ -1,0 +1,108 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.tab {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab[aria-selected='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.search {
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 18px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.results {
+  height: 260px;
+  overflow-y: auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 4px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-small);
+  background: var(--color-surface-muted);
+  cursor: pointer;
+}
+
+.item:hover,
+.item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.item:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Stickers have see-through edges, so they are shown whole on a plain background. */
+.grid[data-kind='sticker'] .item {
+  background: transparent;
+}
+
+.grid[data-kind='sticker'] .item img {
+  object-fit: contain;
+}
+
+.note {
+  padding: var(--space-6) 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.credit {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  text-align: right;
+}
+
+.hiddenLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

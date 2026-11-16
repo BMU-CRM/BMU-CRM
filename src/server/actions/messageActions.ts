@@ -17,13 +17,72 @@ import {
   chatEventSchema,
   chatLinkSchema,
   editMessageSchema,
+  gifMessageSchema,
+  gifSearchSchema,
   groupConversationSchema,
   messageSchema,
   pollSchema,
+  reactionSchema,
 } from '@/lib/validation/messageSchema';
 import { getActionAccess } from '@/server/services/accessService';
+import { searchGiphy, type GifResult } from '@/server/services/gifService';
 
 const noPermission = 'You do not have permission to do this.';
+
+export type GifSearchResult = { status: 'success'; results: GifResult[] } | { status: 'error'; message: string };
+
+// Finds GIFs or stickers on GIPHY: popular ones when the search is empty.
+export async function searchGifsAction(kind: string, query: string): Promise<GifSearchResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return { status: 'error', message: noPermission };
+  const parsed = gifSearchSchema.safeParse({ kind, query });
+  if (!parsed.success) return { status: 'error', message: parsed.error.issues[0]?.message ?? 'Search again.' };
+
+  try {
+    return { status: 'success', results: await searchGiphy(parsed.data.kind, parsed.data.query) };
+  } catch {
+    return { status: 'error', message: 'GIPHY could not be reached. Try again in a moment.' };
+  }
+}
+
+export async function sendGifMessageAction(
+  conversationId: string,
+  gif: { kind: string; url: string; title: string; width: number; height: number; replyToId?: string | null },
+): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+
+  const parsed = gifMessageSchema.safeParse({ ...gif, replyToId: gif.replyToId ?? '' });
+  if (!parsed.success) return validationFailure(parsed.error);
+
+  const database = await createDatabaseClient();
+  const { error } = await database.from('messages').insert({
+    conversation_id: conversationId,
+    reply_to_id: parsed.data.replyToId,
+    gif_kind: parsed.data.kind,
+    gif_url: parsed.data.url,
+    gif_title: parsed.data.title || null,
+    gif_width: parsed.data.width,
+    gif_height: parsed.data.height,
+  });
+  if (error) return databaseFailure(error);
+
+  revalidatePath(`/messages/${conversationId}`);
+  return success(parsed.data.kind === 'sticker' ? 'Sticker sent.' : 'GIF sent.');
+}
+
+// Your reaction to a message. The same emoji again, or an empty one, takes it back.
+export async function reactToMessageAction(conversationId: string, messageId: string, emoji: string): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.messagesUse))) return failure(noPermission);
+  const id = z.uuid().safeParse(messageId);
+  const parsed = reactionSchema.safeParse(emoji);
+  if (!id.success || !parsed.success) return failure('Choose an emoji.');
+
+  const database = await createDatabaseClient();
+  const { error } = await database.rpc('react_to_message', { p_message: id.data, p_emoji: parsed.data });
+  if (error) return databaseFailure(error);
+
+  revalidatePath(`/messages/${conversationId}`);
+  return success(parsed.data ? 'Reacted.' : 'Reaction removed.');
+}
 
 export async function sendMessageAction(
   conversationId: string,
@@ -247,7 +306,7 @@ export async function forwardMessagesAction(messageIds: string[], conversationId
   const database = await createDatabaseClient();
   const { data: originals, error } = await database
     .from('messages')
-    .select('id, body, file_id, contact_employee_id, meeting_id, poll_question, deleted_at, created_at')
+    .select('id, body, file_id, contact_employee_id, meeting_id, poll_question, gif_kind, gif_url, gif_title, gif_width, gif_height, deleted_at, created_at')
     .in('id', messages.data)
     .order('created_at');
   if (error) return databaseFailure(error);
@@ -263,6 +322,11 @@ export async function forwardMessagesAction(messageIds: string[], conversationId
         file_id: message.file_id,
         contact_employee_id: message.contact_employee_id,
         meeting_id: message.meeting_id,
+        gif_kind: message.gif_kind,
+        gif_url: message.gif_url,
+        gif_title: message.gif_title,
+        gif_width: message.gif_width,
+        gif_height: message.gif_height,
         forwarded: true,
       })),
     );

@@ -1,13 +1,14 @@
-import { Ban, BarChart3, FileText, Forward, Pin, Star } from 'lucide-react';
+import { Ban, BarChart3, FileText, Forward, ImagePlay, Pin, Star, Sticker } from 'lucide-react';
 import { PresenceDot } from '@/components/presence/PresenceDot';
 import { PersonAvatar } from '@/components/ui/PersonAvatar';
 import { datePartInIndia } from '@/lib/calendar/calendarRange';
 import { formatDate, formatDateTime, todayInIndia } from '@/lib/formatDate';
-import type { MessageItem, PollVote } from '@/server/services/messageService';
+import type { MessageItem, MessageReaction, PollVote } from '@/server/services/messageService';
 import type { ForwardTarget } from './ChatDialogs';
 import { ChatSelectionProvider, SelectBox } from './ChatSelection';
-import { ContactCard, EventCard, MessageAttachment, PollCard } from './MessageCards';
+import { ContactCard, EventCard, GifCard, MessageAttachment, PollCard } from './MessageCards';
 import { MessageMenu } from './MessageMenu';
+import { MessageReactions, type ReactionView } from './MessageReactions';
 import styles from './MessageThread.module.css';
 
 type MessageThreadProps = {
@@ -22,6 +23,7 @@ type MessageThreadProps = {
   readState: { others: number; everyoneReadAt: string | null; everyoneDeliveredAt: string | null };
   seenLabel: string | null;
   pollVotes: PollVote[];
+  reactions: MessageReaction[];
   // Conversations a message can be forwarded to.
   forwardTargets: ForwardTarget[];
 };
@@ -81,6 +83,13 @@ function ReplyPreview({ reply, myEmployeeId }: { reply: NonNullable<MessageItem[
         <BarChart3 size={14} aria-hidden="true" /> {reply.poll_question}
       </span>
     );
+  else if (reply.gif_kind)
+    content = (
+      <span className={styles.replyFile}>
+        {reply.gif_kind === 'sticker' ? <Sticker size={14} aria-hidden="true" /> : <ImagePlay size={14} aria-hidden="true" />}
+        {reply.gif_kind === 'sticker' ? 'Sticker' : 'GIF'}
+      </span>
+    );
   else content = <span className={styles.replyBody}>{reply.body || 'Attachment'}</span>;
 
   return (
@@ -101,10 +110,18 @@ export function MessageThread({
   readState,
   seenLabel,
   pollVotes,
+  reactions,
   forwardTargets,
 }: MessageThreadProps) {
   if (messages.length === 0) {
     return <p className={styles.empty}>No messages yet. Say hello.</p>;
+  }
+
+  const reactionsByMessage = new Map<string, ReactionView[]>();
+  for (const reaction of reactions) {
+    const list = reactionsByMessage.get(reaction.message_id) ?? [];
+    list.push({ emoji: reaction.emoji, employeeId: reaction.employee_id, name: reaction.reactor?.full_name ?? 'Someone' });
+    reactionsByMessage.set(reaction.message_id, list);
   }
 
   const today = todayInIndia();
@@ -127,6 +144,9 @@ export function MessageThread({
         {messages.map((message, index) => {
           const isMine = message.author_id === myEmployeeId;
           const isDeleted = message.deleted_at !== null;
+          const messageReactions = isDeleted ? [] : (reactionsByMessage.get(message.id) ?? []);
+          // A sticker on its own is shown without a bubble, as in WhatsApp.
+          const isSticker = !isDeleted && message.gif_kind === 'sticker' && !message.body && !message.reply;
           const day = datePartInIndia(message.created_at);
           const previous = messages[index - 1];
           const startsDay = !previous || datePartInIndia(previous.created_at) !== day;
@@ -166,9 +186,11 @@ export function MessageThread({
                   </span>
                 )}
 
+                <div className={styles.bubbleColumn} data-mine={isMine}>
                 <div
                   className={styles.bubble}
                   data-deleted={isDeleted}
+                  data-sticker={isSticker}
                   // Text ends the bubble, so the time can sit at the end of its last line.
                   data-inline-meta={Boolean((isDeleted || message.body) && !(message.id === lastOwnMessageId && seenLabel && showAuthorNames))}
                   style={{ '--meta-width': `${metaWidth(message, isMine)}px` } as React.CSSProperties}
@@ -188,6 +210,7 @@ export function MessageThread({
                       changeableUntil={message.changeableUntil}
                       canPost={canPost}
                       targets={forwardTargets}
+                      myReaction={messageReactions.find((reaction) => reaction.employeeId === myEmployeeId)?.emoji ?? null}
                     />
                   )}
                   {!isMine && showAuthorNames && !continues && (
@@ -227,6 +250,15 @@ export function MessageThread({
                       {message.meeting_id && <EventCard meeting={message.meeting} isOver={message.meetingIsOver} />}
                       {message.contact && <ContactCard contact={message.contact} />}
                       {message.file && <MessageAttachment file={message.file} />}
+                      {message.gif_kind && message.gif_url && (
+                        <GifCard
+                          kind={message.gif_kind === 'sticker' ? 'sticker' : 'gif'}
+                          url={message.gif_url}
+                          title={message.gif_title}
+                          width={message.gif_width}
+                          height={message.gif_height}
+                        />
+                      )}
                       {message.body && <p className={styles.body}>{message.body}</p>}
                     </>
                   )}
@@ -243,6 +275,16 @@ export function MessageThread({
                   {message.id === lastOwnMessageId && seenLabel && showAuthorNames && (
                     <p className={styles.seenBy}>{seenLabel}</p>
                   )}
+                </div>
+                {messageReactions.length > 0 && (
+                  <MessageReactions
+                    conversationId={conversationId}
+                    messageId={message.id}
+                    reactions={messageReactions}
+                    myEmployeeId={myEmployeeId}
+                    isMine={isMine}
+                  />
+                )}
                 </div>
               </div>
             </li>

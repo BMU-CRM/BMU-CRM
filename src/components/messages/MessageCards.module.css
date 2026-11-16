@@ -207,3 +207,41 @@
   background: var(--color-primary-soft);
   transition: width var(--motion-quick);
 }
+
+/* A GIF fills the bubble's width; a sticker shows at sticker size on its own. */
+.gif {
+  position: relative;
+  display: block;
+  margin-bottom: 2px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.gif img {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+}
+
+.gif[data-kind='sticker'] {
+  border-radius: 0;
+}
+
+.gif[data-kind='sticker'] img {
+  width: 140px;
+  max-width: 100%;
+}
+
+.gifBadge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.55);
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}

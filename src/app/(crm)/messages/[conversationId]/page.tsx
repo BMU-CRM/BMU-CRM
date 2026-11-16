@@ -13,11 +13,14 @@ import { PresenceDot } from '@/components/presence/PresenceDot';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { conversationKindLabels } from '@/lib/messages/conversationTitle';
 import { parseId } from '@/lib/parseListParams';
+import { gifKindLabels } from '@/lib/messages/giphyUrl';
 import { requirePagePermission } from '@/server/services/accessService';
 import { listEmployeeOptions } from '@/server/services/employeeService';
+import { isGifSearchOn } from '@/server/services/gifService';
 import {
   getConversation,
   getReadState,
+  listMessageReactions,
   listMessages,
   listMyConversations,
   listPinnedMessages,
@@ -58,15 +61,19 @@ export default async function ConversationPage({ params, searchParams }: Convers
   // Opening the conversation counts as reading it, and clears its notifications.
   await markConversationRead(conversationId);
 
-  const [conversations, messages, pinned, reads, readState, pollVotes, people] = await Promise.all([
+  const [conversations, messages, pinned, reads, readState, pollVotes, reactions, people] = await Promise.all([
     listMyConversations(),
     listMessages(conversationId),
     listPinnedMessages(conversationId),
     listReadPositions(conversationId),
     getReadState(conversationId),
     listPollVotes(conversationId),
+    listMessageReactions(conversationId),
     listEmployeeOptions(),
   ]);
+  // A GIF or sticker has no text, so replies and pins name it instead.
+  const textOf = (message: { body: string; gif_kind: string | null }) =>
+    message.body || (message.gif_kind ? gifKindLabels[message.gif_kind === 'sticker' ? 'sticker' : 'gif'] : '');
   const otherPerson = conversation.kind === 'direct' ? conversation.members.find((member) => member.id !== access.employee.id) : undefined;
 
   const replyId = parseId((await searchParams).reply);
@@ -127,7 +134,7 @@ export default async function ConversationPage({ params, searchParams }: Convers
         <div className={styles.pinnedBar}>
           {pinned.map((message) => (
             <a key={message.id} href={`#message-${message.id}`}>
-              <Pin size={12} aria-label="Pinned" /> {message.author?.full_name ?? 'Former employee'}: {message.body}
+              <Pin size={12} aria-label="Pinned" /> {message.author?.full_name ?? 'Former employee'}: {textOf(message)}
             </a>
           ))}
         </div>
@@ -147,6 +154,7 @@ export default async function ConversationPage({ params, searchParams }: Convers
             .map((item) => ({ value: item.id, label: item.displayTitle }))}
           readState={readState}
           pollVotes={pollVotes}
+          reactions={reactions}
           seenLabel={seenLabel(messages, reads, access.employee.id, conversation.kind === 'direct')}
         />
       </div>
@@ -158,9 +166,10 @@ export default async function ConversationPage({ params, searchParams }: Convers
         people={people.filter((person) => person.id !== access.employee.id).map((person) => ({ value: person.id, label: person.full_name }))}
         canShareLinks={access.permissions[permissionKeys.filesUpload] !== undefined}
         canSchedule={access.permissions[permissionKeys.meetingsCreate] !== undefined}
+        canSendGifs={isGifSearchOn()}
         replyTo={
           replyMessage
-            ? { id: replyMessage.id, author: replyMessage.author?.full_name ?? 'Former employee', body: replyMessage.body }
+            ? { id: replyMessage.id, author: replyMessage.author?.full_name ?? 'Former employee', body: textOf(replyMessage) }
             : null
         }
       />

@@ -61,6 +61,29 @@ export function MessageAttachment({ file }: { file: NonNullable<MessageItem['fil
   );
 }
 
+type GifCardProps = { kind: 'gif' | 'sticker'; url: string; title: string | null; width: number | null; height: number | null };
+
+// A GIF or sticker from GIPHY. The database only keeps GIPHY's own image addresses.
+export function GifCard({ kind, url, title, width, height }: GifCardProps) {
+  const label = title || (kind === 'sticker' ? 'Sticker' : 'GIF');
+  return (
+    <div className={styles.gif} data-kind={kind}>
+      {/* Shown straight from GIPHY; next/image would copy every GIF through our server. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={label}
+        title={label}
+        width={width ?? undefined}
+        height={height ?? undefined}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+      {kind === 'gif' && <span className={styles.gifBadge}>GIF</span>}
+    </div>
+  );
+}
+
 // A colleague's details, shared in the chat.
 export function ContactCard({ contact }: { contact: NonNullable<MessageItem['contact']> }) {
   const [result, formAction, isPending] = useActionState(startDirectConversationAction, idleResult);

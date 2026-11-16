@@ -1,14 +1,21 @@
 'use client';
 
-import { CheckSquare, ChevronDown, Copy, Forward, Info, Pencil, Pin, PinOff, Reply, Star, StarOff, Trash2 } from 'lucide-react';
+import { CheckSquare, ChevronDown, Copy, Forward, Info, Pencil, Pin, PinOff, Plus, Reply, Star, StarOff, Trash2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/Button';
 import { FormMessage } from '@/components/ui/FormMessage';
 import type { ActionResult } from '@/lib/actionResult';
-import { editMessageAction, setMessagePinnedAction, setMessageStarredAction } from '@/server/actions/messageActions';
+import { quickReactions } from '@/lib/messages/emojiList';
+import {
+  editMessageAction,
+  reactToMessageAction,
+  setMessagePinnedAction,
+  setMessageStarredAction,
+} from '@/server/actions/messageActions';
 import { ChatDialog, DeleteForm, ForwardForm, MessageInfo, type ForwardTarget } from './ChatDialogs';
 import { useChatSelection } from './ChatSelection';
+import { EmojiPicker } from './EmojiPicker';
 import styles from './MessageMenu.module.css';
 
 type MessageMenuProps = {
@@ -28,17 +35,19 @@ type MessageMenuProps = {
   changeableUntil: number;
   canPost: boolean;
   targets: ForwardTarget[];
+  // Your current reaction to this message, if any.
+  myReaction: string | null;
 };
 
 // WhatsApp's message menu: Message info, Reply, Copy, Forward, Pin, Star, Edit, Select
 // and Delete. Edit and delete for everyone stay available for 5 minutes after sending.
 export function MessageMenu(props: MessageMenuProps) {
-  const { conversationId, messageId, body, isMine, isPinned, isStarred, canPost, targets } = props;
+  const { conversationId, messageId, body, isMine, isPinned, isStarred, canPost, targets, myReaction } = props;
   const router = useRouter();
   const pathname = usePathname();
   const selection = useChatSelection();
   const [open, setOpen] = useState(false);
-  const [dialog, setDialog] = useState<'info' | 'forward' | 'delete' | null>(null);
+  const [dialog, setDialog] = useState<'info' | 'forward' | 'delete' | 'react' | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(body);
   const [result, setResult] = useState<ActionResult>({ status: 'idle' });
@@ -61,8 +70,8 @@ export function MessageMenu(props: MessageMenuProps) {
       event.preventDefault();
       setOpenedAt(Date.now());
       setPoint({
-        x: Math.max(8, Math.min(event.clientX, window.innerWidth - 210)),
-        y: Math.max(8, Math.min(event.clientY, window.innerHeight - 380)),
+        x: Math.max(8, Math.min(event.clientX, window.innerWidth - 250)),
+        y: Math.max(8, Math.min(event.clientY, window.innerHeight - 430)),
       });
       setOpen(true);
     };
@@ -103,6 +112,12 @@ export function MessageMenu(props: MessageMenuProps) {
       setResult(outcome);
       if (outcome.status === 'success') after?.();
     });
+  }
+
+  // The same emoji as your current reaction takes it back.
+  function react(emoji: string) {
+    setDialog(null);
+    run(() => reactToMessageAction(conversationId, messageId, myReaction === emoji ? '' : emoji));
   }
 
   if (selecting) return null;
@@ -202,6 +217,32 @@ export function MessageMenu(props: MessageMenuProps) {
           role="menu"
           aria-label="Message options"
         >
+          {/* WhatsApp's quick reactions, then + for every other emoji. */}
+          <div className={styles.reactRow} role="group" aria-label="React">
+            {quickReactions.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                role="menuitemcheckbox"
+                className={styles.reactButton}
+                aria-label={myReaction === emoji ? `Remove ${emoji} reaction` : `React with ${emoji}`}
+                aria-checked={myReaction === emoji}
+                onClick={() => react(emoji)}
+              >
+                {emoji}
+              </button>
+            ))}
+            <button
+              type="button"
+              role="menuitem"
+              className={styles.reactButton}
+              aria-label="More reactions"
+              title="More reactions"
+              onClick={() => (setOpen(false), setDialog('react'))}
+            >
+              <Plus size={16} aria-hidden="true" />
+            </button>
+          </div>
           {items
             .filter((item) => item.show)
             .map((item) => (
@@ -218,6 +259,9 @@ export function MessageMenu(props: MessageMenuProps) {
         </span>
       )}
 
+      <ChatDialog title="React" open={dialog === 'react'} onClose={() => setDialog(null)}>
+        <EmojiPicker label="React with" onPick={react} />
+      </ChatDialog>
       <ChatDialog title="Message info" open={dialog === 'info'} onClose={() => setDialog(null)}>
         <MessageInfo messageId={messageId} body={body} sentAt={props.sentAt} />
       </ChatDialog>

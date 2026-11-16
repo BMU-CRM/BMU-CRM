@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { isSingleEmoji } from '@/lib/messages/emojiList';
+import { isGiphyMediaUrl } from '@/lib/messages/giphyUrl';
 
 const optionalId = z
   .string()
@@ -17,6 +19,27 @@ export const messageSchema = z
     message: 'Write a message or attach something.',
     path: ['body'],
   });
+
+// A GIF or sticker picked from GIPHY. Only GIPHY's own image addresses are accepted.
+export const gifMessageSchema = z.object({
+  kind: z.enum(['gif', 'sticker']),
+  url: z.string().trim().refine(isGiphyMediaUrl, 'Choose a GIF or sticker from the list.'),
+  title: z.string().trim().max(200).catch(''),
+  width: z.number().int().min(1).max(2000),
+  height: z.number().int().min(1).max(2000),
+  replyToId: optionalId,
+});
+
+export const gifSearchSchema = z.object({
+  kind: z.enum(['gif', 'sticker']),
+  query: z.string().trim().max(50, 'Use 50 characters or fewer.'),
+});
+
+// One emoji, or nothing to take the reaction back.
+export const reactionSchema = z
+  .string()
+  .trim()
+  .refine((value) => value === '' || isSingleEmoji(value), 'Choose an emoji.');
 
 export const editMessageSchema = z.object({
   body: z.string().trim().min(1, 'A message cannot be empty.').max(8000, 'Messages can be up to 8000 characters.'),

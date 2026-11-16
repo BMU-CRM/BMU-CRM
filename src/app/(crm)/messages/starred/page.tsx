@@ -44,6 +44,7 @@ export default async function StarredMessagesPage() {
                       (message.poll_question ? `Poll: ${message.poll_question}` : null) ||
                       message.meeting?.title ||
                       message.contact?.full_name ||
+                      (message.gif_kind === 'sticker' ? 'Sticker' : message.gif_kind ? 'GIF' : null) ||
                       'Attachment'}
                   </p>
                   <p className={styles.resultMeta}>
