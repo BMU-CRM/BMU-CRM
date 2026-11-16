@@ -6,6 +6,7 @@ import { Panel } from '@/components/ui/Panel';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
+import { getWorkCalendar } from '@/server/services/hrService';
 import { listClientOptions } from '@/server/services/clientService';
 import { listProjectOptions } from '@/server/services/projectService';
 import { getTask, getTaskActor, listAssignableEmployees, listReviewerOptions } from '@/server/services/taskService';
@@ -27,11 +28,12 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
   const actor = await getTaskActor(access, task);
   if (!actor.canManage) notFound();
 
-  const [assignees, reviewers, projects, clients] = await Promise.all([
+  const [assignees, reviewers, projects, clients, calendar] = await Promise.all([
     listAssignableEmployees(task.project_id),
     listReviewerOptions([task.created_by, task.reviewer_id]),
     listProjectOptions(),
     listClientOptions(access, task.client_id),
+    getWorkCalendar(),
   ]);
 
   // The current assignee stays selectable even if they are outside this user's reach.
@@ -51,6 +53,7 @@ export default async function EditTaskPage({ params }: EditTaskPageProps) {
           reviewers={reviewers}
           projects={projects.map((project) => ({ value: project.id, label: project.name }))}
           clients={clients.map((client) => ({ value: client.id, label: client.company_name }))}
+          calendar={calendar}
           cancelHref={`/tasks/${task.id}`}
         />
       </Panel>

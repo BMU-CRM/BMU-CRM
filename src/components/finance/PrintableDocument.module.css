@@ -364,7 +364,7 @@
   margin: 12px 0 4px;
   padding: 16px 20px;
   border: 1px solid var(--doc-rule);
-  border-left: 4px solid var(--doc-green);
+  border-left: 4px solid var(--doc-navy);
   border-radius: 10px;
   break-inside: avoid;
 }
@@ -378,7 +378,7 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--doc-green);
+  color: var(--doc-navy);
   text-transform: uppercase;
 }
 

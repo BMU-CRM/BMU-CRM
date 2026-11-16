@@ -6,6 +6,7 @@ import { Panel } from '@/components/ui/Panel';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
+import { getWorkCalendar } from '@/server/services/hrService';
 import { listClientOptions } from '@/server/services/clientService';
 import { getMeeting } from '@/server/services/meetingService';
 import { listProjectOptions } from '@/server/services/projectService';
@@ -34,11 +35,12 @@ export default async function NewTaskPage({ searchParams }: NewTaskPageProps) {
   if (parentTaskId && !parent) notFound();
   if (meetingId && !meeting) notFound();
 
-  const [assignees, reviewers, projects, clients] = await Promise.all([
+  const [assignees, reviewers, projects, clients, calendar] = await Promise.all([
     listAssignableEmployees(projectId ?? parent?.project_id),
     listReviewerOptions([access.employee.id]),
     listProjectOptions(),
     listClientOptions(access),
+    getWorkCalendar(),
   ]);
 
   return (
@@ -59,6 +61,7 @@ export default async function NewTaskPage({ searchParams }: NewTaskPageProps) {
           reviewers={reviewers}
           projects={projects.map((project) => ({ value: project.id, label: project.name }))}
           clients={clients.map((client) => ({ value: client.id, label: client.company_name }))}
+          calendar={calendar}
           cancelHref={parent ? `/tasks/${parent.id}` : meeting ? `/meetings/${meeting.id}` : '/tasks'}
         />
       </Panel>

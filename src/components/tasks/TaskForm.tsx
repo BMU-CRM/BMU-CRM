@@ -17,6 +17,7 @@ import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { idleResult } from '@/lib/actionResult';
 import { priorityLabels } from '@/lib/tasks/taskWorkflow';
 import { saveTaskAction } from '@/server/actions/taskActions';
+import { TaskDurationField, type WorkCalendar } from './TaskDurationField';
 
 const priorityOptions = Object.entries(priorityLabels).map(([value, label]) => ({ value, label }));
 
@@ -61,6 +62,8 @@ type TaskFormProps = {
   projects: SelectOption[];
   clients: SelectOption[];
   cancelHref: string;
+  // Working days and holidays, for "Working days to finish".
+  calendar?: WorkCalendar;
 };
 
 export function TaskForm({
@@ -73,6 +76,7 @@ export function TaskForm({
   projects,
   clients,
   cancelHref,
+  calendar,
 }: TaskFormProps) {
   const [result, formAction] = useActionState(
     saveTaskAction.bind(null, task?.id ?? null, parentTaskId ?? null, task ? null : (meetingId ?? null)),
@@ -114,6 +118,7 @@ export function TaskForm({
         />
         <TextField label="Estimated hours" name="estimatedHours" type="number" min={0} step="0.25" defaultValue={task?.estimated_hours ?? ''} error={errors?.estimatedHours} />
         <TextField label="Start date" name="startDate" type="date" defaultValue={task?.start_date ?? ''} error={errors?.startDate} />
+        {calendar && <TaskDurationField calendar={calendar} />}
         <TextField label="Due date" name="dueDate" type="date" defaultValue={task?.due_date ?? ''} error={errors?.dueDate} />
         <TextField
           label="Due time (optional)"

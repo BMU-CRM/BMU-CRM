@@ -76,7 +76,16 @@ export async function listHolidaysBetween(from: string, to: string, filters: { k
   return data;
 }
 
-export type HolidayItem = Awaited<ReturnType<typeof listHolidaysBetween>>[number];
+// The working days and the coming year's holidays, for due dates counted in working days.
+export async function getWorkCalendar() {
+  const today = todayInIndia();
+  const until = new Date(`${today}T00:00:00Z`);
+  until.setUTCDate(until.getUTCDate() + 400);
+  const [settings, holidays] = await Promise.all([getCompanySettings(), listHolidaysBetween(today, until.toISOString().slice(0, 10))]);
+  return { today, workingDays: settings.working_days, holidays: holidays.map((holiday) => holiday.holiday_date) };
+}
+
+export type HolidayItem =Awaited<ReturnType<typeof listHolidaysBetween>>[number];
 
 export async function getHoliday(holidayId: string) {
   const database = await createDatabaseClient();
