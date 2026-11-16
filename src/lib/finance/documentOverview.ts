@@ -5,11 +5,31 @@
 // may take either package, or both together for a complete online presence."
 // Written from rules, not by an AI; the person preparing it can change the text.
 
-export type OverviewItem = { serviceName: string; billing: string };
+// An item's sub service (such as "Website Design & Development (Growth plan)"), its
+// service, and its description. An item typed by hand, with no service picked, is named
+// from the start of its description.
+export type OverviewItem = { serviceName: string; billing: string; serviceGroup?: string; description?: string };
 
 // A saved item line as the overview needs it.
-export function lineToOverviewItem(line: { serviceName?: string | null; billing?: string | null }): OverviewItem {
-  return { serviceName: line.serviceName ?? '', billing: line.billing ?? '' };
+export function lineToOverviewItem(line: {
+  serviceName?: string | null;
+  billing?: string | null;
+  serviceGroup?: string | null;
+  description?: string | null;
+}): OverviewItem {
+  return { serviceName: line.serviceName ?? '', billing: line.billing ?? '', serviceGroup: line.serviceGroup ?? '', description: line.description ?? '' };
+}
+
+// "Logo design: three concepts and two rounds of changes" gives "Logo design".
+function nameFromDescription(description: string) {
+  const first = description.trim().split('\n')[0]!.split(/[:.;–—]|\s-\s/)[0]!.trim();
+  if (first.length <= 60) return first;
+  const cut = first.slice(0, 60);
+  return cut.slice(0, cut.lastIndexOf(' ') > 20 ? cut.lastIndexOf(' ') : 60).trim();
+}
+
+function itemName(item: OverviewItem) {
+  return item.serviceName.trim() || item.serviceGroup?.trim() || nameFromDescription(item.description ?? '');
 }
 
 type OverviewInput = {
@@ -45,7 +65,7 @@ function joined(names: string[]) {
 function services(items: OverviewItem[]) {
   const seen = new Map<string, { name: string; plan: string | null; billing: string }>();
   for (const item of items) {
-    const raw = item.serviceName.trim();
+    const raw = itemName(item);
     if (!raw) continue;
     const plan = raw.match(planPattern)?.[1];
     const name = raw.replace(planPattern, '');

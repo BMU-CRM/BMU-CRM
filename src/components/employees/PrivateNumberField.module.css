@@ -1,0 +1,83 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 320px;
+}
+
+/* Looks like a read-only field, with the eye inside it on the right. */
+.box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 0 var(--space-1) 0 var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+}
+
+.number {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.eye {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--color-text-secondary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.eye:hover {
+  color: var(--color-text);
+  background: var(--color-surface-muted);
+}
+
+.ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.askLabel {
+  font-size: var(--text-small);
+  color: var(--color-text-secondary);
+}
+
+.askRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.password {
+  flex: 1 1 140px;
+  min-width: 0;
+  min-height: 36px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-small);
+}
+
+.password[aria-invalid='true'] {
+  border-color: var(--color-critical);
+}
+
+.problem {
+  font-size: var(--text-small);
+  color: var(--color-critical);
+}

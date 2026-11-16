@@ -250,12 +250,19 @@ export function FinanceDocumentForm({
     const data = new FormData(form);
     const names = data.getAll('itemServiceName').map(String);
     const billings = data.getAll('itemBilling').map(String);
+    const groups = data.getAll('itemServiceGroup').map(String);
+    const descriptions = data.getAll('itemDescription').map(String);
     const clientName = String(data.get('billToName') ?? '') || clients.find((option) => option.value === data.get('clientId'))?.label || '';
     const written = writeOverview({
       kind,
       companyName,
       clientName,
-      items: names.map((serviceName, index) => ({ serviceName, billing: billings[index] ?? '' })),
+      items: names.map((serviceName, index) => ({
+        serviceName,
+        billing: billings[index] ?? '',
+        serviceGroup: groups[index] ?? '',
+        description: descriptions[index] ?? '',
+      })),
     });
     if (written && written !== box.value) {
       box.value = written;

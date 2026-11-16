@@ -113,38 +113,30 @@ describe('team access', () => {
   });
 
   describe('adding and editing people', () => {
-    it('gives department heads team scope', async () => {
+    it('gives department heads their team to see and edit, but not to add to', async () => {
       for (const key of ['designHead', 'marketingHead', 'financeHead', 'manager']) {
         const scopes = await permissionKeys(key);
-        expect([scopes['employees.view'], scopes['employees.create'], scopes['employees.update']], key).toEqual(['team', 'team', 'team']);
+        expect([scopes['employees.view'], scopes['employees.create'], scopes['employees.update']], key).toEqual(['team', undefined, 'team']);
       }
     });
 
-    it('lets a head add someone to their team, always as an Employee', async () => {
-      const founderRole = await people.roleId('Founder');
-      const { data, error } = await addAs('designHead', {
-        role_id: founderRole,
-        department_id: designDepartment,
-        reporting_manager_id: ids.lead!,
+    it('stops a head or Client Manager adding anyone, even to their own team', async () => {
+      const employeeRole = await people.roleId('Employee');
+      const byHead = await addAs('designHead', { role_id: employeeRole, department_id: designDepartment, reporting_manager_id: ids.lead! });
+      const byManager = await addAs('manager', {
+        role_id: employeeRole,
+        department_id: await people.departmentId('Client Services'),
+        reporting_manager_id: ids.manager!,
       });
 
-      expect(error).toBeNull();
-      expect(data?.role?.name).toBe('Employee');
+      expect(byHead.error?.code).toBe('42501');
+      expect(byManager.error?.code).toBe('42501');
     });
 
-    it('refuses someone reporting outside the team, or in another department', async () => {
-      const employeeRole = await people.roleId('Employee');
-      const outsideTeam = await addAs('designHead', { role_id: employeeRole, department_id: designDepartment, reporting_manager_id: ids.outsider! });
-      const noManager = await addAs('designHead', { role_id: employeeRole, department_id: designDepartment, reporting_manager_id: null });
-      const otherDepartment = await addAs('designHead', {
-        role_id: employeeRole,
-        department_id: await people.departmentId('Finance'),
-        reporting_manager_id: ids.designHead!,
-      });
-
-      expect(outsideTeam.error?.code).toBe('42501');
-      expect(noManager.error?.code).toBe('42501');
-      expect(otherDepartment.error?.code).toBe('42501');
+    it('leaves adding people to the Founder (and HR)', async () => {
+      const { error } = await addAs('founder', { role_id: await people.roleId('Employee'), department_id: designDepartment, reporting_manager_id: ids.lead! });
+      expect(error).toBeNull();
+      expect((await permissionKeys('founder'))['employees.create']).toBe('organisation');
     });
 
     it('lets a head edit their team, but not move someone out of it', async () => {

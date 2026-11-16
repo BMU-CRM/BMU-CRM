@@ -89,6 +89,19 @@ export async function checkPassword(db: SqlDatabase, email: string, password: st
   return { status: 'ok', userId: user.id };
 }
 
+// Checks the signed-in person's own password again, before something sensitive is shown.
+// A login that only uses Google has no password to check.
+export async function confirmOwnPassword(db: SqlDatabase, userId: string, password: string): Promise<'ok' | 'invalid' | 'no-password'> {
+  const { rows } = await db.query<{ encrypted_password: string | null }>(
+    `select encrypted_password from app_auth.users where id = $1 and coalesce(banned_until <= now(), true)`,
+    [userId],
+  );
+  const stored = rows[0]?.encrypted_password ?? null;
+  if (rows[0] && !stored) return 'no-password';
+  const matches = await verifyPassword(password, stored ?? 'scrypt$16384$8$AAAAAAAAAAAAAAAAAAAAAA==$AAAA');
+  return rows[0] && matches ? 'ok' : 'invalid';
+}
+
 export async function createSession(db: SqlDatabase, userId: string) {
   const token = newToken();
   const expiresAt = new Date(Date.now() + sessionDays * 24 * 60 * 60 * 1000);

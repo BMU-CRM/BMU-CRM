@@ -19,3 +19,18 @@ export async function isRateLimited(db: SqlDatabase, key: string) {
   );
   return (rows[0]?.earlier ?? 0) + 1 > maxAttempts;
 }
+
+// For password checks that only count the wrong ones: whether too many wrong attempts
+// were made lately, without recording one.
+export async function hasTooManyFailures(db: SqlDatabase, key: string) {
+  const { rows } = await db.query<{ earlier: number }>(
+    `select count(*)::int as earlier from app_auth.sign_in_attempts
+     where key = $1 and attempted_at > now() - make_interval(mins => $2)`,
+    [key.trim().toLowerCase(), windowMinutes],
+  );
+  return (rows[0]?.earlier ?? 0) >= maxAttempts;
+}
+
+export async function recordFailure(db: SqlDatabase, key: string) {
+  await db.query(`insert into app_auth.sign_in_attempts (key) values ($1)`, [key.trim().toLowerCase()]);
+}

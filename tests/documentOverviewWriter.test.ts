@@ -47,6 +47,20 @@ describe('writing the overview', () => {
     expect(writeOverview({ kind: 'quotation', companyName: 'BMU Marketing', clientName: ' ', items: two })).toBe('');
   });
 
+  it('names items typed by hand from their service or the start of their description', () => {
+    const text = writeOverview({
+      kind: 'quotation',
+      companyName: 'BMU Marketing',
+      clientName: 'Chiranvi Farm',
+      items: [
+        { serviceName: '', billing: '', description: 'Logo design: three concepts and two rounds of changes' },
+        { serviceName: '', billing: '', serviceGroup: 'Video Production', description: 'Two reels a month' },
+      ],
+    });
+    expect(text).toContain('two services: Logo design and Video Production.');
+    expect(writeTitle('quotation', 'Chiranvi Farm', [{ serviceName: '', billing: '', description: 'Brand film. 60 seconds' }])).toBe('Brand film');
+  });
+
   it('makes a title from the services, or from the client', () => {
     expect(writeTitle('quotation', 'VAMIKA', two)).toBe('Social Media Management and Google Business Profile');
     expect(writeTitle('invoice', 'VAMIKA', [{ serviceName: '', billing: '' }])).toBe('Invoice for VAMIKA');

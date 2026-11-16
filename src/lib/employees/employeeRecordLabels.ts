@@ -61,6 +61,11 @@ export function maskAccount(last4: string | null) {
   return last4 ? `XXXXXX${last4}` : null;
 }
 
+// ABCDE1234F becomes XXXXXX234F.
+export function maskPan(pan: string | null) {
+  return pan ? `XXXXXX${pan.slice(-4)}` : null;
+}
+
 // 123456789012 becomes 1234 5678 9012.
 export function formatAadhaar(digits: string) {
   return digits.replace(/(\d{4})(?=\d)/g, '$1 ');

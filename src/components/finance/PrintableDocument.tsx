@@ -254,10 +254,10 @@ export function PrintableDocument({
   const paid = money.amount_paid ?? 0;
   const due = sumMoney([money.total, -paid]);
   const paidInFull = paid > 0 && due <= 0;
-  // Page breaks: up to two items, the payment details usually fit on page 1 and the terms
-  // start page 2; with three, the payment details go to page 2 with the terms. More than
-  // three run onto page 2 anyway, and everything follows them. PrintLayoutFit measures
-  // the page and corrects the first two cases.
+  // Page breaks: with one or two items, the payment details stay on page 1 and the terms
+  // start page 2 (PrintLayoutFit tightens the spacing if page 1 is nearly full); with
+  // three, the payment details go to page 2 with the terms. More than three run onto
+  // page 2 anyway, and the payment details follow them there.
   const showPayment = showBankDetails && !paidInFull;
   const layout: PrintLayout = lines.length > itemsOnFirstPage ? 'flow' : lines.length <= 2 ? 'payment-first' : 'payment-next';
   const hasTerms = Boolean(notes || terms);

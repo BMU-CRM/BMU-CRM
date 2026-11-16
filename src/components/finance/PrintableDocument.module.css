@@ -176,9 +176,9 @@
   text-align: center;
 }
 
-/* Where the pages break, chosen by PrintLayoutFit:
-   - payment-first: the payment details fit on page 1; the terms start page 2.
-   - payment-next: they do not fit; they start page 2, with the terms after them.
+/* Where the pages break, from the number of items:
+   - payment-first (one or two items): the payment details on page 1; the terms start page 2.
+   - payment-next (three items): the payment details start page 2, with the terms after them.
    - flow: the items already run onto page 2; everything follows them. */
 .sheet[data-layout='payment-first'] .closingPart[data-has-terms='true'] {
   break-before: page;
@@ -196,6 +196,41 @@
 .terms,
 .signOff {
   break-inside: avoid;
+}
+
+/* With one or two items, the payment details always stay on page 1. When the page is
+   nearly full (long descriptions, a three-line overview), PrintLayoutFit sets
+   data-compact and the spacing tightens, so they still fit. */
+.sheet[data-compact='true'] .parties {
+  padding: 16px 0 14px;
+}
+
+.sheet[data-compact='true'] .overview {
+  margin-bottom: 12px;
+  padding: 8px 14px;
+}
+
+.sheet[data-compact='true'] .items td {
+  padding: 8px 12px;
+}
+
+.sheet[data-compact='true'] .summary {
+  padding: 12px 0 4px;
+}
+
+.sheet[data-compact='true'] .totalDue {
+  margin-top: 8px;
+  padding: 10px 16px;
+}
+
+.sheet[data-compact='true'] .payment {
+  margin: 8px 0 0;
+  padding: 10px 16px;
+}
+
+.sheet[data-compact='true'] .qr img {
+  width: 96px;
+  height: 96px;
 }
 
 /* The project in up to three lines, under who it is for. */

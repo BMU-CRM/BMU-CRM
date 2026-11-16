@@ -2,9 +2,9 @@ import { Pencil } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/Button';
 import { Panel } from '@/components/ui/Panel';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
-import { maskAadhaar, maskAccount } from '@/lib/employees/employeeRecordLabels';
+import { maskAadhaar, maskAccount, maskPan } from '@/lib/employees/employeeRecordLabels';
 import type { PrivateDetails } from '@/server/services/employeeService';
-import { RevealNumberButton } from './RevealNumberButton';
+import { PrivateNumberField } from './PrivateNumberField';
 
 type EmployeePrivatePanelProps = {
   employeeId: string;
@@ -20,11 +20,13 @@ const notSet = 'Not set';
 export function EmployeePrivatePanel({ employeeId, details, canEdit, encryptionReady }: EmployeePrivatePanelProps) {
   const aadhaar = maskAadhaar(details?.aadhaar_last4 ?? null);
   const account = maskAccount(details?.account_last4 ?? null);
+  // Only the masked PAN is sent to the browser; the full one needs the password.
+  const pan = maskPan(details?.pan ?? null);
 
   return (
     <Panel
       title="ID and bank details"
-      description="Seen only by this person and HR. Showing a full number is recorded."
+      description="Seen only by this person and HR. Showing a full number asks for your password and is recorded."
       action={
         canEdit && (
           <ButtonLink href={`/people/employees/${employeeId}/private/edit`} variant="ghost">
@@ -43,11 +45,11 @@ export function EmployeePrivatePanel({ employeeId, details, canEdit, encryptionR
       <dl className={layout.facts}>
         <div>
           <dt>Aadhaar</dt>
-          <dd>{aadhaar ? <RevealNumberButton employeeId={employeeId} field="aadhaar" masked={aadhaar} label="Aadhaar number" /> : notSet}</dd>
+          <dd>{aadhaar ? <PrivateNumberField employeeId={employeeId} field="aadhaar" masked={aadhaar} label="Aadhaar number" /> : notSet}</dd>
         </div>
         <div>
           <dt>PAN</dt>
-          <dd>{details?.pan ?? notSet}</dd>
+          <dd>{pan ? <PrivateNumberField employeeId={employeeId} field="pan" masked={pan} label="PAN" /> : notSet}</dd>
         </div>
         <div>
           <dt>Bank</dt>
@@ -56,7 +58,7 @@ export function EmployeePrivatePanel({ employeeId, details, canEdit, encryptionR
         <div>
           <dt>Account number</dt>
           <dd>
-            {account ? <RevealNumberButton employeeId={employeeId} field="account_number" masked={account} label="account number" /> : notSet}
+            {account ? <PrivateNumberField employeeId={employeeId} field="account_number" masked={account} label="account number" /> : notSet}
           </dd>
         </div>
         <div>

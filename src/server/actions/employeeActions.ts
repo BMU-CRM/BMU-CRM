@@ -21,7 +21,9 @@ import {
 } from '@/lib/validation/employeeSchema';
 import { formatAadhaar } from '@/lib/employees/employeeRecordLabels';
 import { sendInvitation, sendPasswordReset } from '@/server/auth/accountEmails';
-import { setAuthUserBlocked } from '@/server/auth/authAccounts';
+import { confirmOwnPassword, setAuthUserBlocked } from '@/server/auth/authAccounts';
+import { getSessionUser } from '@/server/auth/currentSession';
+import { hasTooManyFailures, recordFailure } from '@/server/auth/signInRateLimit';
 import { createEmployeeWithLogin } from '@/server/services/employeeCreation';
 import { getAppDatabase } from '@/server/database/appDatabase';
 import { decryptField, encryptField, isEncryptionReady } from '@/server/security/fieldEncryption';
@@ -32,6 +34,7 @@ import {
   getEmployeeControls,
   getEmployeeRecordAccess,
   getEncryptedDetail,
+  getPrivateDetails,
 } from '@/server/services/employeeService';
 
 const noPermission = 'You do not have permission to do this.';
@@ -361,18 +364,45 @@ export async function savePrivateDetailsAction(
 
 export type RevealResult = { status: 'success'; value: string } | { status: 'error'; message: string };
 
-// Shows one full number. The database records who looked, and refuses anyone without
-// access, before anything is decrypted.
-export async function revealPrivateDetailAction(employeeId: string, field: 'aadhaar' | 'account_number'): Promise<RevealResult> {
+// Shows one full number, after the person showing it types their own password again.
+// The database records who looked, and refuses anyone without access, before anything
+// is decrypted.
+export async function revealPrivateDetailAction(
+  employeeId: string,
+  field: 'aadhaar' | 'account_number' | 'pan',
+  password: string,
+): Promise<RevealResult> {
   if (!(await getActionAccess())) return { status: 'error', message: noPermission };
-  if (field !== 'aadhaar' && field !== 'account_number') return { status: 'error', message: noPermission };
-  if (!isEncryptionReady()) {
+  if (field !== 'aadhaar' && field !== 'account_number' && field !== 'pan') return { status: 'error', message: noPermission };
+  if (field !== 'pan' && !isEncryptionReady()) {
     return { status: 'error', message: 'Encryption is not set up, so this number cannot be shown.' };
+  }
+
+  const user = await getSessionUser();
+  if (!user || user.blocked) return { status: 'error', message: noPermission };
+  if (typeof password !== 'string' || password.length === 0) return { status: 'error', message: 'Enter your password.' };
+  const db = await getAppDatabase();
+  const attemptsKey = `reveal:${user.userId}`;
+  if (await hasTooManyFailures(db, attemptsKey)) {
+    return { status: 'error', message: 'Too many wrong passwords. Please wait a few minutes and try again.' };
+  }
+  const check = await confirmOwnPassword(db, user.userId, password.slice(0, 200));
+  if (check === 'no-password') {
+    return { status: 'error', message: 'Your login has no password, as you sign in with Google. Ask an administrator for a password reset link to set one.' };
+  }
+  if (check !== 'ok') {
+    await recordFailure(db, attemptsKey);
+    return { status: 'error', message: 'That password is incorrect.' };
   }
 
   const database = await createDatabaseClient();
   const { error } = await database.rpc('record_private_detail_reveal', { p_employee: employeeId, p_field: field });
   if (error) return { status: 'error', message: noPermission };
+
+  if (field === 'pan') {
+    const pan = (await getPrivateDetails(employeeId))?.pan;
+    return pan ? { status: 'success', value: pan } : { status: 'error', message: 'Nothing is saved yet.' };
+  }
 
   const stored = await getEncryptedDetail(employeeId, field);
   if (!stored) return { status: 'error', message: 'Nothing is saved yet.' };
