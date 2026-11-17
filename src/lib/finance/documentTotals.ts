@@ -41,6 +41,20 @@ export function isInterStateSupply(companyState: string | null | undefined, plac
   return company !== '' && place !== '' && company !== place;
 }
 
+// The GST rate when every item has the same one, as on quotations and invoices, where it
+// is chosen once for the whole document; null when the rates differ or there are none.
+export function sharedTaxRate(lines: { tax_rate: number }[]) {
+  const rates = new Set(lines.map((line) => Number(line.tax_rate)));
+  return rates.size === 1 ? [...rates][0]! : null;
+}
+
+// "CGST (9%)", "SGST (9%)" and "IGST (18%)" for one shared rate; plain names otherwise.
+export function taxLabels(rate: number | null) {
+  const percent = (value: number) => `${Number(value.toFixed(2))}%`;
+  if (rate === null) return { cgst: 'CGST', sgst: 'SGST', igst: 'IGST' };
+  return { cgst: `CGST (${percent(rate / 2)})`, sgst: `SGST (${percent(rate / 2)})`, igst: `IGST (${percent(rate)})` };
+}
+
 // Adds money without floating-point drift.
 export function sumMoney(values: number[]) {
   return values.reduce((total, value) => total + Math.round(value * 100), 0) / 100;

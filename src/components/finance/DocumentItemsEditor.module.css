@@ -42,6 +42,12 @@
   gap: var(--space-2);
 }
 
+/* One GST rate for the whole document: no GST column on each item. */
+.editor[data-one-rate] .header,
+.editor[data-one-rate] .row {
+  grid-template-columns: minmax(0, 4fr) minmax(0, 0.8fr) minmax(0, 1.2fr) minmax(0, 1.2fr) 5.5rem;
+}
+
 .row {
   align-items: start;
 }
@@ -97,6 +103,23 @@
   margin-top: var(--space-2);
 }
 
+.totalsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+/* The document's GST rate, above the totals it decides. */
+.documentRate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 14rem;
+  max-width: 100%;
+  margin-left: auto;
+}
+
 .totals {
   display: grid;
   grid-template-columns: auto auto;
@@ -122,7 +145,8 @@
     display: none;
   }
 
-  .row {
+  .row,
+  .editor[data-one-rate] .row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: var(--space-3);
     border: 1px solid var(--color-border);

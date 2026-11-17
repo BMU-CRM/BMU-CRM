@@ -13,7 +13,7 @@ import {
   servicePlans,
   type PricedService,
 } from '@/lib/catalog/servicePricing';
-import { documentTotals, lineAmounts } from '@/lib/finance/documentTotals';
+import { documentTotals, lineAmounts, taxLabels } from '@/lib/finance/documentTotals';
 import { formatQuantity, formatRupees } from '@/lib/finance/moneyFormat';
 import { standardTaxRates } from '@/lib/validation/financeSchema';
 import styles from './DocumentItemsEditor.module.css';
@@ -52,6 +52,9 @@ type DocumentItemsEditorProps = {
   services?: PricedService[];
   // Quotations and invoices say which service each item is and how it is billed.
   withServiceDetails?: boolean;
+  // One GST rate for the whole document, chosen beside the totals, instead of one per
+  // item. Every item is saved with it.
+  oneTaxRate?: boolean;
 };
 
 const billingChoices = [{ value: '', label: 'Not stated' }, ...serviceBillings.map((billing) => ({ value: billing, label: itemBillingLabels[billing] }))];
@@ -70,13 +73,24 @@ function priceListOptions(services: PricedService[]) {
 
 // The items of a quotation or invoice. The figures shown are worked out the same way
 // as in the database, which recalculates them when the form is saved.
-export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState, error, services = [], withServiceDetails = false }: DocumentItemsEditorProps) {
+export function DocumentItemsEditor({
+  initialItems,
+  defaultTaxRate,
+  isInterState,
+  error,
+  services = [],
+  withServiceDetails = false,
+  oneTaxRate = false,
+}: DocumentItemsEditorProps) {
+  // The document's GST rate: the saved items' rate, or the default for a new one.
+  const [documentRate, setDocumentRate] = useState(() => String(toNumber(initialItems[0]?.taxRate ?? String(defaultTaxRate))));
+  const mixedRates = oneTaxRate && new Set(initialItems.map((item) => toNumber(item.taxRate))).size > 1;
   const blank = (): ItemDraft => ({
     description: '',
     hsnSac: '',
     quantity: '1',
     unitPrice: '',
-    taxRate: String(defaultTaxRate),
+    taxRate: oneTaxRate ? documentRate : String(defaultTaxRate),
     serviceGroup: '',
     serviceName: '',
     billing: '',
@@ -115,16 +129,20 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
     });
   }
 
-  const rateOptions = [...new Set([...standardTaxRates, defaultTaxRate, ...lines.map((line) => toNumber(line.taxRate))])].sort((a, b) => a - b);
-  const figures = lines.map((line) => ({ quantity: toNumber(line.quantity), unitPrice: toNumber(line.unitPrice), taxRate: toNumber(line.taxRate) }));
+  const rateOf = (line: Line) => toNumber(oneTaxRate ? documentRate : line.taxRate);
+  const rateOptions = [...new Set([...standardTaxRates, defaultTaxRate, toNumber(documentRate), ...lines.map((line) => toNumber(line.taxRate))])]
+    .sort((a, b) => a - b)
+    .map((rate) => ({ value: String(rate), label: `${formatQuantity(rate)}%` }));
+  const figures = lines.map((line) => ({ quantity: toNumber(line.quantity), unitPrice: toNumber(line.unitPrice), taxRate: rateOf(line) }));
   const totals = documentTotals(figures, isInterState);
+  const taxNames = taxLabels(oneTaxRate ? toNumber(documentRate) : null);
 
   function update(key: number, field: keyof ItemDraft, value: string) {
     setLines((current) => current.map((line) => (line.key === key ? { ...line, [field]: value } : line)));
   }
 
   return (
-    <div className={styles.editor}>
+    <div className={styles.editor} data-one-rate={oneTaxRate || undefined}>
       {error && (
         <p className={formStyles.error} role="alert">
           {error}
@@ -134,7 +152,7 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
         <span>Description</span>
         <span className={styles.numeric}>Qty</span>
         <span className={styles.numeric}>Rate (₹)</span>
-        <span>GST</span>
+        {!oneTaxRate && <span>GST</span>}
         <span className={styles.numeric}>Amount</span>
         <span />
       </div>
@@ -224,17 +242,21 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
                 onChange={(event) => update(line.key, 'unitPrice', event.target.value)}
               />
             </label>
-            <label className={styles.cell}>
-              <span className={styles.mobileLabel}>GST</span>
-              <SearchableSelect
-                id={`${id}-tax`}
-                name="itemTaxRate"
-                aria-label={`Item ${index + 1} GST rate`}
-                value={String(toNumber(line.taxRate))}
-                onChange={(event) => update(line.key, 'taxRate', event.target.value)}
-                options={rateOptions.map((rate) => ({ value: String(rate), label: `${formatQuantity(rate)}%` }))}
-              />
-            </label>
+            {oneTaxRate ? (
+              <input type="hidden" name="itemTaxRate" value={String(rateOf(line))} />
+            ) : (
+              <label className={styles.cell}>
+                <span className={styles.mobileLabel}>GST</span>
+                <SearchableSelect
+                  id={`${id}-tax`}
+                  name="itemTaxRate"
+                  aria-label={`Item ${index + 1} GST rate`}
+                  value={String(toNumber(line.taxRate))}
+                  onChange={(event) => update(line.key, 'taxRate', event.target.value)}
+                  options={rateOptions}
+                />
+              </label>
+            )}
             <div className={styles.cell}>
               <span className={styles.mobileLabel}>Amount</span>
               <span className={styles.amount}>{formatRupees(amount)}</span>
@@ -289,25 +311,42 @@ export function DocumentItemsEditor({ initialItems, defaultTaxRate, isInterState
         >
           Add item
         </Button>
+        <div className={styles.totalsColumn}>
+        {oneTaxRate && (
+          <div className={styles.documentRate}>
+            <label htmlFor="document-tax-rate" className={formStyles.label}>
+              GST on the total
+            </label>
+            <SearchableSelect
+              id="document-tax-rate"
+              name="documentTaxRate"
+              value={String(toNumber(documentRate))}
+              onChange={(event) => setDocumentRate(event.target.value)}
+              options={rateOptions}
+            />
+            {mixedRates && <p className={formStyles.hint}>The items had different GST rates. Saving applies this one to all of them.</p>}
+          </div>
+        )}
         <dl className={styles.totals} aria-live="polite">
           <dt>Taxable value</dt>
           <dd>{formatRupees(totals.subtotal)}</dd>
           {isInterState ? (
             <>
-              <dt>IGST</dt>
+              <dt>{taxNames.igst}</dt>
               <dd>{formatRupees(totals.igst)}</dd>
             </>
           ) : (
             <>
-              <dt>CGST</dt>
+              <dt>{taxNames.cgst}</dt>
               <dd>{formatRupees(totals.cgst)}</dd>
-              <dt>SGST</dt>
+              <dt>{taxNames.sgst}</dt>
               <dd>{formatRupees(totals.sgst)}</dd>
             </>
           )}
           <dt className={styles.grandTotal}>Total</dt>
           <dd className={styles.grandTotal}>{formatRupees(totals.total)}</dd>
         </dl>
+        </div>
       </div>
     </div>
   );

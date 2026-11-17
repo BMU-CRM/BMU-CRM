@@ -452,6 +452,7 @@ export function FinanceDocumentForm({
             error={errors?.items}
             services={services}
             withServiceDetails
+            oneTaxRate
           />
           </div>
         </Panel>

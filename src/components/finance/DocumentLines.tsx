@@ -1,5 +1,5 @@
 import styles from '@/components/ui/DataTable.module.css';
-import { sumMoney } from '@/lib/finance/documentTotals';
+import { sharedTaxRate, sumMoney, taxLabels } from '@/lib/finance/documentTotals';
 import { amountInWords, formatQuantity, formatRupees } from '@/lib/finance/moneyFormat';
 import lineStyles from './DocumentLines.module.css';
 
@@ -25,8 +25,12 @@ export type DocumentMoney = {
 };
 
 // The items and totals of a quotation or invoice, as stored by the database.
+// With one GST rate for every item, the rate is shown with the tax in the totals rather
+// than on each item.
 export function DocumentLines({ lines, money }: { lines: DocumentLine[]; money: DocumentMoney }) {
   const paid = money.amount_paid ?? 0;
+  const rate = sharedTaxRate(lines);
+  const labels = taxLabels(rate);
 
   return (
     <>
@@ -42,9 +46,11 @@ export function DocumentLines({ lines, money }: { lines: DocumentLine[]; money: 
               <th scope="col" className={styles.numeric}>
                 Rate
               </th>
-              <th scope="col" className={styles.numeric}>
-                GST
-              </th>
+              {rate === null && (
+                <th scope="col" className={styles.numeric}>
+                  GST
+                </th>
+              )}
               <th scope="col" className={styles.numeric}>
                 Amount
               </th>
@@ -57,7 +63,7 @@ export function DocumentLines({ lines, money }: { lines: DocumentLine[]; money: 
                 <td>{line.hsn_sac ?? ''}</td>
                 <td className={styles.numeric}>{formatQuantity(line.quantity)}</td>
                 <td className={styles.numeric}>{formatRupees(line.unit_price)}</td>
-                <td className={styles.numeric}>{formatQuantity(line.tax_rate)}%</td>
+                {rate === null && <td className={styles.numeric}>{formatQuantity(line.tax_rate)}%</td>}
                 <td className={styles.numeric}>{formatRupees(line.taxable_amount)}</td>
               </tr>
             ))}
@@ -69,14 +75,14 @@ export function DocumentLines({ lines, money }: { lines: DocumentLine[]; money: 
         <dd>{formatRupees(money.subtotal)}</dd>
         {money.is_inter_state ? (
           <>
-            <dt>IGST</dt>
+            <dt>{labels.igst}</dt>
             <dd>{formatRupees(money.igst_total)}</dd>
           </>
         ) : (
           <>
-            <dt>CGST</dt>
+            <dt>{labels.cgst}</dt>
             <dd>{formatRupees(money.cgst_total)}</dd>
-            <dt>SGST</dt>
+            <dt>{labels.sgst}</dt>
             <dd>{formatRupees(money.sgst_total)}</dd>
           </>
         )}

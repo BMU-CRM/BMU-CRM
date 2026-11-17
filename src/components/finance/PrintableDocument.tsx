@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { Fragment, type ReactNode } from 'react';
 import { isServiceBilling, itemBillingLabels } from '@/lib/catalog/servicePricing';
-import { sumMoney } from '@/lib/finance/documentTotals';
+import { sharedTaxRate, sumMoney, taxLabels } from '@/lib/finance/documentTotals';
 import { stateCode } from '@/lib/finance/indianStates';
 import { amountInWords, formatAmount, formatQuantity, formatRupees } from '@/lib/finance/moneyFormat';
 import type { FinanceSettings } from '@/server/services/financeService';
@@ -261,6 +261,8 @@ export function PrintableDocument({
   const showPayment = showBankDetails && !paidInFull;
   const layout: PrintLayout = lines.length > itemsOnFirstPage ? 'flow' : lines.length <= 2 ? 'payment-first' : 'payment-next';
   const hasTerms = Boolean(notes || terms);
+  // One GST rate on the whole document: shown with the tax, such as "CGST (9%)".
+  const taxNames = taxLabels(sharedTaxRate(lines));
 
   return (
     <div className={styles.screen}>
@@ -370,14 +372,14 @@ export function PrintableDocument({
               <dd>{formatRupees(money.subtotal)}</dd>
               {money.is_inter_state ? (
                 <>
-                  <dt>IGST</dt>
+                  <dt>{taxNames.igst}</dt>
                   <dd>{formatRupees(money.igst_total)}</dd>
                 </>
               ) : (
                 <>
-                  <dt>CGST</dt>
+                  <dt>{taxNames.cgst}</dt>
                   <dd>{formatRupees(money.cgst_total)}</dd>
-                  <dt>SGST</dt>
+                  <dt>{taxNames.sgst}</dt>
                   <dd>{formatRupees(money.sgst_total)}</dd>
                 </>
               )}
