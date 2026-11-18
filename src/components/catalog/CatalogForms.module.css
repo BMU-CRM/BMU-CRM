@@ -4,3 +4,17 @@
   flex-direction: column;
   gap: var(--space-3);
 }
+
+/* A bundle's plan prices, worked out from its sub services. */
+.prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.prices strong {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}

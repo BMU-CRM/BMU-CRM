@@ -9,7 +9,7 @@ import {
   type ActionResult,
 } from '@/lib/actionResult';
 import { permissionKeys } from '@/lib/access/permissionKeys';
-import { industrySchema, serviceGroupSchema, serviceSchema } from '@/lib/validation/catalogSchema';
+import { industrySchema, serviceBundleSchema, serviceGroupSchema, serviceSchema } from '@/lib/validation/catalogSchema';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import { getActionAccess } from '@/server/services/accessService';
 
@@ -79,6 +79,42 @@ export async function saveServiceAction(serviceId: string | null, _previous: Act
 
   refresh();
   return success(serviceId ? 'Sub service saved.' : 'Sub service added.');
+}
+
+// A bundle keeps the order its sub services were added in, which is the order printed
+// on the item: those kept stay where they were, new ones go at the end.
+export async function saveServiceBundleAction(bundleId: string | null, _previous: ActionResult, formData: FormData): Promise<ActionResult> {
+  if (!(await getActionAccess(permissionKeys.catalogManage))) return failure(noPermission);
+
+  const parsed = serviceBundleSchema.safeParse({
+    name: formData.get('name') ?? '',
+    serviceIds: formData.getAll('serviceIds').map(String),
+    savingPercent: formData.get('savingPercent') ?? '',
+    isActive: bundleId ? formData.get('isActive') === 'on' : true,
+  });
+  if (!parsed.success) return validationFailure(parsed.error);
+
+  const database = await createDatabaseClient();
+  let serviceIds = parsed.data.serviceIds;
+  if (bundleId) {
+    const { data: current } = await database.from('service_bundles').select('service_ids').eq('id', bundleId).maybeSingle();
+    if (current) {
+      const chosen = new Set(serviceIds);
+      const kept = current.service_ids.filter((id) => chosen.has(id));
+      serviceIds = [...kept, ...serviceIds.filter((id) => !kept.includes(id))];
+    }
+  }
+
+  const row = { name: parsed.data.name, service_ids: serviceIds, saving_percent: parsed.data.savingPercent, is_active: parsed.data.isActive };
+  const { data, error } = bundleId
+    ? await database.from('service_bundles').update(row).eq('id', bundleId).select('id')
+    : await database.from('service_bundles').insert({ ...row, sort_order: 1000 }).select('id');
+
+  if (error) return databaseFailure(error, 'A bundle with this name already exists.');
+  if (data.length === 0) return failure(noPermission);
+
+  refresh();
+  return success(bundleId ? 'Bundle saved.' : 'Bundle added.');
 }
 
 export async function saveIndustryAction(industryId: string | null, _previous: ActionResult, formData: FormData): Promise<ActionResult> {

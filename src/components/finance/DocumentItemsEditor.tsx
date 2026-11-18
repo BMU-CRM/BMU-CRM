@@ -7,7 +7,7 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import {
   billingShort,
   itemBillingLabels,
-  serviceBillings,
+  itemBillings,
   serviceItemDescription,
   serviceItemName,
   servicePlans,
@@ -57,16 +57,17 @@ type DocumentItemsEditorProps = {
   oneTaxRate?: boolean;
 };
 
-const billingChoices = [{ value: '', label: 'Not stated' }, ...serviceBillings.map((billing) => ({ value: billing, label: itemBillingLabels[billing] }))];
+const billingChoices = [{ value: '', label: 'Not stated' }, ...itemBillings.map((billing) => ({ value: billing, label: itemBillingLabels[billing] }))];
 
-// Each sub service and plan that has a price, as one choice.
+// Each sub service and plan that has a price, as one choice, then each bundle and plan,
+// such as "Bundle › Brand Launch — Starter · ₹67,500".
 function priceListOptions(services: PricedService[]) {
   return services.flatMap((service) =>
     servicePlans
       .filter((plan) => service.prices[plan.key] !== null)
       .map((plan) => ({
         value: `${service.id}:${plan.key}`,
-        label: `${service.group} › ${service.name} — ${plan.label} · ${formatRupees(service.prices[plan.key] ?? 0)} ${billingShort[service.billing]}`,
+        label: `${service.group} › ${service.name} — ${plan.label} · ${formatRupees(service.prices[plan.key] ?? 0)}${service.isBundle ? '' : ` ${billingShort[service.billing]}`}`,
       })),
   );
 }
@@ -82,15 +83,19 @@ export function DocumentItemsEditor({
   withServiceDetails = false,
   oneTaxRate = false,
 }: DocumentItemsEditorProps) {
-  // The document's GST rate: the saved items' rate, or the default for a new one.
-  const [documentRate, setDocumentRate] = useState(() => String(toNumber(initialItems[0]?.taxRate ?? String(defaultTaxRate))));
+  // The document's GST: whether it is added, and at what rate. A saved document with no
+  // GST on its items starts with it off; a new one follows the default rate.
+  const savedRate = initialItems.length > 0 ? toNumber(initialItems[0]!.taxRate) : defaultTaxRate;
+  const [gstOn, setGstOn] = useState(savedRate > 0);
+  const [documentRate, setDocumentRate] = useState(() => String(savedRate > 0 ? savedRate : defaultTaxRate > 0 ? defaultTaxRate : 18));
+  const appliedRate = gstOn ? toNumber(documentRate) : 0;
   const mixedRates = oneTaxRate && new Set(initialItems.map((item) => toNumber(item.taxRate))).size > 1;
   const blank = (): ItemDraft => ({
     description: '',
     hsnSac: '',
     quantity: '1',
     unitPrice: '',
-    taxRate: oneTaxRate ? documentRate : String(defaultTaxRate),
+    taxRate: oneTaxRate ? String(appliedRate) : String(defaultTaxRate),
     serviceGroup: '',
     serviceName: '',
     billing: '',
@@ -116,7 +121,8 @@ export function DocumentItemsEditor({
     const filled = {
       description: serviceItemDescription(service, plan),
       unitPrice: String(price),
-      serviceGroup: service.group,
+      // A bundle is not under a service; it shows as "Bundle" from its billing.
+      serviceGroup: service.isBundle ? '' : service.group,
       serviceName: serviceItemName(service, plan),
       billing: service.billing,
     };
@@ -129,13 +135,15 @@ export function DocumentItemsEditor({
     });
   }
 
-  const rateOf = (line: Line) => toNumber(oneTaxRate ? documentRate : line.taxRate);
+  const rateOf = (line: Line) => (oneTaxRate ? appliedRate : toNumber(line.taxRate));
   const rateOptions = [...new Set([...standardTaxRates, defaultTaxRate, toNumber(documentRate), ...lines.map((line) => toNumber(line.taxRate))])]
     .sort((a, b) => a - b)
     .map((rate) => ({ value: String(rate), label: `${formatQuantity(rate)}%` }));
   const figures = lines.map((line) => ({ quantity: toNumber(line.quantity), unitPrice: toNumber(line.unitPrice), taxRate: rateOf(line) }));
   const totals = documentTotals(figures, isInterState);
-  const taxNames = taxLabels(oneTaxRate ? toNumber(documentRate) : null);
+  const taxNames = taxLabels(oneTaxRate ? appliedRate : null);
+  // Without GST the totals are just the items, with no tax lines.
+  const showTax = !oneTaxRate || gstOn;
 
   function update(key: number, field: keyof ItemDraft, value: string) {
     setLines((current) => current.map((line) => (line.key === key ? { ...line, [field]: value } : line)));
@@ -314,23 +322,29 @@ export function DocumentItemsEditor({
         <div className={styles.totalsColumn}>
         {oneTaxRate && (
           <div className={styles.documentRate}>
-            <label htmlFor="document-tax-rate" className={formStyles.label}>
-              GST on the total
+            {/* On by default; off for a client billed without GST. */}
+            <label className={styles.gstSwitch}>
+              <input type="checkbox" role="switch" checked={gstOn} onChange={(event) => setGstOn(event.target.checked)} />
+              Add GST
             </label>
-            <SearchableSelect
-              id="document-tax-rate"
-              name="documentTaxRate"
-              value={String(toNumber(documentRate))}
-              onChange={(event) => setDocumentRate(event.target.value)}
-              options={rateOptions}
-            />
+            {gstOn && (
+              <SearchableSelect
+                id="document-tax-rate"
+                aria-label="GST rate on the total"
+                name="documentTaxRate"
+                value={String(toNumber(documentRate))}
+                onChange={(event) => setDocumentRate(event.target.value)}
+                options={rateOptions.filter((option) => option.value !== '0')}
+              />
+            )}
+            {!gstOn && <p className={formStyles.hint}>No GST: the total is the items alone.</p>}
             {mixedRates && <p className={formStyles.hint}>The items had different GST rates. Saving applies this one to all of them.</p>}
           </div>
         )}
         <dl className={styles.totals} aria-live="polite">
-          <dt>Taxable value</dt>
+          <dt>{showTax ? 'Taxable value' : 'Subtotal'}</dt>
           <dd>{formatRupees(totals.subtotal)}</dd>
-          {isInterState ? (
+          {!showTax ? null : isInterState ? (
             <>
               <dt>{taxNames.igst}</dt>
               <dd>{formatRupees(totals.igst)}</dd>

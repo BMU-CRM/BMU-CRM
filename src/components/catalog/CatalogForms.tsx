@@ -5,10 +5,13 @@ import hrStyles from '@/components/hr/HrForms.module.css';
 import { SelectField, TextField, type SelectOption } from '@/components/ui/FormFields';
 import { FormMessage } from '@/components/ui/FormMessage';
 import { KeepValuesForm } from '@/components/ui/KeepValuesForm';
+import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect';
+import type { SearchableOption } from '@/components/ui/SearchableSelect';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { idleResult, type ActionResult } from '@/lib/actionResult';
-import { billingLabels, serviceBillings, servicePlans } from '@/lib/catalog/servicePricing';
-import { saveIndustryAction, saveServiceAction, saveServiceGroupAction } from '@/server/actions/catalogActions';
+import { billingLabels, serviceBillings, servicePlans, type ServicePlan } from '@/lib/catalog/servicePricing';
+import { formatRupees } from '@/lib/finance/moneyFormat';
+import { saveIndustryAction, saveServiceAction, saveServiceBundleAction, saveServiceGroupAction } from '@/server/actions/catalogActions';
 import styles from './CatalogForms.module.css';
 
 type Entry = { id: string; name: string; is_active: boolean };
@@ -108,6 +111,66 @@ export function ServiceForm({ service, groupId, groups }: { service?: PricedEntr
         )}
         <SubmitButton label={service ? 'Save' : 'Add'} pendingLabel="Saving…" variant="secondary" />
       </div>
+      </div>
+    </KeepValuesForm>
+  );
+}
+
+type BundleEntry = Entry & {
+  saving_percent: number;
+  services: { id: string; name: string }[];
+  prices: Record<ServicePlan, number | null>;
+};
+
+// A bundle: its name, its sub services (printed on the item in this order) and the
+// saving taken off their total. Its plan prices are worked out from the sub services'.
+export function ServiceBundleForm({ bundle, serviceOptions }: { bundle?: BundleEntry; serviceOptions: SearchableOption[] }) {
+  const prefix = `bundle-${bundle?.id ?? 'new'}`;
+  const [result, formAction] = useActionState(saveServiceBundleAction.bind(null, bundle?.id ?? null), idleResult);
+  const errors = result.fieldErrors;
+
+  return (
+    <KeepValuesForm action={formAction} key={!bundle && result.status === 'success' ? result.message : prefix}>
+      <FormMessage result={result} />
+      <div className={styles.rows}>
+        <div className={hrStyles.inline}>
+          <TextField label="Bundle" name="name" id={`${prefix}-name`} defaultValue={bundle?.name} required error={errors?.name} />
+          <TextField
+            label="Saving (%)"
+            name="savingPercent"
+            id={`${prefix}-saving`}
+            inputMode="decimal"
+            defaultValue={bundle ? String(bundle.saving_percent) : '10'}
+            required
+            error={errors?.savingPercent}
+          />
+        </div>
+        <SearchableMultiSelect
+          id={`${prefix}-services`}
+          name="serviceIds"
+          label="Sub services in it"
+          options={serviceOptions}
+          defaultValue={bundle?.services.map((service) => service.id)}
+          hint="Printed on the item in the order added, such as “SEO + Social Media Management”."
+          error={errors?.serviceIds}
+        />
+        {bundle && (
+          <p className={styles.prices}>
+            {servicePlans.map((plan) => (
+              <span key={plan.key}>
+                {plan.label}: <strong>{bundle.prices[plan.key] === null ? 'No price' : formatRupees(bundle.prices[plan.key] ?? 0)}</strong>
+              </span>
+            ))}
+          </p>
+        )}
+        <div className={hrStyles.inline}>
+          {bundle && (
+            <label className={hrStyles.check}>
+              <input type="checkbox" name="isActive" defaultChecked={bundle.is_active} /> Can be chosen
+            </label>
+          )}
+          <SubmitButton label={bundle ? 'Save' : 'Add'} pendingLabel="Saving…" variant="secondary" />
+        </div>
       </div>
     </KeepValuesForm>
   );

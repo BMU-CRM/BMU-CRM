@@ -29,6 +29,21 @@ export const serviceSchema = z.object({
   premiumPrice: planPrice,
 });
 
+// A bundle: its name, the sub services in it and the saving taken off their total.
+export const serviceBundleSchema = z.object({
+  name: z.string().trim().min(2, 'Enter a name.').max(80, 'Use 80 characters or fewer.'),
+  serviceIds: z
+    .array(z.uuid())
+    .transform((ids) => [...new Set(ids)])
+    .pipe(z.array(z.uuid()).min(2, 'Choose at least two sub services.').max(20, 'Choose 20 sub services or fewer.')),
+  savingPercent: z
+    .string()
+    .trim()
+    .refine((value) => /^\d{1,2}(\.\d{1,2})?$/.test(value) && Number(value) <= 90, 'Enter a saving from 0 to 90 percent.')
+    .transform(Number),
+  isActive: z.boolean(),
+});
+
 export const industrySchema = z.object({
   name: z.string().trim().min(2, 'Enter a name.').max(80, 'Use 80 characters or fewer.'),
   isActive: z.boolean(),

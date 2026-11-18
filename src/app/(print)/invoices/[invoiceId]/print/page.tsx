@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PrintableDocument } from '@/components/finance/PrintableDocument';
 import { permissionKeys } from '@/lib/access/permissionKeys';
+import { sharedTaxRate } from '@/lib/finance/documentTotals';
 import { formatDate } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
@@ -40,14 +41,17 @@ export default async function PrintInvoicePage({ params }: PrintInvoicePageProps
   const signatory = await getSignatory(invoice.signed_by);
 
   const isDraft = invoice.status === 'draft';
+  // Billed without GST: an invoice, not a tax invoice.
+  const withoutGst = sharedTaxRate(items) === 0;
+  const isTaxInvoice = !isDraft && !withoutGst;
 
   return (
     <PrintableDocument
-      heading={isDraft ? 'Invoice' : 'Tax invoice'}
+      heading={isTaxInvoice ? 'Tax invoice' : 'Invoice'}
       fromLabel="Invoice from"
       partyLabel="Invoice to"
       overview={invoice.overview}
-      stamp={stamps[invoice.status]}
+      stamp={isDraft && withoutGst ? 'Draft' : stamps[invoice.status]}
       backHref={`/invoices/${invoice.id}`}
       facts={[
         { label: 'Invoice no.', value: invoice.invoice_number ?? 'Given when issued' },
@@ -62,7 +66,7 @@ export default async function PrintInvoicePage({ params }: PrintInvoicePageProps
       notes={invoice.notes}
       terms={invoice.terms}
       showBankDetails={invoice.status !== 'cancelled' && invoice.status !== 'paid'}
-      isTaxInvoice={!isDraft}
+      isTaxInvoice={isTaxInvoice}
       signatory={signatory}
       showSeal={invoice.show_seal}
       closingLine="Thank you for your business"

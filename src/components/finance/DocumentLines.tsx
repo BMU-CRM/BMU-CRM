@@ -71,9 +71,14 @@ export function DocumentLines({ lines, money }: { lines: DocumentLine[]; money: 
         </table>
       </div>
       <dl className={lineStyles.totals}>
-        <dt>Taxable value</dt>
+        <dt>{rate === 0 ? 'Subtotal' : 'Taxable value'}</dt>
         <dd>{formatRupees(money.subtotal)}</dd>
-        {money.is_inter_state ? (
+        {rate === 0 ? (
+          <>
+            <dt>GST</dt>
+            <dd>Not added</dd>
+          </>
+        ) : money.is_inter_state ? (
           <>
             <dt>{labels.igst}</dt>
             <dd>{formatRupees(money.igst_total)}</dd>

@@ -1,5 +1,12 @@
 import 'server-only';
-import { isServiceBilling, servicePlans, type PricedService } from '@/lib/catalog/servicePricing';
+import {
+  bundleDescription,
+  bundlePlanPrice,
+  isServiceBilling,
+  servicePlans,
+  type PricedService,
+  type ServicePlan,
+} from '@/lib/catalog/servicePricing';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 
 // The services (in groups) and industries clients choose from.
@@ -10,14 +17,18 @@ const byName =(first: { name: string }, second: { name: string }) => first.name.
 
 export async function getCatalog() {
   const database = await createDatabaseClient();
-  const [groups, services, industries] = await Promise.all([
+  const [groups, services, industries, bundles] = await Promise.all([
     database.from('service_groups').select('id, name, sort_order, is_active').order('sort_order').order('name'),
     database.from('services').select('id, group_id, name, is_active, billing, description, starter_price, growth_price, premium_price'),
     database.from('industries').select('id, name, is_active'),
+    database.from('service_bundles').select('id, name, service_ids, saving_percent, is_active, sort_order').order('sort_order').order('name'),
   ]);
   if (groups.error) throw groups.error;
   if (services.error) throw services.error;
   if (industries.error) throw industries.error;
+  if (bundles.error) throw bundles.error;
+
+  const serviceById = new Map(services.data.map((service) => [service.id, service]));
 
   return {
     groups: groups.data.map((group) => ({
@@ -25,8 +36,19 @@ export async function getCatalog() {
       services: services.data.filter((service) => service.group_id === group.id).sort(byName),
     })),
     industries: [...industries.data].sort(byName),
+    // Each bundle with its sub services, in order, and its price for each plan.
+    bundles: bundles.data.map((bundle) => {
+      const members = bundle.service_ids.flatMap((id) => serviceById.get(id) ?? []);
+      const savingPercent = Number(bundle.saving_percent);
+      const prices = Object.fromEntries(
+        servicePlans.map((plan) => [plan.key, bundlePlanPrice(members.map((member) => toPrice(member[`${plan.key}_price`])), savingPercent)]),
+      ) as Record<ServicePlan, number | null>;
+      return { ...bundle, saving_percent: savingPercent, services: members.map((member) => ({ id: member.id, name: member.name })), prices };
+    }),
   };
 }
+
+export type CatalogBundle = Catalog['bundles'][number];
 
 export type Catalog = Awaited<ReturnType<typeof getCatalog>>;
 
@@ -64,9 +86,11 @@ export type SubServiceOption = Awaited<ReturnType<typeof listServiceOptions>>[nu
 
 // Sub services with at least one plan price, for quotation and invoice items: under
 // their service, both alphabetical. Hidden ones are left out.
+// Bundles that can be chosen and have a price for at least one plan come last, under
+// "Bundle".
 export async function listPricedServices(): Promise<PricedService[]> {
-  const { groups } = await getCatalog();
-  return [...groups]
+  const { groups, bundles } = await getCatalog();
+  const services: PricedService[] = [...groups]
     .filter((group) => group.is_active)
     .sort(byName)
     .flatMap((group) =>
@@ -81,6 +105,18 @@ export async function listPricedServices(): Promise<PricedService[]> {
           prices: { starter: toPrice(service.starter_price), growth: toPrice(service.growth_price), premium: toPrice(service.premium_price) },
         })),
     );
+  const pricedBundles: PricedService[] = bundles
+    .filter((bundle) => bundle.is_active && Object.values(bundle.prices).some((price) => price !== null))
+    .map((bundle) => ({
+      id: bundle.id,
+      name: bundle.name,
+      group: 'Bundle',
+      billing: 'bundle',
+      description: bundleDescription(bundle.services.map((service) => service.name)),
+      prices: bundle.prices,
+      isBundle: true,
+    }));
+  return [...services, ...pricedBundles];
 }
 
 export type ClientServiceItem = {

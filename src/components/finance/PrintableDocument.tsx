@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { AppLink as Link } from '@/components/ui/AppLink';
 import { Fragment, type ReactNode } from 'react';
-import { isServiceBilling, itemBillingLabels } from '@/lib/catalog/servicePricing';
+import { isItemBilling, itemBillingLabels } from '@/lib/catalog/servicePricing';
 import { sharedTaxRate, sumMoney, taxLabels } from '@/lib/finance/documentTotals';
 import { stateCode } from '@/lib/finance/indianStates';
 import { amountInWords, formatAmount, formatQuantity, formatRupees } from '@/lib/finance/moneyFormat';
@@ -14,8 +14,9 @@ import styles from './PrintableDocument.module.css';
 
 type PrintLine = DocumentLine & { service_group?: string | null; service_name?: string | null; billing?: string | null };
 
-// The first page holds this many items; the rest continue on the next page.
-export const itemsOnFirstPage = 3;
+// The first page holds this many items; the rest continue on the next page, followed
+// by the totals, payment details, terms, signatures and contact details.
+export const itemsOnFirstPage = 4;
 
 type PrintableDocumentProps = {
   heading: string;
@@ -256,13 +257,17 @@ export function PrintableDocument({
   const paidInFull = paid > 0 && due <= 0;
   // Page breaks: with one or two items, the payment details stay on page 1 and the terms
   // start page 2 (PrintLayoutFit tightens the spacing if page 1 is nearly full); with
-  // three, the payment details go to page 2 with the terms. More than three run onto
-  // page 2 anyway, and the payment details follow them there.
+  // three or four, the payment details go to page 2 with the terms. From the fifth item,
+  // the items carry on onto page 2 and everything else follows them there.
+  // PrintLayoutFit also tightens page 2 so it all fits on that page.
   const showPayment = showBankDetails && !paidInFull;
   const layout: PrintLayout = lines.length > itemsOnFirstPage ? 'flow' : lines.length <= 2 ? 'payment-first' : 'payment-next';
   const hasTerms = Boolean(notes || terms);
-  // One GST rate on the whole document: shown with the tax, such as "CGST (9%)".
-  const taxNames = taxLabels(sharedTaxRate(lines));
+  // One GST rate on the whole document: shown with the tax, such as "CGST (9%)". With
+  // no GST at all, there are no tax lines.
+  const rate = sharedTaxRate(lines);
+  const taxNames = taxLabels(rate);
+  const withoutGst = rate === 0;
 
   return (
     <div className={styles.screen}>
@@ -331,13 +336,17 @@ export function PrintableDocument({
             </thead>
             <tbody>
               {lines.map((line, index) => {
-                const billing = line.billing && isServiceBilling(line.billing) ? itemBillingLabels[line.billing] : null;
+                const billing = line.billing && isItemBilling(line.billing) ? itemBillingLabels[line.billing] : null;
                 // The sub service as the item's name, under its service; else the description.
                 const name = line.service_name || line.service_group;
                 const group = line.service_name ? line.service_group : null;
                 const breaksAfter = index === itemsOnFirstPage - 1 && lines.length > itemsOnFirstPage;
                 return (
-                  <tr key={line.id} className={breaksAfter ? styles.pageBreakAfter : undefined}>
+                  <tr
+                    key={line.id}
+                    className={breaksAfter ? styles.pageBreakAfter : undefined}
+                    data-part={index === itemsOnFirstPage ? 'page-two-items' : undefined}
+                  >
                     <td className={styles.serial}>{index + 1}</td>
                     <td>
                       {name && <p className={styles.itemName}>{name}</p>}
@@ -370,7 +379,7 @@ export function PrintableDocument({
             <dl className={styles.totals}>
               <dt>Subtotal</dt>
               <dd>{formatRupees(money.subtotal)}</dd>
-              {money.is_inter_state ? (
+              {withoutGst ? null : money.is_inter_state ? (
                 <>
                   <dt>{taxNames.igst}</dt>
                   <dd>{formatRupees(money.igst_total)}</dd>
@@ -407,7 +416,7 @@ export function PrintableDocument({
           </div>
         )}
 
-        <div className={styles.closingPart} data-has-terms={hasTerms} data-after-payment={showPayment}>
+        <div className={styles.closingPart} data-part="closing" data-has-terms={hasTerms} data-after-payment={showPayment}>
           <DocumentTerms notes={notes} terms={terms} />
 
           {/* The closing line, the signatures and the contact details stay together. */}

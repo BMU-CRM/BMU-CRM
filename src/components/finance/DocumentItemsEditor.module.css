@@ -120,6 +120,52 @@
   margin-left: auto;
 }
 
+/* "Add GST": a switch, on by default. */
+.gstSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.gstSwitch input {
+  appearance: none;
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--color-border-strong);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.gstSwitch input::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.25rem - 4px);
+  height: calc(1.25rem - 4px);
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 120ms ease;
+}
+
+.gstSwitch input:checked {
+  background: var(--color-primary);
+}
+
+.gstSwitch input:checked::after {
+  transform: translateX(1rem);
+}
+
+.gstSwitch input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .totals {
   display: grid;
   grid-template-columns: auto auto;

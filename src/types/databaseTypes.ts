@@ -5178,6 +5178,40 @@ export type Database = {
           },
         ]
       }
+      "service_bundles": {
+        Row: {
+          "created_at": string
+          "id": string
+          "is_active": boolean
+          "name": string
+          "saving_percent": number
+          "service_ids": (string)[]
+          "sort_order": number
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "name": string
+          "saving_percent"?: number
+          "service_ids": (string)[]
+          "sort_order"?: number
+          "updated_at"?: string
+        }
+        Update: {
+          "created_at"?: string
+          "id"?: string
+          "is_active"?: boolean
+          "name"?: string
+          "saving_percent"?: number
+          "service_ids"?: (string)[]
+          "sort_order"?: number
+          "updated_at"?: string
+        }
+        Relationships: []
+      }
       "service_groups": {
         Row: {
           "created_at": string

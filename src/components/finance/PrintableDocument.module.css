@@ -178,8 +178,10 @@
 
 /* Where the pages break, from the number of items:
    - payment-first (one or two items): the payment details on page 1; the terms start page 2.
-   - payment-next (three items): the payment details start page 2, with the terms after them.
-   - flow: the items already run onto page 2; everything follows them. */
+   - payment-next (three or four items): the payment details start page 2, with the terms
+     after them.
+   - flow (five or more): the items after the fourth run onto page 2; everything follows
+     them. */
 .sheet[data-layout='payment-first'] .closingPart[data-has-terms='true'] {
   break-before: page;
 }
@@ -233,6 +235,74 @@
   height: 96px;
 }
 
+/* Page 2 holds the rest of the items, the totals, payment details, terms, closing line,
+   signatures and contact details. When they would run onto a third page, PrintLayoutFit
+   sets data-compact-next and their spacing tightens, so they stay on page 2. */
+.sheet[data-compact-next='true'] .items td {
+  padding: 8px 12px;
+}
+
+.sheet[data-compact-next='true'] .summary {
+  padding: 10px 0 4px;
+}
+
+.sheet[data-compact-next='true'] .totalDue {
+  margin-top: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.sheet[data-compact-next='true'] .payment {
+  margin: 6px 0 0;
+  padding: 8px 14px;
+}
+
+.sheet[data-compact-next='true'] .paymentHeading {
+  margin-bottom: 4px;
+}
+
+.sheet[data-compact-next='true'] .paymentRows {
+  gap: 1px 12px;
+}
+
+.sheet[data-compact-next='true'] .qr img {
+  width: 80px;
+  height: 80px;
+}
+
+.sheet[data-compact-next='true'] .terms {
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.sheet[data-compact-next='true'] .thanks {
+  padding: 6px 0 0;
+  font-size: 13px;
+}
+
+.sheet[data-compact-next='true'] .signatures {
+  padding: 4px 0 8px;
+}
+
+.sheet[data-compact-next='true'] .marks {
+  height: 64px;
+}
+
+.sheet[data-compact-next='true'] .seal {
+  width: 64px;
+}
+
+.sheet[data-compact-next='true'] .signatureImage {
+  max-height: 56px;
+}
+
+.sheet[data-compact-next='true'] .footer {
+  gap: 12px;
+  padding-top: 8px;
+}
+
 /* The project in up to three lines, under who it is for. */
 .overview {
   margin-bottom: 20px;
@@ -251,7 +321,7 @@
   text-transform: uppercase;
 }
 
-/* After the third item, the rest continue on the next page. The headings repeat. */
+/* After the fourth item, the rest continue on the next page. The headings repeat. */
 .pageBreakAfter {
   break-after: page;
 }

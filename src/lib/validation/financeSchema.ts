@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { serviceBillings } from '@/lib/catalog/servicePricing';
+import { itemBillings } from '@/lib/catalog/servicePricing';
 import type { Database } from '@/types/databaseTypes';
 
 export type QuotationStatus = Database['public']['Enums']['quotation_status'];
@@ -155,7 +155,7 @@ const lineItemSchema = z.object({
   // The service it is (main and sub service) and how it is billed. All optional.
   serviceGroup: z.string().trim().max(80, 'Use a shorter service name.'),
   serviceName: z.string().trim().max(120, 'Use a shorter sub service name.'),
-  billing: z.enum(['', ...serviceBillings], 'Choose how it is billed.'),
+  billing: z.enum(['', ...itemBillings], 'Choose how it is billed.'),
 });
 
 export type LineItem = z.infer<typeof lineItemSchema>;
