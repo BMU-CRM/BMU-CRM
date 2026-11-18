@@ -8,6 +8,7 @@ import {
   EmployeePerformanceTable,
   EmployeeWorkloadTable,
 } from '@/components/workload/WorkloadTables';
+import { WorkloadTabs } from '@/components/workload/WorkloadTabs';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { summariseByDepartment, weeklyCapacityHours, type EmployeeWorkload } from '@/lib/tasks/calculateWorkload';
 import { requirePagePermission } from '@/server/services/accessService';
@@ -17,7 +18,7 @@ import { getWorkloads } from '@/server/services/workloadService';
 export const metadata: Metadata = { title: 'Workload' };
 
 export default async function WorkloadPage() {
-  await requirePagePermission(permissionKeys.workloadView);
+  const access = await requirePagePermission(permissionKeys.workloadView);
 
   const [workloads, departmentOptions] = await Promise.all([getWorkloads(), listDepartmentOptions()]);
   const departments = summariseByDepartment(workloads);
@@ -32,6 +33,7 @@ export default async function WorkloadPage() {
         description={`What everyone in your reach is doing, has done and has yet to start. Click a name or a number to open those tasks. The load compares remaining work with ${weeklyCapacityHours} hours a week, weighted by priority and overdue work.`}
       />
       <div className={layout.stack}>
+        <WorkloadTabs access={access} current="now" />
         <StatTiles
           tiles={[
             { label: 'Yet to start', value: total('todo') },

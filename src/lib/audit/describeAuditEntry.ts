@@ -144,6 +144,10 @@ const hiddenFields = new Set([
   'resume_requested_at',
   'resume_requested_by',
   'resume_request_note',
+  // Follow from submitting a task for review, shown as its status change.
+  'first_submitted_at',
+  'submitted_at',
+  'submission_count',
   ...derivedFinanceFields,
 ]);
 

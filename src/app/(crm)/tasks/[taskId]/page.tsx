@@ -74,7 +74,8 @@ export default async function TaskPage({ params }: TaskPageProps) {
   const isOpen = isTaskOpen(task.status);
   const isCollaborator = panels.collaborators.some((person) => person.id === access.employee.id);
   const canWork = actor.canManage || actor.isAssignee || isCollaborator;
-  const canUpdateProgress = (actor.isAssignee || actor.canManage) && isOpen;
+  // Typed in only until the first submission; after that it follows the review.
+  const canUpdateProgress = (actor.isAssignee || actor.canManage) && isOpen && task.submission_count === 0 && task.status !== 'under_review';
   const canDelete = actor.canManage && (task.status === 'not_started' || task.status === 'assigned');
 
   // Up the reporting line, or back to whoever assigned it.
@@ -257,12 +258,26 @@ export default async function TaskPage({ params }: TaskPageProps) {
                 <dt>Complexity</dt>
                 <dd>{task.complexity} of 5</dd>
               </div>
+              {task.first_submitted_at && (
+                <div>
+                  <dt>Submitted for review</dt>
+                  <dd>
+                    {formatDateTime(task.first_submitted_at)}
+                    {task.submission_count > 1 && task.submitted_at && (
+                      <p className={layout.muted}>
+                        Submitted {task.submission_count} times ({task.submission_count - 1} after rework). Last submitted{' '}
+                        {formatDateTime(task.submitted_at)}.
+                      </p>
+                    )}
+                  </dd>
+                </div>
+              )}
               {task.completed_at && (
                 <div>
-                  <dt>Completed</dt>
+                  <dt>{task.verifier ? 'Approved' : 'Completed'}</dt>
                   <dd>
                     {formatDateTime(task.completed_at)}
-                    {task.verifier ? `, signed off by ${task.verifier.full_name}` : ''}
+                    {task.verifier ? ` by ${task.verifier.full_name}` : ''}
                     {task.quality_rating ? `, rated ${task.quality_rating} of 5` : ''}
                   </dd>
                 </div>

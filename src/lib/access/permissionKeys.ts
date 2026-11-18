@@ -26,6 +26,8 @@ export const permissionKeys = {
   tasksAssignProjectTeam: 'tasks.assign_project_team',
   tasksManage: 'tasks.manage',
   workloadView: 'workload.view',
+  workloadReportSend: 'workload.report_send',
+  workloadReportReceive: 'workload.report_receive',
   filesView: 'files.view',
   filesUpload: 'files.upload',
   messagesUse: 'messages.use',

@@ -104,8 +104,9 @@ export const taskProgressSchema = z.object({
   completionPercentage: z.coerce
     .number({ error: 'Enter a percentage.' })
     .int('Enter a whole number.')
-    .min(0, 'Enter 0 to 100.')
-    .max(100, 'Enter 0 to 100.'),
+    .min(0, 'Enter 0 to 74.')
+    // 75% and above are set by the database when the task is submitted and approved.
+    .max(74, 'Progress goes to 75% when you submit the task for review. Before that, enter up to 74%.'),
 });
 
 export const taskCommentSchema = z.object({

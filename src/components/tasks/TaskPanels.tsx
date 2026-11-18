@@ -199,11 +199,21 @@ export function TaskHistoryPanel({ history }: HistoryProps) {
 
 type ProgressProps = { taskId: string; percentage: number };
 
-// Only progress is entered here. Hours worked are counted from Start work.
+// Only progress is entered here, and only before the task is first submitted. Hours
+// worked are counted from Start work.
 export function TaskProgressForm({ taskId, percentage }: ProgressProps) {
   return (
     <InlineActionForm action={updateTaskProgressAction.bind(null, taskId)} submitLabel="Save progress">
-      <TextField label="Progress %" name="completionPercentage" type="number" min={0} max={100} defaultValue={percentage} required />
+      <TextField
+        label="Progress %"
+        name="completionPercentage"
+        type="number"
+        min={0}
+        max={74}
+        defaultValue={Math.min(percentage, 74)}
+        hint="Up to 74%. Submitting for review sets 75%, each resubmission after changes adds 2%, and approval sets 100%."
+        required
+      />
     </InlineActionForm>
   );
 }

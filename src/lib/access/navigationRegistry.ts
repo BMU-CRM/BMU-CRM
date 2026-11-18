@@ -1,4 +1,5 @@
 import {
+  Inbox,
   ArrowLeftRight,
   BookOpen,
   Banknote,
@@ -84,6 +85,7 @@ const navigationSections: NavigationSection[] = [
       { label: 'Files', href: '/files', icon: FolderOpen, permission: permissionKeys.filesUpload },
       { label: 'Projects', href: '/projects', icon: SquareKanban, permission: permissionKeys.projectsView },
       { label: 'Workload', href: '/workload', icon: Gauge, permission: permissionKeys.workloadView },
+      { label: 'Received reports', href: '/workload/reports', icon: Inbox, permission: permissionKeys.workloadReportReceive },
     ],
   },
   // The HR person's own section. Each page also appears elsewhere for other people,
