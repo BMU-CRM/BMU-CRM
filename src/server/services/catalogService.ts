@@ -1,6 +1,7 @@
 import 'server-only';
 import {
   bundleDescription,
+  bundleGroupName,
   bundlePlanPrice,
   isServiceBilling,
   servicePlans,
@@ -87,7 +88,7 @@ export type SubServiceOption = Awaited<ReturnType<typeof listServiceOptions>>[nu
 // Sub services with at least one plan price, for quotation and invoice items: under
 // their service, both alphabetical. Hidden ones are left out.
 // Bundles that can be chosen and have a price for at least one plan come last, under
-// "Bundle".
+// "Bundle". A bundle is a monthly project.
 export async function listPricedServices(): Promise<PricedService[]> {
   const { groups, bundles } = await getCatalog();
   const services: PricedService[] = [...groups]
@@ -110,8 +111,8 @@ export async function listPricedServices(): Promise<PricedService[]> {
     .map((bundle) => ({
       id: bundle.id,
       name: bundle.name,
-      group: 'Bundle',
-      billing: 'bundle',
+      group: bundleGroupName,
+      billing: 'monthly',
       description: bundleDescription(bundle.services.map((service) => service.name)),
       prices: bundle.prices,
       isBundle: true,
@@ -128,40 +129,64 @@ export type ClientServiceItem = {
 };
 
 // The services each client takes (not ended), as quotation and invoice items: the sub
-// service with the client's plan, its service, how it is billed, its description and
-// the plan's price (or, with no plan chosen, the lowest plan priced) to start from.
+// service or bundle with the client's plan, its service ("Bundle" for a bundle), how it
+// is billed, its description and the plan's price (or, with no plan chosen, the lowest
+// plan priced) to start from.
 export async function listClientServiceItems(clientIds: string[]): Promise<Record<string, ClientServiceItem[]>> {
   if (clientIds.length === 0) return {};
   const database = await createDatabaseClient();
   const { data, error } = await database
     .from('client_services')
     .select(
-      'client_id, service_name, status, plan, created_at, service:services(name, billing, description, starter_price, growth_price, premium_price, group:service_groups(name))',
+      'client_id, service_name, status, plan, bundle_id, created_at, service:services(name, billing, description, starter_price, growth_price, premium_price, group:service_groups(name))',
     )
     .in('client_id', clientIds)
     .neq('status', 'ended')
     .order('created_at');
   if (error) throw error;
+  const bundles = data.some((row) => row.bundle_id) ? (await getCatalog()).bundles : [];
 
   const items: Record<string, ClientServiceItem[]> = {};
   for (const row of data) {
     const service = row.service;
-    const prices = { starter: service?.starter_price, growth: service?.growth_price, premium: service?.premium_price };
+    const bundle = row.bundle_id ? bundles.find((option) => option.id === row.bundle_id) : undefined;
+    const prices: Record<ServicePlan, number | string | null | undefined> = bundle
+      ? bundle.prices
+      : { starter: service?.starter_price, growth: service?.growth_price, premium: service?.premium_price };
     const plan = row.plan === 'starter' || row.plan === 'growth' || row.plan === 'premium' ? row.plan : null;
     // The client's plan, else the lowest plan that has a price.
     const price = plan && prices[plan] !== null && prices[plan] !== undefined ? prices[plan] : Object.values(prices).find((value) => value !== null && value !== undefined);
     const planLabel = plan ? servicePlans.find((option) => option.key === plan)?.label : null;
-    const name = service?.name ?? row.service_name;
+    const name = bundle?.name ?? service?.name ?? row.service_name;
     (items[row.client_id] ??= []).push({
-      description: service?.description ?? name,
-      serviceGroup: service?.group?.name ?? '',
+      description: bundle ? bundleDescription(bundle.services.map((member) => member.name)) : (service?.description ?? name),
+      serviceGroup: row.bundle_id ? bundleGroupName : (service?.group?.name ?? ''),
       serviceName: planLabel ? `${name} (${planLabel} plan)` : name,
-      billing: service && isServiceBilling(service.billing) ? service.billing : '',
+      billing: row.bundle_id ? 'monthly' : service && isServiceBilling(service.billing) ? service.billing : '',
       unitPrice: price === undefined || price === null ? '' : String(Number(price)),
     });
   }
   return items;
 }
+
+// Bundles for the client form: those that can be chosen, with their plan prices, in the
+// price list's order. A hidden one stays if the client already has it.
+export async function listBundleOptions(keepIds: string[] = []) {
+  const { bundles } = await getCatalog();
+  return bundles
+    .filter((bundle) => bundle.is_active || keepIds.includes(bundle.id))
+    .map((bundle) => ({
+      value: bundle.id,
+      label: bundle.name,
+      group: bundleGroupName,
+      groupId: '',
+      billing: 'monthly' as const,
+      prices: bundle.prices,
+      description: bundleDescription(bundle.services.map((service) => service.name)),
+    }));
+}
+
+export type BundleOption = Awaited<ReturnType<typeof listBundleOptions>>[number];
 
 // Industries for a picker, alphabetical. A hidden industry stays if the client has it.
 export async function listIndustryOptions(keepId?: string | null) {

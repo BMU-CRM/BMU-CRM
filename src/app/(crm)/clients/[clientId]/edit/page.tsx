@@ -6,7 +6,7 @@ import { Panel } from '@/components/ui/Panel';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { parseId } from '@/lib/parseListParams';
 import { requirePagePermission } from '@/server/services/accessService';
-import { listIndustryOptions, listServiceGroupOptions, listServiceOptions } from '@/server/services/catalogService';
+import { listBundleOptions, listIndustryOptions, listServiceGroupOptions, listServiceOptions } from '@/server/services/catalogService';
 import { canUpdateClient, getClient, listClientServices } from '@/server/services/clientService';
 import { listEmployeeOptions } from '@/server/services/employeeService';
 import { listDepartments } from '@/server/services/organisationService';
@@ -33,7 +33,12 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
 
   // The form holds the client's current services. Ended ones stay as history.
   const serviceIds = clientServices.flatMap((service) => (service.status !== 'ended' && service.service_id ? [service.service_id] : []));
-  const [industries, services] = await Promise.all([listIndustryOptions(client.industry_id), listServiceOptions(serviceIds)]);
+  const bundleIds = clientServices.flatMap((service) => (service.status !== 'ended' && service.bundle_id ? [service.bundle_id] : []));
+  const [industries, services, bundles] = await Promise.all([
+    listIndustryOptions(client.industry_id),
+    listServiceOptions(serviceIds),
+    listBundleOptions(bundleIds),
+  ]);
   const serviceGroups = await listServiceGroupOptions(
     services.filter((service) => serviceIds.includes(service.value)).map((service) => service.groupId),
   );
@@ -45,12 +50,17 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
         <ClientForm
           client={client}
           serviceIds={serviceIds}
+          bundleIds={bundleIds}
           servicePlans={Object.fromEntries(
-            clientServices.flatMap((service) => (service.status !== 'ended' && service.service_id && service.plan ? [[service.service_id, service.plan]] : [])),
+            clientServices.flatMap((service) => {
+              const id = service.service_id ?? service.bundle_id;
+              return service.status !== 'ended' && id && service.plan ? [[id, service.plan]] : [];
+            }),
           )}
           industries={industries}
           serviceGroups={serviceGroups}
           services={services}
+          bundles={bundles}
           managers={managers.map((manager) => ({ value: manager.id, label: manager.full_name }))}
           departments={departments.map((department) => ({ value: department.id, label: department.name }))}
         />

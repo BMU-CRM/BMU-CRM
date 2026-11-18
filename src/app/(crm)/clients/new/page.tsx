@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { requirePagePermission } from '@/server/services/accessService';
-import { listIndustryOptions, listServiceGroupOptions, listServiceOptions } from '@/server/services/catalogService';
+import { listBundleOptions, listIndustryOptions, listServiceGroupOptions, listServiceOptions } from '@/server/services/catalogService';
 import { listEmployeeOptions } from '@/server/services/employeeService';
 import { listDepartments } from '@/server/services/organisationService';
 
@@ -13,12 +13,13 @@ export const metadata: Metadata = { title: 'Add client' };
 export default async function NewClientPage() {
   await requirePagePermission(permissionKeys.clientsCreate);
 
-  const [managers, departments, industries, serviceGroups, services] = await Promise.all([
+  const [managers, departments, industries, serviceGroups, services, bundles] = await Promise.all([
     listEmployeeOptions(),
     listDepartments(),
     listIndustryOptions(),
     listServiceGroupOptions(),
     listServiceOptions(),
+    listBundleOptions(),
   ]);
 
   return (
@@ -31,6 +32,7 @@ export default async function NewClientPage() {
           industries={industries}
           serviceGroups={serviceGroups}
           services={services}
+          bundles={bundles}
         />
       </Panel>
     </>

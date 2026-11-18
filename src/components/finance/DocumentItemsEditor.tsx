@@ -57,17 +57,21 @@ type DocumentItemsEditorProps = {
   oneTaxRate?: boolean;
 };
 
-const billingChoices = [{ value: '', label: 'Not stated' }, ...itemBillings.map((billing) => ({ value: billing, label: itemBillingLabels[billing] }))];
+// "Bundle" is offered only on an item saved that way before; bundles are billed monthly.
+const billingChoicesFor = (current: string | undefined) => [
+  { value: '', label: 'Not stated' },
+  ...itemBillings.filter((billing) => billing !== 'bundle' || current === 'bundle').map((billing) => ({ value: billing, label: itemBillingLabels[billing] })),
+];
 
 // Each sub service and plan that has a price, as one choice, then each bundle and plan,
-// such as "Bundle › Brand Launch — Starter · ₹67,500".
+// such as "Bundle › Brand Launch — Starter · ₹67,500 per month".
 function priceListOptions(services: PricedService[]) {
   return services.flatMap((service) =>
     servicePlans
       .filter((plan) => service.prices[plan.key] !== null)
       .map((plan) => ({
         value: `${service.id}:${plan.key}`,
-        label: `${service.group} › ${service.name} — ${plan.label} · ${formatRupees(service.prices[plan.key] ?? 0)}${service.isBundle ? '' : ` ${billingShort[service.billing]}`}`,
+        label: `${service.group} › ${service.name} — ${plan.label} · ${formatRupees(service.prices[plan.key] ?? 0)} ${billingShort[service.billing]}`,
       })),
   );
 }
@@ -121,8 +125,8 @@ export function DocumentItemsEditor({
     const filled = {
       description: serviceItemDescription(service, plan),
       unitPrice: String(price),
-      // A bundle is not under a service; it shows as "Bundle" from its billing.
-      serviceGroup: service.isBundle ? '' : service.group,
+      // A bundle's service is "Bundle".
+      serviceGroup: service.group,
       serviceName: serviceItemName(service, plan),
       billing: service.billing,
     };
@@ -210,7 +214,7 @@ export function DocumentItemsEditor({
                     value={line.billing ?? ''}
                     onChange={(event) => update(line.key, 'billing', event.target.value)}
                   >
-                    {billingChoices.map((choice) => (
+                    {billingChoicesFor(line.billing).map((choice) => (
                       <option key={choice.value} value={choice.value}>
                         {choice.label}
                       </option>

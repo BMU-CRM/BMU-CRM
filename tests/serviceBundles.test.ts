@@ -1,6 +1,7 @@
 // Bundles in the price list: a named set of sub services whose plan prices are their
 // sub services' prices added up, less the saving. A bundle goes on a quotation as one
-// item billed as "bundle". Quotations and invoices can also leave GST out.
+// monthly item under the service "Bundle", and a client can take bundles. Quotations and
+// invoices can also leave GST out.
 import { beforeAll, describe, expect, it } from 'vitest';
 import { bundleDescription, bundlePlanPrice } from '@/lib/catalog/servicePricing';
 import { createTestPeople } from './helpers/testDatabase';
@@ -89,7 +90,34 @@ describe('service bundles', () => {
     expect(unknown.error?.message).toMatch(/price list/);
   });
 
-  it('saves a bundle as one item billed as a bundle, and a quotation without GST', async () => {
+  it('lets a client take bundles, with a plan, alongside or instead of sub services', async () => {
+    const { data: bundles } = await admin.from('service_bundles').select('id, name').in('name', ['Brand Launch', 'Social Growth']);
+    const brand = bundles!.find((bundle) => bundle.name === 'Brand Launch')!.id;
+    const social = bundles!.find((bundle) => bundle.name === 'Social Growth')!.id;
+    const { data: seo } = await admin.from('services').select('id').eq('name', 'SEO').single();
+    const current = async () =>
+      (await admin.from('client_services').select('service_id, bundle_id, service_name, plan').eq('client_id', clientId).neq('status', 'ended').order('service_name')).data;
+
+    const bundleOnly = await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [], p_plans: { [brand]: 'growth' }, p_bundles: [brand] });
+    expect(bundleOnly.error).toBeNull();
+    expect(await current()).toEqual([{ service_id: null, bundle_id: brand, service_name: 'Brand Launch', plan: 'growth' }]);
+
+    const both = await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [seo!.id], p_plans: { [social]: 'starter' }, p_bundles: [social] });
+    expect(both.error).toBeNull();
+    expect(await current()).toEqual([
+      { service_id: seo!.id, bundle_id: null, service_name: 'SEO', plan: null },
+      { service_id: null, bundle_id: social, service_name: 'Social Growth', plan: 'starter' },
+    ]);
+
+    const none = await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [], p_bundles: [] });
+    expect(none.error?.message).toContain('at least one service or bundle');
+    const unknown = await as.manager!.rpc('set_client_services', { p_client: clientId, p_services: [], p_bundles: [crypto.randomUUID()] });
+    expect(unknown.error?.message).toContain('bundles from the list');
+    const outsider = await as.designer!.rpc('set_client_services', { p_client: clientId, p_services: [], p_bundles: [brand] });
+    expect(outsider.error?.message).toContain('permission');
+  });
+
+  it('keeps an item saved as billed "bundle" before bundles were billed monthly, and a quotation without GST', async () => {
     const { data: id, error } = await as.manager!.rpc('save_quotation', {
       p_quotation: null as unknown as string,
       p_values: { client_id: clientId, title: 'Brand Launch' },

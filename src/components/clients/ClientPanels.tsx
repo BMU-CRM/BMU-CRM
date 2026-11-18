@@ -7,6 +7,7 @@ import { SearchablePicker, type PickerOption } from '@/components/ui/SearchableP
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { describeAuditEntry } from '@/lib/audit/describeAuditEntry';
+import { bundleGroupName } from '@/lib/catalog/servicePricing';
 import { formatDate, formatDateTime, todayInIndia } from '@/lib/formatDate';
 import { clientRecordLabels, type ClientRecordKind } from '@/lib/validation/clientSchema';
 import {
@@ -120,10 +121,15 @@ export function ClientServicesPanel({ clientId, services, serviceOptions, canUpd
             <li key={service.id} className={layout.row}>
               <div className={layout.rowMain}>
                 <p className={layout.rowTitle}>
-                  {service.service?.group?.name ? `${service.service.group.name} › ${service.service_name}` : service.service_name}
+                  {service.bundle_id
+                    ? `${bundleGroupName} › ${service.service_name}`
+                    : service.service?.group?.name
+                      ? `${service.service.group.name} › ${service.service_name}`
+                      : service.service_name}
                 </p>
                 <p className={layout.muted}>
                   {service.plan ? `${service.plan.charAt(0).toUpperCase()}${service.plan.slice(1)} plan · ` : ''}
+                  {service.bundle_id ? 'Monthly · ' : ''}
                   {service.status === 'active' ? 'Active' : service.status === 'paused' ? 'Paused' : 'Ended'}
                   {service.start_date ? ` · From ${formatDate(service.start_date)}` : ''}
                 </p>
@@ -141,7 +147,7 @@ export function ClientServicesPanel({ clientId, services, serviceOptions, canUpd
               key={services.length}
               id="add-service"
               name="serviceId"
-              label="Sub service"
+              label="Sub service or bundle"
               options={serviceOptions}
               placeholder="Type to search, grouped by service"
               required

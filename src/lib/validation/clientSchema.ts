@@ -72,14 +72,11 @@ export const clientSchema = z.object({
   nextFollowUpDate: optionalDate,
   importantNotes: optionalText(2000),
   industryId: optionalId,
-  serviceGroupIds: z
-    .array(z.uuid('Choose services from the list.'))
-    .min(1, 'Choose at least one service.')
-    .max(20, 'Choose 20 services or fewer.'),
-  serviceIds: z
-    .array(z.uuid('Choose sub services from the list.'))
-    .min(1, 'Choose at least one sub service.')
-    .max(60, 'Choose 60 sub services or fewer.'),
+  // Services and their sub services, and bundles. At least one service or bundle is
+  // needed; checkServiceSelection says so.
+  serviceGroupIds: z.array(z.uuid('Choose services from the list.')).max(20, 'Choose 20 services or fewer.'),
+  serviceIds: z.array(z.uuid('Choose sub services from the list.')).max(60, 'Choose 60 sub services or fewer.'),
+  bundleIds: z.array(z.uuid('Choose bundles from the list.')).max(20, 'Choose 20 bundles or fewer.').default([]),
   clientManagerId: optionalId,
   departmentId: optionalId,
   gstin: z

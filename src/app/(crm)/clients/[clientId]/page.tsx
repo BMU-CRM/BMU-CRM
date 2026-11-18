@@ -28,7 +28,8 @@ import {
   listClientRecords,
   listClientServices,
 } from '@/server/services/clientService';
-import { listServiceOptions } from '@/server/services/catalogService';
+import { bundleChoicePrefix } from '@/lib/clients/serviceSelection';
+import { listBundleOptions, listServiceOptions } from '@/server/services/catalogService';
 import { listLinkedFiles } from '@/server/services/fileService';
 import { canSeeInvoices, canSeeQuotations, hasFinanceReach } from '@/server/services/financeService';
 import { getClientBalance, listClientInvoices } from '@/server/services/invoiceService';
@@ -69,7 +70,13 @@ export default async function ClientPage({ params }: ClientPageProps) {
       showInvoices ? getClientBalance(clientId) : Promise.resolve(null),
     ]);
 
-  const serviceOptions = canUpdate ? await listServiceOptions() : [];
+  // Sub services, then bundles (picked as "bundle:<id>").
+  const serviceOptions = canUpdate
+    ? await Promise.all([listServiceOptions(), listBundleOptions()]).then(([subServices, bundles]) => [
+        ...subServices,
+        ...bundles.map((bundle) => ({ value: `${bundleChoicePrefix}${bundle.value}`, label: bundle.label, group: bundle.group })),
+      ])
+    : [];
   const website = safeExternalUrl(client.website);
   const canCreateProject = access.permissions[permissionKeys.projectsCreate] !== undefined;
   const canCreateTask = access.permissions[permissionKeys.tasksCreate] !== undefined;

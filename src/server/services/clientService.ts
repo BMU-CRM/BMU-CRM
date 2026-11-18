@@ -28,13 +28,21 @@ type ClientFilters = {
   page: number;
 };
 
-// Clients currently taking any of these sub services, not ones whose service has ended.
+// Clients currently taking any of these sub services, on their own or in a bundle, not
+// ones whose service has ended.
 async function clientsTaking(subServiceIds: string[]) {
   if (subServiceIds.length === 0) return [];
   const database = await createDatabaseClient();
-  const { data, error } = await database.from('client_services').select('client_id').in('service_id', subServiceIds).neq('status', 'ended');
-  if (error) throw error;
-  return [...new Set(data.map((row) => row.client_id))];
+  const bundles = await database.from('service_bundles').select('id, service_ids');
+  if (bundles.error) throw bundles.error;
+  const bundleIds = bundles.data.filter((bundle) => bundle.service_ids.some((id) => subServiceIds.includes(id))).map((bundle) => bundle.id);
+  const [direct, inBundles] = await Promise.all([
+    database.from('client_services').select('client_id').in('service_id', subServiceIds).neq('status', 'ended'),
+    bundleIds.length ? database.from('client_services').select('client_id').in('bundle_id', bundleIds).neq('status', 'ended') : { data: [], error: null },
+  ]);
+  if (direct.error) throw direct.error;
+  if (inBundles.error) throw inBundles.error;
+  return [...new Set([...direct.data, ...inBundles.data].map((row) => row.client_id))];
 }
 
 export async function listClients({ search, status, managerId, industryId, serviceGroupId, serviceId, page }: ClientFilters) {
@@ -112,7 +120,7 @@ export async function listClientServices(clientId: string) {
 
   const { data, error } = await database
     .from('client_services')
-    .select('id, service_id, service_name, status, plan, start_date, end_date, service:services(group:service_groups(name))')
+    .select('id, service_id, bundle_id, service_name, status, plan, start_date, end_date, service:services(group:service_groups(name))')
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
 

@@ -10,7 +10,8 @@ export const billingLabels: Record<ServiceBilling, string> = {
   per_unit: 'Per unit (shoot, session or campaign)',
 };
 
-// How a quotation or invoice item is billed: as a sub service is, or as a bundle of them.
+// How a quotation or invoice item is billed: as a sub service is. Bundles are billed
+// monthly, under the service "Bundle"; "bundle" stays for items saved that way before.
 export const itemBillings = [...serviceBillings, 'bundle'] as const;
 export type ItemBilling = (typeof itemBillings)[number];
 
@@ -53,6 +54,9 @@ export const itemBillingLabels: Record<ItemBilling, string> = {
 export function isItemBilling(value: string): value is ItemBilling {
   return (itemBillings as readonly string[]).includes(value);
 }
+
+// A bundle item's service, as shown on quotations and invoices.
+export const bundleGroupName = 'Bundle';
 
 // A bundle's price for a plan: its sub services' prices for that plan added up, less
 // the saving. Null when any of them has no price for the plan, so it is not offered.

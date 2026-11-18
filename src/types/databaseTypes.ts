@@ -631,6 +631,7 @@ export type Database = {
       }
       "client_services": {
         Row: {
+          "bundle_id": string | null
           "client_id": string
           "created_at": string
           "created_by": string | null
@@ -645,6 +646,7 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          "bundle_id"?: string | null
           "client_id": string
           "created_at"?: string
           "created_by"?: string | null
@@ -658,6 +660,7 @@ export type Database = {
           "updated_at"?: string
         }
         Update: {
+          "bundle_id"?: string | null
           "client_id"?: string
           "created_at"?: string
           "created_by"?: string | null
@@ -671,6 +674,13 @@ export type Database = {
           "updated_at"?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "client_services_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "service_bundles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "client_services_client_id_fkey"
             columns: ["client_id"]
@@ -7265,6 +7275,7 @@ export type Database = {
             "p_client": string
             "p_services": (string)[]
             "p_plans"?: Json
+            "p_bundles"?: (string)[]
           }; Returns: undefined }
       "set_employee_extra_roles":
         | { Args: {

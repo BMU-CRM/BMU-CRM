@@ -11,8 +11,14 @@ describe('checkServiceSelection', () => {
     ).toBeNull();
   });
 
-  it('needs at least one service', () => {
-    expect(checkServiceSelection([], [], names)).toEqual({ field: 'serviceGroupIds', message: 'Choose at least one service.' });
+  it('needs at least one service or bundle', () => {
+    expect(checkServiceSelection([], [], names)).toEqual({ field: 'serviceGroupIds', message: 'Choose at least one service or bundle.' });
+  });
+
+  it('accepts bundles alone, or with services', () => {
+    expect(checkServiceSelection([], [], names, 1)).toBeNull();
+    expect(checkServiceSelection(['web'], [{ id: 'site', serviceId: 'web' }], names, 2)).toBeNull();
+    expect(checkServiceSelection(['web'], [], names, 1)).toEqual({ field: 'serviceIds', message: 'Choose at least one sub service for Web & AI.' });
   });
 
   it('names every service still missing a sub service', () => {

@@ -12,7 +12,7 @@ import {
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import { createDatabaseClient } from '@/server/database/databaseClient';
 import { clientRecordSchema, clientSchema, clientServiceSchema } from '@/lib/validation/clientSchema';
-import { checkServiceSelection } from '@/lib/clients/serviceSelection';
+import { bundleChoicePrefix, checkServiceSelection } from '@/lib/clients/serviceSelection';
 import { getActionAccess } from '@/server/services/accessService';
 
 const noPermission = 'You do not have permission to do this.';
@@ -33,6 +33,7 @@ function clientValues(formData: FormData) {
     industryId: formData.get('industryId') ?? '',
     serviceGroupIds: formData.getAll('serviceGroupIds').map(String),
     serviceIds: formData.getAll('serviceIds').map(String),
+    bundleIds: formData.getAll('bundleIds').map(String),
     clientManagerId: formData.get('clientManagerId') ?? '',
     departmentId: formData.get('departmentId') ?? '',
     gstin: formData.get('gstin') ?? '',
@@ -56,19 +57,27 @@ export async function saveClientAction(
 
   // Every chosen service needs a sub service, and every sub service must belong to a
   // chosen service. Checked against the lists, not against what the form says.
-  const [subRows, groupRows] = await Promise.all([
-    database.from('services').select('id, group_id').in('id', values.serviceIds),
-    database.from('service_groups').select('id, name').in('id', values.serviceGroupIds),
+  // A client may take only bundles, so any list can be empty; nothing is looked up then.
+  const noRows = { data: [], error: null } as const;
+  const [subRows, groupRows, bundleRows] = await Promise.all([
+    values.serviceIds.length ? database.from('services').select('id, group_id').in('id', values.serviceIds) : noRows,
+    values.serviceGroupIds.length ? database.from('service_groups').select('id, name').in('id', values.serviceGroupIds) : noRows,
+    values.bundleIds.length ? database.from('service_bundles').select('id').in('id', values.bundleIds) : noRows,
   ]);
   if (subRows.error) return databaseFailure(subRows.error);
   if (groupRows.error) return databaseFailure(groupRows.error);
+  if (bundleRows.error) return databaseFailure(bundleRows.error);
   if (subRows.data.length !== new Set(values.serviceIds).size || groupRows.data.length !== new Set(values.serviceGroupIds).size) {
     return { status: 'error', message: 'Check the highlighted fields.', fieldErrors: { serviceIds: 'Choose from the lists.' } };
+  }
+  if (bundleRows.data.length !== new Set(values.bundleIds).size) {
+    return { status: 'error', message: 'Check the highlighted fields.', fieldErrors: { bundleIds: 'Choose bundles from the list.' } };
   }
   const selectionProblem = checkServiceSelection(
     values.serviceGroupIds,
     subRows.data.map((sub) => ({ id: sub.id, serviceId: sub.group_id })),
     Object.fromEntries(groupRows.data.map((group) => [group.id, group.name])),
+    values.bundleIds.length,
   );
   if (selectionProblem) {
     return { status: 'error', message: 'Check the highlighted fields.', fieldErrors: { [selectionProblem.field]: selectionProblem.message } };
@@ -97,7 +106,12 @@ export async function saveClientAction(
   if (clientId) {
     // Services first: the update may hand the client to another manager, after which
     // this person could no longer change them.
-    const services = await database.rpc('set_client_services', { p_client: clientId, p_services: values.serviceIds, p_plans: plansFrom(formData) });
+    const services = await database.rpc('set_client_services', {
+      p_client: clientId,
+      p_services: values.serviceIds,
+      p_plans: plansFrom(formData),
+      p_bundles: values.bundleIds,
+    });
     if (services.error) return databaseFailure(services.error);
 
     const { data, error } = await database.from('clients').update(row).eq('id', clientId).select('id');
@@ -115,7 +129,12 @@ export async function saveClientAction(
 
     // The services were checked above, so this only fails if something changed in the
     // meantime. The client is saved either way, so open it to finish there.
-    const services = await database.rpc('set_client_services', { p_client: data.id, p_services: values.serviceIds, p_plans: plansFrom(formData) });
+    const services = await database.rpc('set_client_services', {
+      p_client: data.id,
+      p_services: values.serviceIds,
+      p_plans: plansFrom(formData),
+      p_bundles: values.bundleIds,
+    });
     if (services.error) console.error('Could not set the services of a new client', services.error);
   }
 
@@ -187,7 +206,8 @@ export async function deleteClientRecordAction(clientId: string, recordId: strin
   return success('Removed.');
 }
 
-// The plan chosen for each sub service, sent as "servicePlan" fields like "<id>:growth".
+// The plan chosen for each sub service or bundle, sent as "servicePlan" fields like
+// "<id>:growth".
 function plansFrom(formData: FormData) {
   const plans: Record<string, string> = {};
   for (const value of formData.getAll('servicePlan').map(String)) {
@@ -204,8 +224,12 @@ export async function addClientServiceAction(
 ): Promise<ActionResult> {
   if (!(await getActionAccess(permissionKeys.clientsUpdate))) return failure(noPermission);
 
+  // A bundle is picked as "bundle:<id>", a sub service by its id.
+  const picked = String(formData.get('serviceId') ?? '');
+  const isBundle = picked.startsWith(bundleChoicePrefix);
   const parsed = clientServiceSchema.safeParse({
-    serviceId: formData.get('serviceId') ?? '',
+    // Checked as an id either way; the database refuses one not in its list.
+    serviceId: isBundle ? picked.slice(bundleChoicePrefix.length) : picked,
     status: formData.get('status'),
     startDate: formData.get('startDate') ?? '',
     endDate: formData.get('endDate') ?? '',
@@ -213,19 +237,20 @@ export async function addClientServiceAction(
   });
   if (!parsed.success) return validationFailure(parsed.error);
 
+  const column = isBundle ? 'bundle_id' : 'service_id';
   const database = await createDatabaseClient();
   const { data: existing } = await database
     .from('client_services')
     .select('id')
     .eq('client_id', clientId)
-    .eq('service_id', parsed.data.serviceId)
+    .eq(column, parsed.data.serviceId)
     .neq('status', 'ended');
-  if (existing?.length) return failure('This client already has this sub service.');
+  if (existing?.length) return failure(isBundle ? 'This client already has this bundle.' : 'This client already has this sub service.');
 
-  // The service's name is filled in by the database from the list.
+  // The name is filled in by the database from the list.
   const { error } = await database.from('client_services').insert({
     client_id: clientId,
-    service_id: parsed.data.serviceId,
+    ...(isBundle ? { bundle_id: parsed.data.serviceId } : { service_id: parsed.data.serviceId }),
     service_name: '',
     plan: parsed.data.plan,
     status: parsed.data.status,

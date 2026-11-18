@@ -19,7 +19,7 @@ import { idleResult } from '@/lib/actionResult';
 import { stateOptionsWith } from '@/lib/finance/indianStates';
 import { clientStatusLabels } from '@/lib/validation/clientSchema';
 import { saveClientAction } from '@/server/actions/clientActions';
-import { ClientServicesFields, type SubServicePickerOption } from './ClientServicesFields';
+import { ClientServicesFields, type BundlePickerOption, type SubServicePickerOption } from './ClientServicesFields';
 import type { ClientDetails } from '@/server/services/clientService';
 
 const statusOptions = Object.entries(clientStatusLabels).map(([value, label]) => ({ value, label }));
@@ -28,15 +28,28 @@ type ClientFormProps = {
   client?: ClientDetails;
   // The client's current sub services, when editing, and the plan of each.
   serviceIds?: string[];
+  bundleIds?: string[];
   servicePlans?: Record<string, string>;
   managers: SelectOption[];
   departments: SelectOption[];
   industries: PickerOption[];
   serviceGroups: PickerOption[];
   services: SubServicePickerOption[];
+  bundles?: BundlePickerOption[];
 };
 
-export function ClientForm({ client, serviceIds = [], servicePlans = {}, managers, departments, industries, serviceGroups, services }: ClientFormProps) {
+export function ClientForm({
+  client,
+  serviceIds = [],
+  bundleIds = [],
+  servicePlans = {},
+  managers,
+  departments,
+  industries,
+  serviceGroups,
+  services,
+  bundles = [],
+}: ClientFormProps) {
   const [result, formAction] = useActionState(saveClientAction.bind(null, client?.id ?? null), idleResult);
   const errors = result.fieldErrors;
 
@@ -100,10 +113,13 @@ export function ClientForm({ client, serviceIds = [], servicePlans = {}, manager
         <ClientServicesFields
           services={serviceGroups}
           subServices={services}
+          bundles={bundles}
           defaultSubServiceIds={serviceIds}
+          defaultBundleIds={bundleIds}
           defaultPlans={servicePlans}
           serviceError={errors?.serviceGroupIds}
           subServiceError={errors?.serviceIds}
+          bundleError={errors?.bundleIds}
         />
       </div>
       <div className={layout.spaced}>
