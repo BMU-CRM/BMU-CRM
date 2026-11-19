@@ -10,10 +10,10 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { WorkloadTabs } from '@/components/workload/WorkloadTabs';
 import { permissionKeys } from '@/lib/access/permissionKeys';
-import { formatDateTime } from '@/lib/formatDate';
+import { formatDateTime, todayInIndia } from '@/lib/formatDate';
 import { workloadPeriodLabel } from '@/lib/workload/workloadPeriod';
 import { requireAccess } from '@/server/services/accessService';
-import { listWorkloadReports } from '@/server/services/workloadService';
+import { getMissingDailyReports, listWorkloadReports } from '@/server/services/workloadService';
 
 export const metadata: Metadata = { title: 'Workload reports' };
 
@@ -24,7 +24,8 @@ export default async function WorkloadReportsPage() {
   const receives = access.permissions[permissionKeys.workloadReportReceive] !== undefined;
   if (!receives && access.permissions[permissionKeys.workloadReportSend] === undefined) notFound();
 
-  const reports = await listWorkloadReports();
+  const today = todayInIndia();
+  const [reports, missing] = await Promise.all([listWorkloadReports(), receives ? getMissingDailyReports(today) : Promise.resolve([])]);
 
   return (
     <>
@@ -38,6 +39,11 @@ export default async function WorkloadReportsPage() {
       />
       <div className={layout.stack}>
         <WorkloadTabs access={access} current="received" />
+        {missing.length > 0 && (
+          <Panel title="Not sent today" description="Daily reports still to come. They are reminded at 6:30 pm.">
+            <p className={layout.text}>{missing.map((person) => person.full_name).join(', ')}</p>
+          </Panel>
+        )}
         <Panel flush>
           {reports.length === 0 ? (
             <EmptyState
@@ -54,6 +60,7 @@ export default async function WorkloadReportsPage() {
                     <div className={layout.rowMain}>
                       <div className={layout.badges}>
                         <StatusBadge>{kind === 'week' ? 'Week' : 'Day'}</StatusBadge>
+                        {report.reviewed_at ? <StatusBadge tone="good">Reviewed</StatusBadge> : <StatusBadge tone="warning">Not reviewed</StatusBadge>}
                       </div>
                       <Link href={`/workload/reports/${report.id}`} className={`${layout.rowTitle} ${layout.link}`}>
                         {report.title}
@@ -63,6 +70,11 @@ export default async function WorkloadReportsPage() {
                         {formatDateTime(report.created_at)}
                       </p>
                       {report.note && <p className={layout.text}>{report.note}</p>}
+                      {report.reply && (
+                        <p className={layout.text}>
+                          Reply from {report.reviewed_by_name}: “{report.reply}”
+                        </p>
+                      )}
                     </div>
                     <span className={layout.rowActions}>
                       <ButtonLink href={`/workload/reports/${report.id}`} variant="ghost">

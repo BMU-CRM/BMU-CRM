@@ -7,6 +7,10 @@ import { Panel } from '@/components/ui/Panel';
 import { StatTiles } from '@/components/ui/StatTiles';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import { WorkloadActivityDepartmentTable, WorkloadActivityTable } from '@/components/workload/WorkloadActivityTables';
+import { ReviewWorkloadReportForm } from '@/components/workload/WorkloadFlagForms';
+import { WorkloadFlagList } from '@/components/workload/WorkloadFlagList';
+import { permissionKeys } from '@/lib/access/permissionKeys';
+import { sortFlags } from '@/lib/workload/workloadFlags';
 import { formatDateTime } from '@/lib/formatDate';
 import { parseId } from '@/lib/parseListParams';
 import { workloadPeriodLabel } from '@/lib/workload/workloadPeriod';
@@ -21,7 +25,8 @@ type WorkloadReportViewProps = { params: Promise<{ reportId: string }> };
 // One sent report, with its figures as they were when sent. Who can open it is decided
 // by the database: the sender, and those who receive workload reports.
 export default async function WorkloadReportView({ params }: WorkloadReportViewProps) {
-  await requireAccess();
+  const access = await requireAccess();
+  const canReview = access.permissions[permissionKeys.workloadReportReceive] !== undefined;
   const reportId = parseId((await params).reportId);
   if (!reportId) notFound();
   const report = await getWorkloadReport(reportId);
@@ -61,6 +66,34 @@ export default async function WorkloadReportView({ params }: WorkloadReportViewP
         </Panel>
         <Panel title="By department" flush>
           <WorkloadActivityDepartmentTable rows={report.rows} />
+        </Panel>
+        <Panel
+          title="Red flags when sent"
+          description={`${report.flagList.filter((flag) => !flag.note).length} open · ${report.flagList.filter((flag) => flag.note).length} looked into`}
+          flush
+        >
+          {report.flagList.length === 0 ? (
+            <p className={layout.emptyText}>No red flags when this was sent.</p>
+          ) : (
+            <WorkloadFlagList flags={sortFlags(report.flagList)} canComment={false} />
+          )}
+        </Panel>
+        <Panel
+          title={report.reviewed_at ? 'Reviewed' : 'Review'}
+          description={
+            report.reviewed_at
+              ? `By ${report.reviewed_by_name ?? 'someone'} on ${formatDateTime(report.reviewed_at)}.`
+              : canReview
+                ? 'Marking it reviewed tells the sender you have read it.'
+                : 'Not reviewed yet.'
+          }
+        >
+          {report.reply && <p className={layout.text}>“{report.reply}”</p>}
+          {canReview && (
+            <div className={report.reply ? layout.spaced : undefined}>
+              <ReviewWorkloadReportForm reportId={report.id} reply={report.reply} reviewed={Boolean(report.reviewed_at)} />
+            </div>
+          )}
         </Panel>
       </div>
     </>

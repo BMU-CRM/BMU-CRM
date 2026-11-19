@@ -5252,6 +5252,7 @@ export type Database = {
       }
       "services": {
         Row: {
+          "asks_plan": boolean
           "billing": string
           "created_at": string
           "description": string | null
@@ -5266,6 +5267,7 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          "asks_plan"?: boolean
           "billing"?: string
           "created_at"?: string
           "description"?: string | null
@@ -5279,6 +5281,7 @@ export type Database = {
           "updated_at"?: string
         }
         Update: {
+          "asks_plan"?: boolean
           "billing"?: string
           "created_at"?: string
           "description"?: string | null
@@ -6128,15 +6131,87 @@ export type Database = {
           },
         ]
       }
+      "workload_flag_notes": {
+        Row: {
+          "flag_key": string
+          "note": string
+          "noted_at": string
+          "noted_by": string | null
+          "noted_by_name": string
+        }
+        ComputedFields: never
+        Insert: {
+          "flag_key": string
+          "note": string
+          "noted_at"?: string
+          "noted_by"?: string | null
+          "noted_by_name": string
+        }
+        Update: {
+          "flag_key"?: string
+          "note"?: string
+          "noted_at"?: string
+          "noted_by"?: string | null
+          "noted_by_name"?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workload_flag_notes_noted_by_fkey"
+            columns: ["noted_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      "workload_flag_settings": {
+        Row: {
+          "check_attendance": boolean
+          "hours_tracked_from": string
+          "id": boolean
+          "idle_working_days": number
+          "overdue_days": number
+          "review_wait_days": number
+          "rework_times": number
+          "updated_at": string
+        }
+        ComputedFields: never
+        Insert: {
+          "check_attendance"?: boolean
+          "hours_tracked_from"?: string
+          "id"?: boolean
+          "idle_working_days"?: number
+          "overdue_days"?: number
+          "review_wait_days"?: number
+          "rework_times"?: number
+          "updated_at"?: string
+        }
+        Update: {
+          "check_attendance"?: boolean
+          "hours_tracked_from"?: string
+          "id"?: boolean
+          "idle_working_days"?: number
+          "overdue_days"?: number
+          "review_wait_days"?: number
+          "rework_times"?: number
+          "updated_at"?: string
+        }
+        Relationships: []
+      }
       "workload_reports": {
         Row: {
           "created_at": string
           "figures": Json
+          "flags": Json
           "id": string
           "note": string | null
           "period": string
           "period_from": string
           "period_to": string
+          "reply": string | null
+          "reviewed_at": string | null
+          "reviewed_by": string | null
+          "reviewed_by_name": string | null
           "sent_by": string | null
           "sent_by_name": string
           "title": string
@@ -6145,11 +6220,16 @@ export type Database = {
         Insert: {
           "created_at"?: string
           "figures"?: Json
+          "flags"?: Json
           "id"?: string
           "note"?: string | null
           "period": string
           "period_from": string
           "period_to": string
+          "reply"?: string | null
+          "reviewed_at"?: string | null
+          "reviewed_by"?: string | null
+          "reviewed_by_name"?: string | null
           "sent_by"?: string | null
           "sent_by_name": string
           "title": string
@@ -6157,16 +6237,28 @@ export type Database = {
         Update: {
           "created_at"?: string
           "figures"?: Json
+          "flags"?: Json
           "id"?: string
           "note"?: string | null
           "period"?: string
           "period_from"?: string
           "period_to"?: string
+          "reply"?: string | null
+          "reviewed_at"?: string | null
+          "reviewed_by"?: string | null
+          "reviewed_by_name"?: string | null
           "sent_by"?: string | null
           "sent_by_name"?: string
           "title"?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workload_reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workload_reports_sent_by_fkey"
             columns: ["sent_by"]
@@ -6605,6 +6697,12 @@ export type Database = {
         | { Args: {
             "p_employee": string
           }; Returns: boolean }
+      "employee_working_days":
+        | { Args: {
+            "p_employee": string
+            "p_start": string
+            "p_end": string
+          }; Returns: number }
       "employees_with_permission":
         | { Args: {
             "p_permission": string
@@ -6804,6 +6902,13 @@ export type Database = {
             "delivered": boolean
             "delivered_at": string
           }[] }
+      "get_missing_daily_reports":
+        | { Args: {
+            "p_date": string
+          }; Returns: {
+            "employee_id": string
+            "full_name": string
+          }[] }
       "get_money_movements":
         | { Args: {
             "p_from": string
@@ -6996,6 +7101,20 @@ export type Database = {
             "waiting_review": number
             "overdue": number
           }[] }
+      "get_workload_flags":
+        | { Args: Record<PropertyKey, never>; Returns: {
+            "flag_key": string
+            "kind": string
+            "employee_id": string
+            "employee_name": string
+            "task_id": string
+            "task_title": string
+            "detail": string
+            "since": string
+            "note": string
+            "noted_by_name": string
+            "noted_at": string
+          }[] }
       "get_workload_rows":
         | { Args: Record<PropertyKey, never>; Returns: {
             "employee_id": string
@@ -7040,6 +7159,10 @@ export type Database = {
         | { Args: {
             "p_name": string
           }; Returns: boolean }
+      "is_company_working_day":
+        | { Args: {
+            "p_day": string
+          }; Returns: boolean }
       "is_conversation_participant":
         | { Args: {
             "v_conversation": Omit<Database["public"]["Tables"]["conversations"]["Row"], Database["public"]["Tables"]["conversations"]["ComputedFields"]>
@@ -7057,6 +7180,11 @@ export type Database = {
       "is_meeting_organizer":
         | { Args: {
             "p_meeting": string
+          }; Returns: boolean }
+      "is_on_leave":
+        | { Args: {
+            "p_employee": string
+            "p_day": string
           }; Returns: boolean }
       "item_lines":
         | { Args: {
@@ -7287,6 +7415,8 @@ export type Database = {
         | { Args: {
             "p_run": string
           }; Returns: undefined }
+      "remind_daily_workload_reports":
+        | { Args: Record<PropertyKey, never>; Returns: undefined }
       "remove_ledger_entry":
         | { Args: {
             "p_kind": string
@@ -7311,6 +7441,11 @@ export type Database = {
       "require_payroll_permission":
         | { Args: {
             "p_permission": string
+          }; Returns: undefined }
+      "review_workload_report":
+        | { Args: {
+            "p_report": string
+            "p_reply"?: string
           }; Returns: undefined }
       "role_is_assignable":
         | { Args: {
@@ -7430,6 +7565,11 @@ export type Database = {
             "p_role": string
             "p_permissions": Json
           }; Returns: undefined }
+      "set_workload_flag_note":
+        | { Args: {
+            "p_flag_key": string
+            "p_note": string
+          }; Returns: undefined }
       "start_onboarding":
         | { Args: {
             "p_employee": string
@@ -7469,6 +7609,8 @@ export type Database = {
             "p_message": string
             "p_options": (number)[]
           }; Returns: undefined }
+      "workload_reach":
+        | { Args: Record<PropertyKey, never>; Returns: string[] }
     }
     Enums: {
       "attendance_day_status": "present" | "half_day" | "absent" | "leave" | "holiday" | "week_off"
@@ -7494,7 +7636,7 @@ export type Database = {
       "meeting_kind": "internal" | "department" | "management" | "client" | "project" | "one_to_one" | "content"
       "meeting_response": "pending" | "accepted" | "declined"
       "meeting_status": "scheduled" | "completed" | "cancelled"
-      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided" | "invoice_due_soon" | "follow_up_due" | "vendor_bill_due" | "reimbursement_submitted" | "reimbursement_decided" | "reimbursement_paid" | "budget_alert" | "employee_added" | "attendance_irregularity" | "task_resume_requested" | "task_updated" | "workload_report_received"
+      "notification_kind": "task_assigned" | "task_due_soon" | "task_overdue" | "task_review_requested" | "task_changes_requested" | "task_completed" | "task_rejected" | "task_escalated" | "task_comment" | "file_received" | "message_received" | "mention" | "announcement" | "meeting_invited" | "meeting_changed" | "meeting_cancelled" | "meeting_reminder" | "leave_requested" | "leave_decided" | "ticket_raised" | "ticket_updated" | "payment_received" | "invoice_overdue" | "task_rescheduled" | "payroll_review" | "payroll_decided" | "salary_paid" | "candidate_added" | "interview_reminder" | "resignation_submitted" | "resignation_decided" | "invoice_due_soon" | "follow_up_due" | "vendor_bill_due" | "reimbursement_submitted" | "reimbursement_decided" | "reimbursement_paid" | "budget_alert" | "employee_added" | "attendance_irregularity" | "task_resume_requested" | "task_updated" | "workload_report_received" | "workload_report_reviewed" | "workload_report_reminder"
       "notification_priority": "normal" | "high"
       "payment_method": "bank_transfer" | "upi" | "cheque" | "cash" | "card" | "tds" | "other"
       "payroll_rule_kind": "pf" | "esi" | "pt" | "tds"
@@ -7606,7 +7748,7 @@ export const Constants = {
       "meeting_kind": ["internal", "department", "management", "client", "project", "one_to_one", "content"],
       "meeting_response": ["pending", "accepted", "declined"],
       "meeting_status": ["scheduled", "completed", "cancelled"],
-      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided", "invoice_due_soon", "follow_up_due", "vendor_bill_due", "reimbursement_submitted", "reimbursement_decided", "reimbursement_paid", "budget_alert", "employee_added", "attendance_irregularity", "task_resume_requested", "task_updated", "workload_report_received"],
+      "notification_kind": ["task_assigned", "task_due_soon", "task_overdue", "task_review_requested", "task_changes_requested", "task_completed", "task_rejected", "task_escalated", "task_comment", "file_received", "message_received", "mention", "announcement", "meeting_invited", "meeting_changed", "meeting_cancelled", "meeting_reminder", "leave_requested", "leave_decided", "ticket_raised", "ticket_updated", "payment_received", "invoice_overdue", "task_rescheduled", "payroll_review", "payroll_decided", "salary_paid", "candidate_added", "interview_reminder", "resignation_submitted", "resignation_decided", "invoice_due_soon", "follow_up_due", "vendor_bill_due", "reimbursement_submitted", "reimbursement_decided", "reimbursement_paid", "budget_alert", "employee_added", "attendance_irregularity", "task_resume_requested", "task_updated", "workload_report_received", "workload_report_reviewed", "workload_report_reminder"],
       "notification_priority": ["normal", "high"],
       "payment_method": ["bank_transfer", "upi", "cheque", "cash", "card", "tds", "other"],
       "payroll_rule_kind": ["pf", "esi", "pt", "tds"],

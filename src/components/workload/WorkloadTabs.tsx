@@ -2,7 +2,7 @@ import { PageTabs } from '@/components/ui/PageTabs';
 import { permissionKeys } from '@/lib/access/permissionKeys';
 import type { CurrentAccess } from '@/server/services/accessService';
 
-type WorkloadTab = 'now' | 'report' | 'received';
+type WorkloadTab = 'now' | 'report' | 'flags' | 'received';
 
 // The Workload page's views: as things stand now, a day or week report, and the
 // reports sent (for those who receive them, or have sent some).
@@ -13,6 +13,7 @@ export function WorkloadTabs({ access, current }: { access: CurrentAccess; curre
       ? [
           { href: '/workload', label: 'Now', current: current === 'now' },
           { href: '/workload/report', label: 'Day or week report', current: current === 'report' },
+          { href: '/workload/flags', label: 'Red flags', current: current === 'flags' },
         ]
       : []),
     ...(has(permissionKeys.workloadReportReceive) || has(permissionKeys.workloadReportSend)

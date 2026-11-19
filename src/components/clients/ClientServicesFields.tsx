@@ -12,6 +12,8 @@ import styles from './ClientServicesFields.module.css';
 export type SubServicePickerOption = PickerOption & {
   groupId: string;
   billing?: ServiceBilling;
+  // False for work quoted per project: no plan is chosen for it.
+  asksPlan?: boolean;
   prices?: Record<ServicePlan, number | null>;
 };
 
@@ -76,9 +78,9 @@ export function ClientServicesFields({
     setChosenSubs((current) => current.filter((id) => next.includes(groupOf(id) ?? '')));
   }
 
-  // Each chosen sub service, then each chosen bundle, with its plan.
+  // Each chosen sub service that asks for a plan, then each chosen bundle, with its plan.
   const planned = [
-    ...chosenSubs.flatMap((id) => subServices.find((option) => option.value === id) ?? []),
+    ...chosenSubs.flatMap((id) => subServices.find((option) => option.value === id && option.asksPlan !== false) ?? []),
     ...chosenBundles.flatMap((id) => {
       const bundle = bundles.find((option) => option.value === id);
       return bundle ? [{ ...bundle, label: `Bundle › ${bundle.label}` }] : [];

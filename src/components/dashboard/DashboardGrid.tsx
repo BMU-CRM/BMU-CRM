@@ -21,6 +21,7 @@ import { MyTeamWidget } from './MyTeamWidget';
 import { OrganisationStatsWidget } from './OrganisationStatsWidget';
 import { RecentActivityWidget } from './RecentActivityWidget';
 import { TaskStatsWidget } from './TaskStatsWidget';
+import { TeamPulseWidget } from './TeamPulseWidget';
 import { TeamWorkloadWidget } from './TeamWorkloadWidget';
 import layout from '@/components/ui/WorkspaceLayout.module.css';
 import styles from './DashboardGrid.module.css';
@@ -46,6 +47,7 @@ const widgetComponents: Record<DashboardWidgetKey, (access: CurrentAccess) => Re
   awaitingQuotations: () => <AwaitingQuotationsWidget />,
   myWorkload: () => <MyWorkloadWidget />,
   documentSignature: (access) => <DocumentSignatureWidget access={access} />,
+  teamPulse: (access) => <TeamPulseWidget access={access} />,
 };
 
 type WidgetStackProps = {

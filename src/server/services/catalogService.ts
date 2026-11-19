@@ -20,7 +20,7 @@ export async function getCatalog() {
   const database = await createDatabaseClient();
   const [groups, services, industries, bundles] = await Promise.all([
     database.from('service_groups').select('id, name, sort_order, is_active').order('sort_order').order('name'),
-    database.from('services').select('id, group_id, name, is_active, billing, description, starter_price, growth_price, premium_price'),
+    database.from('services').select('id, group_id, name, is_active, billing, asks_plan, description, starter_price, growth_price, premium_price'),
     database.from('industries').select('id, name, is_active'),
     database.from('service_bundles').select('id, name, service_ids, saving_percent, is_active, sort_order').order('sort_order').order('name'),
   ]);
@@ -78,6 +78,7 @@ export async function listServiceOptions(keepIds: string[] = []) {
         group: group.name,
         groupId: group.id,
         billing: isServiceBilling(service.billing) ? service.billing : 'monthly',
+        asksPlan: service.asks_plan,
         prices: { starter: toPrice(service.starter_price), growth: toPrice(service.growth_price), premium: toPrice(service.premium_price) },
       })),
   );
@@ -138,7 +139,7 @@ export async function listClientServiceItems(clientIds: string[]): Promise<Recor
   const { data, error } = await database
     .from('client_services')
     .select(
-      'client_id, service_name, status, plan, bundle_id, created_at, service:services(name, billing, description, starter_price, growth_price, premium_price, group:service_groups(name))',
+      'client_id, service_name, status, plan, bundle_id, created_at, service:services(name, billing, asks_plan, description, starter_price, growth_price, premium_price, group:service_groups(name))',
     )
     .in('client_id', clientIds)
     .neq('status', 'ended')
@@ -163,7 +164,8 @@ export async function listClientServiceItems(clientIds: string[]): Promise<Recor
       serviceGroup: row.bundle_id ? bundleGroupName : (service?.group?.name ?? ''),
       serviceName: planLabel ? `${name} (${planLabel} plan)` : name,
       billing: row.bundle_id ? 'monthly' : service && isServiceBilling(service.billing) ? service.billing : '',
-      unitPrice: price === undefined || price === null ? '' : String(Number(price)),
+      // A sub service with no plan (quoted per project) starts with no rate, to type in.
+      unitPrice: price === undefined || price === null || (service && !service.asks_plan) ? '' : String(Number(price)),
     });
   }
   return items;

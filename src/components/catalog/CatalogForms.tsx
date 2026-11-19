@@ -53,6 +53,7 @@ export function ServiceGroupForm({ group }: { group?: Entry }) {
 
 type PricedEntry = Entry & {
   billing: string;
+  asks_plan: boolean;
   description: string | null;
   starter_price: number | string | null;
   growth_price: number | string | null;
@@ -104,6 +105,11 @@ export function ServiceForm({ service, groupId, groups }: { service?: PricedEntr
             error={errors?.[`${plan.key}Price`]}
           />
         ))}
+        {/* Off for work quoted per project, such as a website: no plan on clients, and
+            the rate on a quotation starts empty. */}
+        <label className={hrStyles.check}>
+          <input type="checkbox" name="asksPlan" defaultChecked={service?.asks_plan ?? true} /> Choose a plan for clients
+        </label>
         {service && (
           <label className={hrStyles.check}>
             <input type="checkbox" name="isActive" defaultChecked={service.is_active} /> Can be chosen

@@ -19,6 +19,8 @@ export const serviceSchema = z.object({
   groupId: z.uuid('Choose the service it belongs to.'),
   isActive: z.boolean(),
   billing: z.enum(serviceBillings, 'Choose how it is billed.'),
+  // Off for work quoted per project, such as a website: clients get no plan for it.
+  asksPlan: z.boolean(),
   description: z
     .string()
     .trim()

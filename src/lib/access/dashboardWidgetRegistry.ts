@@ -20,7 +20,8 @@ export type DashboardWidgetKey =
   | 'overdueInvoices'
   | 'awaitingQuotations'
   | 'myWorkload'
-  | 'documentSignature';
+  | 'documentSignature'
+  | 'teamPulse';
 
 export type DashboardWidget = {
   key: DashboardWidgetKey;
@@ -33,6 +34,8 @@ export type DashboardWidget = {
 // role gets the right dashboard from its permissions alone. Each module adds its
 // widgets here when it ships.
 const dashboardWidgets: DashboardWidget[] = [
+  // First, for those who track the team: the day at a glance.
+  { key: 'teamPulse', permission: permissionKeys.dashboardTeamPulse, size: 'full' },
   { key: 'financeStats', permission: permissionKeys.financeReports, size: 'full' },
   { key: 'organisationStats', permission: permissionKeys.organisationStats, size: 'full' },
   // Project figures for anyone who sees projects. Client figures are added inside the
