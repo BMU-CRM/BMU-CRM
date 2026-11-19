@@ -342,15 +342,17 @@ describe('clients, projects and the task engine', () => {
       expect(error?.message).toContain('cannot move this task');
     });
 
-    it('lets the assignee move the deadline of their open work, and tells whoever assigned it', async () => {
+    it('leaves the deadline of assigned work to whoever assigned it, and tells the assignee when it moves', async () => {
       const { data } = await newTask(as.founder!, { assignee_id: ids.designHead!, title: 'Deadline to move' });
 
-      const moved = await as.designHead!.from('tasks').update({ due_date: '2030-01-01' }).eq('id', data!.id).select('due_date');
+      const refused = await as.designHead!.from('tasks').update({ due_date: '2030-01-01' }).eq('id', data!.id).select('due_date');
+      expect(refused.error?.message).toContain('Only the person who assigned this task');
 
+      const moved = await as.founder!.from('tasks').update({ due_date: '2030-01-01' }).eq('id', data!.id).select('due_date');
       expect(moved.error).toBeNull();
       expect(moved.data?.[0]?.due_date).toBe('2030-01-01');
 
-      const notices = await as.founder!
+      const notices = await as.designHead!
         .from('notifications')
         .select('kind, body')
         .eq('kind', 'task_rescheduled')
@@ -358,8 +360,8 @@ describe('clients, projects and the task engine', () => {
       expect(notices.data?.[0]?.body).toContain('01 Jan 2030');
     });
 
-    it('moves the start date along when a deadline is brought forward before it', async () => {
-      const { data } = await newTask(as.founder!, {
+    it('moves the start date along when someone brings their own deadline forward before it', async () => {
+      const { data } = await newTask(as.designHead!, {
         assignee_id: ids.designHead!,
         start_date: '2030-02-01',
         due_date: '2030-02-10',
@@ -382,7 +384,7 @@ describe('clients, projects and the task engine', () => {
       const cleared = await as.designHead!.from('tasks').update({ due_date: null }).eq('id', data!.id);
 
       expect(renamed.error?.message).toContain('do not have permission to change these task details');
-      expect(cleared.error?.message).toContain('do not have permission to change these task details');
+      expect(cleared.error?.message).toContain('Only the person who assigned this task');
     });
 
     it('stops anyone else moving a deadline they do not manage', async () => {

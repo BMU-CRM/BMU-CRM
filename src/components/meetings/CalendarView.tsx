@@ -112,7 +112,7 @@ export function CalendarView({ range, items, today, canAddTasks, contentCategori
         {contentCategories && contentCategories.length > 0
           ? 'Click any day to add content work for a category, your own task or a meeting.'
           : 'Click any day to add your own task or schedule a meeting.'}
-        {items.some((item) => item.canMove) && ' Drag one of your tasks to another day, or use its Move button, to postpone or bring it forward.'}
+        {items.some((item) => item.canMove) && ' Drag one of your own tasks to another day, or use its Move button, to postpone or bring it forward. Tasks given to you are moved by whoever assigned them.'}
       </p>
       {range.view === 'month' ? (
         <>

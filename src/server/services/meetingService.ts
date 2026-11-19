@@ -43,7 +43,7 @@ export type CalendarItem = {
   isCancelled?: boolean;
   // An approved or completed task, or a meeting that has ended. Shown struck through.
   isDone?: boolean;
-  // An open task of the person's own, which they can move to another day.
+  // An open task the person gave themselves, which they can move to another day.
   canMove?: boolean;
 };
 
@@ -57,7 +57,7 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
     // Finished work stays on the calendar, struck through. Rejected work does not.
     database
       .from('tasks')
-      .select('id, title, due_date, due_time, status, meeting_id')
+      .select('id, title, due_date, due_time, status, meeting_id, created_by')
       .eq('assignee_id', access.employee.id)
       .neq('status', 'rejected')
       .gte('due_date', from)
@@ -102,7 +102,8 @@ export async function getCalendarItems(access: CurrentAccess, from: string, to: 
       time: task.due_time ? task.due_time.slice(0, 5) : null,
       href: `/tasks/${task.id}`,
       isDone: task.status === 'completed',
-      canMove: task.status !== 'completed',
+      // Only work they gave themselves: assigned work is moved by whoever manages it.
+      canMove: task.status !== 'completed' && task.created_by === access.employee.id,
     })),
   ];
 

@@ -222,7 +222,8 @@ export async function createMyTaskAction(values: {
 const rescheduleSchema = z.iso.date();
 
 // Postpones or brings forward a task's deadline, from the calendar. The database lets
-// the assignee move their own open work, and anyone who manages the task.
+// people move open work they gave themselves, and anyone who manages the task move it;
+// work someone else assigned is not moved by the person doing it.
 export async function rescheduleTaskAction(taskId: string, dueDate: string): Promise<ActionResult> {
   if (!(await getActionAccess())) return failure(noPermission);
 

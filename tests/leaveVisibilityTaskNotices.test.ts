@@ -49,15 +49,16 @@ describe('leave on the calendar and moved deadlines', () => {
     return (data ?? []).filter((row) => row.body?.startsWith(title));
   }
 
-  it('tells whoever assigned a task when its deadline moves', async () => {
+  it('tells the assignee when whoever assigned a task moves its deadline, which the assignee cannot', async () => {
     const title = `Poster ${runId}`;
     const { data: task } = await as.head!.from('tasks').insert({ title, assignee_id: ids.designer!, created_by: ids.head!, due_date: '2027-04-10' }).select('id').single();
-    await as.designer!.from('tasks').update({ due_date: '2027-04-14' }).eq('id', task!.id).select('id');
+    const refused = await as.designer!.from('tasks').update({ due_date: '2027-04-14' }).eq('id', task!.id).select('id');
+    expect(refused.error?.message).toContain('Only the person who assigned this task');
     await as.head!.from('tasks').update({ due_date: '2027-04-08' }).eq('id', task!.id).select('id');
 
     const toHead = await deadlineNotices('head', title);
     const toDesigner = await deadlineNotices('designer', title);
-    expect(toHead.map((row) => row.body)).toEqual([`${title}: postponed to 14 Apr 2027`]);
+    expect(toHead).toEqual([]);
     expect(toDesigner.map((row) => row.body)).toEqual([`${title}: brought forward to 08 Apr 2027`]);
   });
 
